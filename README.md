@@ -2,7 +2,7 @@
 
 > An AI-powered assessment platform for courses, submissions, grading, and analytics — built for students, instructors, evaluators, and admins.
 
-**🚀 Live demo:** [https://skillforge-ai-orpin.vercel.app](https://skillforge-ai-orpin.vercel.app)
+**🚀 Live demo:** [[https://skillforge-ai-orpin.vercel.app](https://skillforge-ai-orpin.vercel.app)](https://skillforge-ai-h35u.vercel.app/)
 
 ---
 
