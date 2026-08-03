@@ -1,0 +1,6 @@
+{
+  "name": "EdTech Matrix - AI Assessment Platform",
+  "description": "Full-stack EdTech platform with AI curriculum generation, submission grading, role-based authorization, and assessment analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
