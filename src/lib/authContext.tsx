@@ -46,8 +46,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [candidateInfo, setCandidateInfo] = useState<CandidateInfo>({
     name: '',
     email: '',
-    githubProfile: '',
-    linkedInProfile: '',
+    githubProfile: 'https://github.com/AdarshMalllah07',
+    linkedInProfile: 'https://www.linkedin.com/in/adarsh-mallah-011279312/',
     portfolioWebsite: '',
     assignmentTitle: '',
     companyName: '',
@@ -110,7 +110,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     api<CandidateInfo | null>('/api/candidate')
       .then((data) => {
-        if (data) setCandidateInfo(data);
+        if (data) {
+          setCandidateInfo({
+            ...data,
+            githubProfile: data.githubProfile || 'https://github.com/AdarshMalllah07',
+            linkedInProfile:
+              data.linkedInProfile || 'https://www.linkedin.com/in/adarsh-mallah-011279312/',
+          });
+        }
       })
       .catch(() => {});
   }, []);

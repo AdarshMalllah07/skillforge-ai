@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import process from 'node:process';
 
-const rawUri = process.env.MONGODB_URI || "mongodb+srv://adarshmallah1357_db_user:bWWliUwYt5IS9COY@cluster0.acff7ci.mongodb.net";
+const rawUri = process.env.MONGODB_URI;
 
 /** Ensure Atlas URIs without a DB path use a stable app database name. */
 function withDatabaseName(uri: string, dbName = 'edtech_matrix'): string {
@@ -15,8 +15,6 @@ function withDatabaseName(uri: string, dbName = 'edtech_matrix'): string {
     return uri;
   }
 }
-
-const MONGODB_URI = withDatabaseName(rawUri);
 
 /** Ensures the configured database exists (MongoDB creates DBs on first write). */
 async function ensureDatabaseExists(): Promise<void> {
@@ -39,11 +37,18 @@ async function ensureDatabaseExists(): Promise<void> {
 }
 
 export async function connectDB(): Promise<typeof mongoose> {
+  if (!rawUri) {
+    throw new Error('MONGODB_URI is not set');
+  }
+
+  const MONGODB_URI = withDatabaseName(rawUri);
   mongoose.set('strictQuery', true);
 
-  await mongoose.connect(MONGODB_URI);
+  await mongoose.connect(MONGODB_URI, {
+    serverSelectionTimeoutMS: 10000,
+  });
   await ensureDatabaseExists();
 
-  console.log(`MongoDB connected: ${MONGODB_URI}`);
+  console.log(`MongoDB connected: ${mongoose.connection.db?.databaseName}`);
   return mongoose;
 }

@@ -43,7 +43,7 @@ export default function LoginPage({ onNavigateToSignup, onNavigateToForgotPasswo
             <GraduationCap className="w-8 h-8 text-indigo-300" />
           </div>
           <h2 className="text-2xl font-black text-slate-900 tracking-tight">
-            Sign In to EdTech Matrix
+            Sign In to SkillForge AI
           </h2>
           <p className="text-xs text-slate-500 max-w-xs mx-auto">
             Access your role-based dashboard, courses, submissions, and AI grading.

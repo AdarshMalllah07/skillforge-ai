@@ -154,24 +154,32 @@ export default function CandidateModal({ onClose }: CandidateModalProps) {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-3 border-t border-slate-200">
                 <a
-                  href={candidateInfo.githubProfile}
+                  href={candidateInfo.githubProfile || 'https://github.com/AdarshMalllah07'}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center text-slate-700 hover:text-indigo-600 bg-white p-2.5 rounded-lg border border-slate-200 hover:border-indigo-300 transition-colors"
                 >
                   <Github className="w-4 h-4 mr-2 text-slate-500" />
-                  <span className="truncate">{candidateInfo.githubProfile}</span>
+                  <span className="truncate">
+                    {candidateInfo.githubProfile || 'https://github.com/AdarshMalllah07'}
+                  </span>
                   <ExternalLink className="w-3 h-3 ml-auto opacity-50" />
                 </a>
 
                 <a
-                  href={candidateInfo.linkedInProfile}
+                  href={
+                    candidateInfo.linkedInProfile ||
+                    'https://www.linkedin.com/in/adarsh-mallah-011279312/'
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center text-slate-700 hover:text-blue-600 bg-white p-2.5 rounded-lg border border-slate-200 hover:border-blue-300 transition-colors"
                 >
                   <Linkedin className="w-4 h-4 mr-2 text-blue-600" />
-                  <span className="truncate">{candidateInfo.linkedInProfile}</span>
+                  <span className="truncate">
+                    {candidateInfo.linkedInProfile ||
+                      'https://www.linkedin.com/in/adarsh-mallah-011279312/'}
+                  </span>
                   <ExternalLink className="w-3 h-3 ml-auto opacity-50" />
                 </a>
               </div>

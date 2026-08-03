@@ -55,7 +55,7 @@ export default function AuthModal() {
 
           <div className="flex items-center space-x-2 text-indigo-400 mb-1">
             <Sparkles className="w-4 h-4" />
-            <span className="text-[10px] font-extrabold uppercase tracking-widest">House of EdTech</span>
+            <span className="text-[10px] font-extrabold uppercase tracking-widest">SkillForge AI</span>
           </div>
 
           <h3 className="text-xl font-extrabold text-white">
@@ -64,7 +64,7 @@ export default function AuthModal() {
           <p className="text-xs text-slate-300 mt-1">
             {mode === 'LOGIN'
               ? 'Sign in to manage courses, view assignment submissions, and run AI evaluations.'
-              : 'Join House of EdTech platform as a Candidate, Instructor, or Evaluator.'}
+              : 'Join SkillForge AI as a Candidate, Instructor, or Evaluator.'}
           </p>
 
           {/* Tab Switcher */}

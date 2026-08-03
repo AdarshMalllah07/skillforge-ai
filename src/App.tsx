@@ -223,7 +223,7 @@ function AppContent() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-600 text-sm font-medium">
-        Loading EdTech Matrix…
+        Loading SkillForge AI…
       </div>
     );
   }

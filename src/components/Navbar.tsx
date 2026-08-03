@@ -66,13 +66,13 @@ export default function Navbar({ activeTab, setActiveTab }: NavbarProps) {
             </div>
             <div className="flex flex-col">
               <div className="flex items-center space-x-1.5">
-                <span className="text-base font-extrabold tracking-tight text-slate-900 whitespace-nowrap">EdTech Matrix</span>
+                <span className="text-base font-extrabold tracking-tight text-slate-900 whitespace-nowrap">SkillForge AI</span>
                 <span className="text-[9px] font-extrabold uppercase tracking-wider bg-slate-900 text-indigo-300 px-1.5 py-0.5 rounded whitespace-nowrap hidden sm:inline-block">
                   NEXT.JS 16
                 </span>
               </div>
               <p className="text-[10px] text-slate-500 font-medium hidden md:block whitespace-nowrap">
-                House of EdTech Assessment Platform
+                AI Assessment Platform
               </p>
             </div>
           </div>
@@ -254,7 +254,7 @@ export default function Navbar({ activeTab, setActiveTab }: NavbarProps) {
                     <GraduationCap className="w-6 h-6" />
                   </div>
                   <div>
-                    <h2 className="text-base font-black text-white leading-none">EdTech Matrix</h2>
+                    <h2 className="text-base font-black text-white leading-none">SkillForge AI</h2>
                     <p className="text-[11px] text-indigo-300 font-semibold mt-0.5">Platform Navigation & Roles</p>
                   </div>
                 </div>

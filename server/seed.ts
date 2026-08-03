@@ -76,8 +76,33 @@ async function removeDemoSeedData(): Promise<void> {
   }
 }
 
+const DEFAULT_CANDIDATE = {
+  name: 'Adarsh Mallah',
+  email: '',
+  githubProfile: 'https://github.com/AdarshMalllah07',
+  linkedInProfile: 'https://www.linkedin.com/in/adarsh-mallah-011279312/',
+  portfolioWebsite: '',
+  assignmentTitle: '',
+  companyName: 'House of EdTech',
+  submissionDate: '',
+};
+
+/** Ensures footer candidate profile links are present. */
+async function ensureCandidateProfile(): Promise<void> {
+  const existing = await Candidate.findOne();
+  if (existing) {
+    existing.githubProfile = DEFAULT_CANDIDATE.githubProfile;
+    existing.linkedInProfile = DEFAULT_CANDIDATE.linkedInProfile;
+    if (!existing.name) existing.name = DEFAULT_CANDIDATE.name;
+    await existing.save();
+    return;
+  }
+  await Candidate.create(DEFAULT_CANDIDATE);
+}
+
 /** On startup: ensure admin only — no default demo users, courses, or submissions. */
 export async function seedDatabase(): Promise<void> {
   await ensureSuperAdmin();
   await removeDemoSeedData();
+  await ensureCandidateProfile();
 }

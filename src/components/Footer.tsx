@@ -16,10 +16,10 @@ export default function Footer() {
           <div className="md:col-span-2 space-y-3">
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-sm">
-                E
+                S
               </div>
               <span className="text-xl font-bold tracking-tight text-white">
-                House of EdTech <span className="text-indigo-400 font-medium text-sm ml-1">Matrix Platform</span>
+                SkillForge AI
               </span>
             </div>
             <p className="text-slate-400 text-sm max-w-md leading-relaxed">
@@ -61,7 +61,7 @@ export default function Footer() {
             <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Social & Repository</h4>
             <div className="space-y-2">
               <a
-                href={candidateInfo.githubProfile}
+                href={candidateInfo.githubProfile || 'https://github.com/AdarshMalllah07'}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center text-sm text-slate-300 hover:text-white transition-colors group"
@@ -72,7 +72,7 @@ export default function Footer() {
               </a>
 
               <a
-                href={candidateInfo.linkedInProfile}
+                href={candidateInfo.linkedInProfile || 'https://www.linkedin.com/in/adarsh-mallah-011279312/'}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center text-sm text-slate-300 hover:text-blue-400 transition-colors group"
