@@ -97,7 +97,22 @@ export default function RoadmapTable({
                                         className="mx-auto mb-4 text-violet-500"
                                     />
 
-                                    No Roadmaps Found
+                                    <div>
+
+                                        <Sparkles
+                                            size={48}
+                                            className="mx-auto mb-5 text-violet-500"
+                                        />
+
+                                        <h3 className="text-xl font-bold text-slate-700">
+                                            No Roadmaps Yet
+                                        </h3>
+
+                                        <p className="mt-2 text-slate-500">
+                                            Create your first AI roadmap to begin your learning journey.
+                                        </p>
+
+                                    </div>
                                 </td>
 
                             </tr>
@@ -146,10 +161,19 @@ export default function RoadmapTable({
 
                                         <div className="flex items-center gap-3">
 
-                                            <div className="h-2 w-32 rounded-full bg-slate-200">
+                                            <div className="h-2 w-40 overflow-hidden rounded-full bg-slate-200">
 
                                                 <div
-                                                    className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-violet-500"
+                                                    className="
+        h-2
+        rounded-full
+        bg-gradient-to-r
+        from-blue-500
+        via-cyan-500
+        to-violet-600
+        transition-all
+        duration-700
+    "
                                                     style={{
                                                         width: `${item.progress}%`,
                                                     }}
@@ -157,7 +181,23 @@ export default function RoadmapTable({
 
                                             </div>
 
-                                            <span className="text-sm font-medium text-slate-600">
+                                            <span
+                                                className={`
+        rounded-full
+        px-3
+        py-1
+        text-xs
+        font-bold
+        ${item.progress === 100
+                                                        ? "bg-green-100 text-green-700"
+                                                        : item.progress >= 60
+                                                            ? "bg-blue-100 text-blue-700"
+                                                            : item.progress >= 30
+                                                                ? "bg-orange-100 text-orange-700"
+                                                                : "bg-slate-100 text-slate-600"
+                                                    }
+    `}
+                                            >
                                                 {item.progress}%
                                             </span>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
+import { toast } from "sonner";
 import DashboardStats from "@/components/dashboard/DashboardStats";
 import RoadmapForm from "@/components/dashboard/RoadmapForm";
 import RoadmapTable from "@/components/dashboard/RoadmapTable";
@@ -27,6 +27,7 @@ export default function DashboardPage() {
         description: "",
         category: "",
         level: "Beginner",
+        progress: 0,
     });
 
     const loadRoadmaps = async () => {
@@ -42,32 +43,57 @@ export default function DashboardPage() {
     }, []);
 
     const createRoadmap = async () => {
-        await fetch("/api/roadmaps", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(form),
-        });
+        try {
+            const res = await fetch("/api/roadmaps", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(form),
+            });
 
-        setForm({
-            title: "",
-            description: "",
-            category: "",
-            level: "Beginner",
-        });
+            if (!res.ok) {
+                toast.error("Failed to create roadmap.");
+                return;
+            }
 
-        loadRoadmaps();
+            toast.success("Roadmap created successfully!");
+
+            setForm({
+                title: "",
+                description: "",
+                category: "",
+                level: "Beginner",
+                progress: 0,
+            });
+
+            loadRoadmaps();
+        } catch (error) {
+            console.error(error);
+            toast.error("Something went wrong.");
+        }
     };
 
     const deleteRoadmap = async (id: string) => {
-        await fetch(`/api/roadmaps/${id}`, {
-            method: "DELETE",
-        });
+        try {
+            const res = await fetch(`/api/roadmaps/${id}`, {
+                method: "DELETE",
+            });
 
-        loadRoadmaps();
+            if (!res.ok) {
+                toast.error("Failed to delete roadmap.");
+                return;
+            }
+
+            toast.success("Roadmap deleted.");
+
+            loadRoadmaps();
+        } catch (error) {
+            console.error(error);
+            toast.error("Something went wrong.");
+        }
+
     };
-
     const editRoadmap = (roadmap: Roadmap) => {
         setEditingId(roadmap._id);
 
@@ -76,35 +102,49 @@ export default function DashboardPage() {
             description: roadmap.description,
             category: roadmap.category,
             level: roadmap.level,
+            progress: roadmap.progress,
         });
     };
 
     const saveRoadmap = async () => {
         if (!editingId) return;
 
-        await fetch(`/api/roadmaps/${editingId}`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(form),
-        });
+        try {
+            const res = await fetch(`/api/roadmaps/${editingId}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(form),
+            });
 
-        setEditingId(null);
+            if (!res.ok) {
+                toast.error("Failed to update roadmap.");
+                return;
+            }
 
-        setForm({
-            title: "",
-            description: "",
-            category: "",
-            level: "Beginner",
-        });
+            toast.success("Roadmap updated successfully!");
 
-        loadRoadmaps();
+            setEditingId(null);
+
+            setForm({
+                title: "",
+                description: "",
+                category: "",
+                level: "Beginner",
+                progress: 0,
+            });
+
+            loadRoadmaps();
+        } catch (error) {
+            console.error(error);
+            toast.error("Something went wrong.");
+        }
     };
 
     const generateAIRoadmap = async () => {
         if (!form.title) {
-            alert("Please enter a roadmap title first.");
+            toast.warning("Please enter a roadmap title first.");
             return;
         }
 
@@ -122,7 +162,7 @@ export default function DashboardPage() {
             const data = await res.json();
 
             if (!res.ok) {
-                alert(data.message);
+                toast.error(data.message || "Failed to generate AI roadmap.");
                 return;
             }
 
@@ -131,9 +171,10 @@ export default function DashboardPage() {
                 description: data.roadmap,
             }));
 
+            toast.success("AI roadmap generated successfully!");
         } catch (error) {
             console.error(error);
-            alert("Failed to generate AI roadmap.");
+            toast.error("Failed to generate AI roadmap.");
         } finally {
             setAiLoading(false);
         }

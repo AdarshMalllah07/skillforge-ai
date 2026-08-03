@@ -27,89 +27,106 @@ export default function Header() {
         }
     };
 
+    const navClass = (active: boolean) =>
+        `flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all duration-300 ${active
+            ? "bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-lg"
+            : "text-slate-600 hover:bg-white/80 hover:text-slate-900 hover:shadow-md"
+        }`;
+
     return (
-        <header
-            className="
-                sticky
-                top-0
-                z-50
-                border-b
-                border-white/20
-                bg-white/70
-                backdrop-blur-xl
-                shadow-lg
-            "
-        >
-            <div className="mx-auto flex max-w-7xl items-center justify-between px-8 py-4">
+        <header className="sticky top-0 z-50 border-b border-white/20 bg-white/70 backdrop-blur-2xl shadow-lg">
+
+            <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-8">
+
+                {/* Logo */}
 
                 <Link
                     href="/"
-                    className="flex items-center gap-3"
+                    className="group flex items-center gap-3"
                 >
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-violet-600 text-white shadow-lg">
-                        <Brain size={22} />
+
+                    <div
+                        className="
+                            flex
+                            h-12
+                            w-12
+                            items-center
+                            justify-center
+                            rounded-2xl
+                            bg-gradient-to-br
+                            from-blue-600
+                            via-violet-600
+                            to-fuchsia-600
+                            text-white
+                            shadow-lg
+                            transition-transform
+                            duration-300
+                            group-hover:scale-105
+                        "
+                    >
+                        <Brain size={24} />
                     </div>
 
                     <div>
-                        <h1 className="text-xl font-bold tracking-tight text-slate-900">
+
+                        <h1 className="text-xl font-extrabold tracking-tight text-slate-900">
                             SkillForge AI
                         </h1>
 
                         <p className="text-xs text-slate-500">
-                            AI Learning Platform
+                            AI Learning Roadmap Platform
                         </p>
+
                     </div>
+
                 </Link>
+
+                {/* Navigation */}
 
                 <nav className="flex items-center gap-3">
 
                     <Link
                         href="/"
-                        className={`
-                            flex items-center gap-2 rounded-xl px-4 py-2 transition-all
-                            ${pathname === "/"
-                                ? "bg-blue-600 text-white shadow-md"
-                                : "text-slate-600 hover:bg-white hover:shadow"
-                            }
-                        `}
+                        className={navClass(pathname === "/")}
                     >
                         <Home size={18} />
                         Home
                     </Link>
 
                     {pathname === "/dashboard" ? (
+
                         <button
                             onClick={handleLogout}
                             className="
-                                flex items-center gap-2
+                                flex
+                                items-center
+                                gap-2
                                 rounded-xl
-                                bg-red-500
-                                px-4
-                                py-2
+                                bg-gradient-to-r
+                                from-red-500
+                                to-rose-600
+                                px-5
+                                py-2.5
+                                text-sm
+                                font-semibold
                                 text-white
-                                shadow-md
+                                shadow-lg
                                 transition-all
+                                duration-300
                                 hover:-translate-y-0.5
-                                hover:bg-red-600
+                                hover:shadow-xl
                             "
                         >
                             <LogOut size={18} />
                             Logout
                         </button>
+
                     ) : (
+
                         <>
                             <Link
                                 href="/login"
-                                className="
-                                    flex items-center gap-2
-                                    rounded-xl
-                                    px-4
-                                    py-2
-                                    text-slate-600
-                                    transition-all
-                                    hover:bg-white
-                                    hover:shadow
-                                "
+                                className={navClass(pathname === "/login")}
                             >
                                 <LogIn size={18} />
                                 Login
@@ -118,17 +135,22 @@ export default function Header() {
                             <Link
                                 href="/register"
                                 className="
-                                    flex items-center gap-2
+                                    flex
+                                    items-center
+                                    gap-2
                                     rounded-xl
                                     bg-gradient-to-r
                                     from-blue-600
-                                    to-violet-600
+                                    via-violet-600
+                                    to-fuchsia-600
                                     px-5
-                                    py-2
-                                    font-medium
+                                    py-2.5
+                                    text-sm
+                                    font-semibold
                                     text-white
                                     shadow-lg
                                     transition-all
+                                    duration-300
                                     hover:-translate-y-0.5
                                     hover:shadow-xl
                                 "
@@ -137,11 +159,13 @@ export default function Header() {
                                 Register
                             </Link>
                         </>
+
                     )}
 
                 </nav>
 
             </div>
+
         </header>
     );
 }
