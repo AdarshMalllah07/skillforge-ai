@@ -1,35 +1,6 @@
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-white">
-      {/* Navbar */}
-      <header className="border-b">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <h1 className="text-2xl font-bold text-blue-600">
-            SkillForge AI
-          </h1>
-
-          <nav className="flex gap-6 text-sm font-medium">
-            <a href="#features" className="hover:text-blue-600">
-              Features
-            </a>
-
-            <a href="#about" className="hover:text-blue-600">
-              About
-            </a>
-
-            <a href="/login" className="hover:text-blue-600">
-              Login
-            </a>
-
-            <a
-              href="/register"
-              className="rounded-lg bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700"
-            >
-              Get Started
-            </a>
-          </nav>
-        </div>
-      </header>
 
       {/* Hero */}
       <section className="mx-auto flex max-w-7xl flex-col items-center px-6 py-24 text-center">
@@ -56,10 +27,10 @@ export default function HomePage() {
           </a>
 
           <a
-            href="#features"
+            href="/login"
             className="rounded-xl border px-6 py-3 transition hover:bg-gray-100"
           >
-            Explore Features
+            Login
           </a>
         </div>
       </section>
@@ -91,8 +62,8 @@ export default function HomePage() {
             </h4>
 
             <p className="text-gray-600">
-              Generate structured learning plans using Gemini AI based on your
-              goals.
+              Generate structured learning plans using AI based on your
+              learning goals.
             </p>
           </div>
 
@@ -102,33 +73,13 @@ export default function HomePage() {
             </h4>
 
             <p className="text-gray-600">
-              Visualize completed topics, pending goals and overall learning
-              performance.
+              Visualize completed topics, pending goals, and overall learning
+              progress.
             </p>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer
-        id="about"
-        className="mt-20 border-t bg-gray-50"
-      >
-        <div className="mx-auto max-w-7xl px-6 py-10 text-center">
-          <h3 className="text-2xl font-bold">
-            SkillForge AI
-          </h3>
-
-          <p className="mt-4 text-gray-600">
-            AI Powered Learning Roadmap Manager built using Next.js 16,
-            TypeScript, MongoDB and Gemini AI.
-          </p>
-
-          <p className="mt-8 text-sm text-gray-500">
-            © 2026 SkillForge AI. All Rights Reserved.
-          </p>
-        </div>
-      </footer>
     </main>
   );
 }
