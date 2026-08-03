@@ -140,7 +140,16 @@ export default function DashboardPage() {
     };
 
     return (
-        <main className="min-h-screen bg-slate-100 p-8">
+        <main
+            className="
+        min-h-screen
+        bg-gradient-to-br
+        from-slate-100
+        via-blue-50
+        to-violet-100
+        p-8
+    "
+        >
 
             <DashboardStats
                 total={roadmaps.length}
