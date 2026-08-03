@@ -24,7 +24,6 @@ app.use(express.json({ limit: '10mb' }));
 app.use('/uploads', express.static(UPLOADS_ROOT));
 
 let dbReady: Promise<void> | null = null;
-let frontendReady: Promise<void> | null = null;
 
 async function ensureDb(): Promise<void> {
   if (!dbReady) {
@@ -47,62 +46,26 @@ function resolveStaticRoot(): string {
   return candidates.find((dir) => fs.existsSync(path.join(dir, 'index.html'))) || candidates[0];
 }
 
-async function setupFrontend(): Promise<void> {
-  if (frontendReady) {
-    await frontendReady;
-    return;
-  }
-
-  frontendReady = (async () => {
-    if (!isProd) {
-      const { createServer: createViteServer } = await import('vite');
-      const vite = await createViteServer({
-        server: { middlewareMode: true },
-        appType: 'spa',
-      });
-      app.use(vite.middlewares);
-      return;
-    }
-
-    // On Vercel, files in public/ are served by the CDN; Express still needs an SPA fallback.
-    const staticRoot = resolveStaticRoot();
-    if (!isVercel) {
-      app.use(express.static(staticRoot));
-    }
-    app.get('*', (req, res, next) => {
-      if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) return next();
-      const indexPath = path.join(staticRoot, 'index.html');
-      if (!fs.existsSync(indexPath)) {
-        return res.status(500).send('Frontend build missing. Run vite build --outDir public.');
-      }
-      res.sendFile(indexPath);
-    });
-  })().catch((err) => {
-    frontendReady = null;
-    throw err;
-  });
-
-  await frontendReady;
+function isSpaExcluded(reqPath: string): boolean {
+  return (
+    reqPath.startsWith('/api') ||
+    reqPath.startsWith('/uploads') ||
+    reqPath.startsWith('/assets') ||
+    Boolean(path.extname(reqPath))
+  );
 }
 
-app.use(async (req, res, next) => {
+// DB only required for API routes
+app.use('/api', async (req, res, next) => {
   try {
-    if (req.path.startsWith('/api')) {
-      await ensureDb();
-    }
-    await setupFrontend();
+    await ensureDb();
     next();
   } catch (err) {
-    console.error('Request bootstrap failed:', err);
-    if (req.path.startsWith('/api')) {
-      res.status(503).json({ error: 'Database unavailable' });
-      return;
-    }
-    res.status(503).send('Service unavailable');
+    console.error('Database connection failed:', err);
+    res.status(503).json({ error: 'Database unavailable' });
   }
 });
 
-// API routes
 app.use('/api', miscRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -110,9 +73,50 @@ app.use('/api/courses', courseRoutes);
 app.use('/api/submissions', submissionRoutes);
 app.use('/api/ai', aiRoutes);
 
+async function attachFrontend(): Promise<void> {
+  if (!isProd) {
+    const { createServer: createViteServer } = await import('vite');
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: 'spa',
+    });
+    app.use(vite.middlewares);
+    return;
+  }
+
+  // On Vercel, Vite output lives in the function under public/ (CDN static/ is empty),
+  // so Express must serve JS/CSS itself.
+  const staticRoot = resolveStaticRoot();
+  app.use(express.static(staticRoot, { index: false, fallthrough: true }));
+  app.get('*', (req, res, next) => {
+    if (isSpaExcluded(req.path)) return next();
+    const indexPath = path.join(staticRoot, 'index.html');
+    if (!fs.existsSync(indexPath)) {
+      return res.status(500).send('Frontend build missing. Run vite build --outDir public.');
+    }
+    res.sendFile(indexPath);
+  });
+}
+
+const frontendReady = attachFrontend().catch((err) => {
+  console.error('Frontend setup failed:', err);
+  throw err;
+});
+
+// Ensure frontend middleware is attached before handling non-API traffic.
+app.use(async (req, res, next) => {
+  if (req.path.startsWith('/api')) return next();
+  try {
+    await frontendReady;
+    next();
+  } catch {
+    res.status(503).send('Service unavailable');
+  }
+});
+
 async function startServer() {
   await ensureDb();
-  await setupFrontend();
+  await frontendReady;
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://0.0.0.0:${PORT}`);
@@ -120,7 +124,6 @@ async function startServer() {
   });
 }
 
-// Vercel: export the app. Local / traditional host: listen on a port.
 if (!isVercel) {
   startServer().catch((err) => {
     console.error('Failed to start server:', err);
