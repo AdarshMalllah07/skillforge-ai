@@ -10,12 +10,14 @@ interface Props {
     roadmaps: Roadmap[];
     loading: boolean;
     deleteRoadmap: (id: string) => void;
+    editRoadmap: (roadmap: Roadmap) => void;
 }
 
 export default function RoadmapTable({
     roadmaps,
     loading,
     deleteRoadmap,
+    editRoadmap,
 }: Props) {
     if (loading) {
         return (
@@ -75,12 +77,23 @@ export default function RoadmapTable({
                                 <td>{item.progress}%</td>
 
                                 <td className="text-center">
-                                    <button
-                                        onClick={() => deleteRoadmap(item._id)}
-                                        className="rounded-md bg-red-500 px-3 py-1 text-white transition hover:bg-red-600"
-                                    >
-                                        Delete
-                                    </button>
+                                    <div className="flex justify-center gap-2">
+
+                                        <button
+                                            onClick={() => editRoadmap(item)}
+                                            className="rounded-md bg-yellow-500 px-3 py-1 text-white transition hover:bg-yellow-600"
+                                        >
+                                            Edit
+                                        </button>
+
+                                        <button
+                                            onClick={() => deleteRoadmap(item._id)}
+                                            className="rounded-md bg-red-500 px-3 py-1 text-white transition hover:bg-red-600"
+                                        >
+                                            Delete
+                                        </button>
+
+                                    </div>
                                 </td>
                             </tr>
                         ))

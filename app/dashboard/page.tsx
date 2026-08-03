@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 
-
 import DashboardStats from "@/components/dashboard/DashboardStats";
 import RoadmapForm from "@/components/dashboard/RoadmapForm";
 import RoadmapTable from "@/components/dashboard/RoadmapTable";
@@ -20,6 +19,8 @@ interface Roadmap {
 export default function DashboardPage() {
     const [roadmaps, setRoadmaps] = useState<Roadmap[]>([]);
     const [loading, setLoading] = useState(true);
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [aiLoading, setAiLoading] = useState(false);
 
     const [form, setForm] = useState({
         title: "",
@@ -67,46 +68,118 @@ export default function DashboardPage() {
         loadRoadmaps();
     };
 
+    const editRoadmap = (roadmap: Roadmap) => {
+        setEditingId(roadmap._id);
+
+        setForm({
+            title: roadmap.title,
+            description: roadmap.description,
+            category: roadmap.category,
+            level: roadmap.level,
+        });
+    };
+
+    const saveRoadmap = async () => {
+        if (!editingId) return;
+
+        await fetch(`/api/roadmaps/${editingId}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(form),
+        });
+
+        setEditingId(null);
+
+        setForm({
+            title: "",
+            description: "",
+            category: "",
+            level: "Beginner",
+        });
+
+        loadRoadmaps();
+    };
+
+    const generateAIRoadmap = async () => {
+        if (!form.title) {
+            alert("Please enter a roadmap title first.");
+            return;
+        }
+
+        try {
+            setAiLoading(true);
+
+            const res = await fetch("/api/ai/generate", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(form),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                alert(data.message);
+                return;
+            }
+
+            setForm((prev) => ({
+                ...prev,
+                description: data.roadmap,
+            }));
+
+        } catch (error) {
+            console.error(error);
+            alert("Failed to generate AI roadmap.");
+        } finally {
+            setAiLoading(false);
+        }
+    };
+
     return (
-        <>
+        <main className="min-h-screen bg-slate-100 p-8">
 
+            <DashboardStats
+                total={roadmaps.length}
+                completed={
+                    roadmaps.filter(
+                        (r) => r.progress === 100
+                    ).length
+                }
+                progress={
+                    roadmaps.filter(
+                        (r) => r.progress < 100
+                    ).length
+                }
+                ai={
+                    roadmaps.filter(
+                        (r) => r.aiRoadmap
+                    ).length
+                }
+            />
 
-            <main className="min-h-screen bg-slate-100 p-8">
+            <RoadmapForm
+                form={form}
+                setForm={setForm}
+                createRoadmap={
+                    editingId
+                        ? saveRoadmap
+                        : createRoadmap
+                }
+                generateAIRoadmap={generateAIRoadmap}
+                aiLoading={aiLoading}
+            />
 
-                <DashboardStats
-                    total={roadmaps.length}
-                    completed={
-                        roadmaps.filter(
-                            (r) => r.progress === 100
-                        ).length
-                    }
-                    progress={
-                        roadmaps.filter(
-                            (r) => r.progress < 100
-                        ).length
-                    }
-                    ai={
-                        roadmaps.filter(
-                            (r) => r.aiRoadmap
-                        ).length
-                    }
-                />
-                <RoadmapForm
-                    form={form}
-                    setForm={setForm}
-                    createRoadmap={createRoadmap}
-                />
+            <RoadmapTable
+                roadmaps={roadmaps}
+                loading={loading}
+                deleteRoadmap={deleteRoadmap}
+                editRoadmap={editRoadmap}
+            />
 
-
-                <RoadmapTable
-                    roadmaps={roadmaps}
-                    loading={loading}
-                    deleteRoadmap={deleteRoadmap}
-                />
-
-
-
-            </main>
-        </>
+        </main>
     );
 }

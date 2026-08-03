@@ -15,8 +15,12 @@ export async function GET() {
         console.error(error);
 
         return NextResponse.json(
-            { message: "Failed to fetch roadmaps" },
-            { status: 500 }
+            {
+                message: "Failed to fetch roadmaps",
+            },
+            {
+                status: 500,
+            }
         );
     }
 }
@@ -27,7 +31,14 @@ export async function POST(req: NextRequest) {
 
         const body = await req.json();
 
-        const roadmap = await Roadmap.create(body);
+        const roadmap = await Roadmap.create({
+            title: body.title,
+            description: body.description,
+            category: body.category,
+            level: body.level,
+            progress: 0,
+            aiRoadmap: body.description,
+        });
 
         return NextResponse.json(roadmap, {
             status: 201,
@@ -36,8 +47,12 @@ export async function POST(req: NextRequest) {
         console.error(error);
 
         return NextResponse.json(
-            { message: "Failed to create roadmap" },
-            { status: 500 }
+            {
+                message: "Failed to create roadmap",
+            },
+            {
+                status: 500,
+            }
         );
     }
 }
