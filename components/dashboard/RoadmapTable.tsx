@@ -1,11 +1,12 @@
 interface Roadmap {
     _id: string;
     title: string;
+    description: string;
     category: string;
     level: string;
     progress: number;
+    aiRoadmap: string;
 }
-
 interface Props {
     roadmaps: Roadmap[];
     loading: boolean;
