@@ -20,7 +20,6 @@ interface Roadmap {
 export default function DashboardPage() {
     const [roadmaps, setRoadmaps] = useState<Roadmap[]>([]);
     const [loading, setLoading] = useState(true);
-    const [editingId, setEditingId] = useState<string | null>(null);
 
     const [form, setForm] = useState({
         title: "",
@@ -95,11 +94,7 @@ export default function DashboardPage() {
                 <RoadmapForm
                     form={form}
                     setForm={setForm}
-                    createRoadmap={
-                        editingId
-                            ? saveRoadmap
-                            : createRoadmap
-                    }
+                    createRoadmap={createRoadmap}
                 />
 
 
