@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import DashboardHeader from "@/components/dashboard/DashboardHeader";
+
 import DashboardStats from "@/components/dashboard/DashboardStats";
 import RoadmapForm from "@/components/dashboard/RoadmapForm";
 import RoadmapTable from "@/components/dashboard/RoadmapTable";
@@ -69,7 +69,7 @@ export default function DashboardPage() {
 
     return (
         <>
-            <DashboardHeader />
+
 
             <main className="min-h-screen bg-slate-100 p-8">
 
