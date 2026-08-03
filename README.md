@@ -1,80 +1,102 @@
 # 🚀 SkillForge AI
 
-AI-powered Learning Roadmap Manager built with **Next.js 16**, **TypeScript**, **MongoDB**, **JWT Authentication**, and **Tailwind CSS**.
+An AI-powered Learning Roadmap Management Platform built with **Next.js 16**, **TypeScript**, **MongoDB**, and **Google Gemini AI**.
 
-The application allows users to securely register, log in, and manage personalized learning roadmaps through a clean and responsive dashboard.
-
----
-
-## 📌 Features
-
-- 🔐 JWT Authentication
-- 👤 User Registration
-- 🔑 User Login
-- 🚪 Logout
-- ➕ Create Learning Roadmaps
-- 📋 View All Roadmaps
-- ❌ Delete Roadmaps
-- 📱 Responsive UI
-- ⚡ Next.js 16 App Router
-- 🗄 MongoDB Database
-- 🔒 Password Hashing using bcrypt
-- ✅ Form Validation using Zod
+SkillForge AI helps learners create, organize, and manage personalized learning roadmaps with AI-assisted content generation, secure authentication, and an intuitive dashboard.
 
 ---
 
-## 🛠 Tech Stack
+## 🌐 Live Demo
 
-### Frontend
+> https://your-vercel-url.vercel.app
+
+---
+
+## 📸 Preview
+
+> Add your screenshots here
+
+| Landing Page | Dashboard |
+|--------------|-----------|
+| ![Landing](./public/screenshots/landing.png) | ![Dashboard](./public/screenshots/dashboard.png) |
+
+---
+
+# ✨ Features
+
+- 🤖 AI-powered roadmap generation using Google Gemini
+- 🔐 Secure JWT Authentication
+- 👤 User Registration & Login
+- 📚 Create, Read, Update & Delete Roadmaps
+- 📊 Dashboard with roadmap statistics
+- 🎯 Learning progress tracking
+- 📱 Fully Responsive UI
+- ⚡ Fast Next.js 16 App Router
+- 🍃 MongoDB database integration
+- 🔔 Beautiful toast notifications
+- 🎨 Modern Tailwind CSS UI
+
+---
+
+# 🛠 Tech Stack
+
+## Frontend
 
 - Next.js 16
 - React
 - TypeScript
 - Tailwind CSS
 
-### Backend
+## Backend
 
 - Next.js API Routes
 - JWT Authentication
-- bcrypt
+
+## Database
+
 - MongoDB
 - Mongoose
 
-### Validation
+## AI
 
-- Zod
+- Google Gemini API
+
+## Deployment
+
+- Vercel
 
 ---
 
-## 📂 Project Structure
+# 📂 Project Structure
 
-```
+```text
 app/
- ├── api/
- │    ├── auth/
- │    └── roadmaps/
- ├── dashboard/
- ├── login/
- └── register/
-
+│
+├── api/
+├── dashboard/
+├── login/
+├── register/
+│
 components/
+│
+├── dashboard/
+├── landing/
+├── layout/
+│
 lib/
 models/
-validators/
 middleware.ts
 ```
 
 ---
 
-## ⚙️ Installation
+# 🚀 Getting Started
 
-Clone the repository
+## Clone Repository
 
 ```bash
 git clone https://github.com/AdarshMalllah07/skillforge-ai.git
 ```
-
-Go to project
 
 ```bash
 cd skillforge-ai
@@ -86,70 +108,113 @@ Install dependencies
 npm install
 ```
 
-Create environment file
-
-```
-.env.local
-```
-
-Add
-
-```env
-MONGODB_URI=your_mongodb_connection_string
-
-JWT_SECRET=your_secret_key
-```
-
-Run project
+Start development server
 
 ```bash
 npm run dev
 ```
 
----
+Build production
 
-## 🔑 Environment Variables
-
-| Variable | Description |
-|----------|-------------|
-| MONGODB_URI | MongoDB Atlas Connection String |
-| JWT_SECRET | Secret key for JWT Authentication |
-
----
-
-## 📸 Screenshots
-
-### Login
-
-(Add Screenshot)
-
-### Dashboard
-
-(Add Screenshot)
-
-### Create Roadmap
-
-(Add Screenshot)
-
----
-
-## 🌐 Live Demo
-
-Vercel Deployment
-
-```
-Add Your Vercel URL Here
+```bash
+npm run build
 ```
 
 ---
 
-## 📂 GitHub Repository
+# 🔐 Environment Variables
 
-https://github.com/AdarshMalllah07/skillforge-ai
+Create a **.env.local**
+
+```env
+MONGODB_URI=your_mongodb_uri
+
+JWT_SECRET=your_jwt_secret
+
+GEMINI_API_KEY=your_gemini_api_key
+```
 
 ---
 
-## 👨‍💻 Developer
+# 🤖 AI Integration
+
+SkillForge AI integrates with **Google Gemini AI** to generate personalized learning roadmaps based on user goals.
+
+Users simply provide:
+
+- Roadmap Title
+- Category
+- Difficulty Level
+
+Gemini generates a structured learning roadmap that users can further edit and save.
+
+---
+
+# 📚 CRUD Operations
+
+Users can
+
+- ✅ Create Roadmaps
+- ✅ View Roadmaps
+- ✅ Update Existing Roadmaps
+- ✅ Delete Roadmaps
+
+---
+
+# 🔐 Authentication
+
+The application uses **JWT-based Authentication**.
+
+Features include
+
+- User Registration
+- User Login
+- Secure Token Verification
+- Protected Dashboard Routes
+- Logout
+
+---
+
+# 📊 Dashboard
+
+The dashboard provides
+
+- Total Roadmaps
+- Completed Roadmaps
+- AI Generated Roadmaps
+- Progress Tracking
+- Roadmap Management
+
+---
+
+# 🎯 Assignment Highlights
+
+This project demonstrates
+
+- Full Stack Development
+- Next.js 16 App Router
+- REST APIs
+- MongoDB Integration
+- Authentication
+- AI Integration
+- Responsive UI
+- Clean Project Architecture
+
+---
+
+# 🚀 Deployment
+
+This project is deployed on **Vercel**.
+
+Deployment includes
+
+- Automatic Builds
+- Environment Variables
+- Production Optimizations
+
+---
+
+# 👨‍💻 Author
 
 **Adarsh Mallah**
 
@@ -163,6 +228,6 @@ https://www.linkedin.com/in/adarsh-mallah-011279312/
 
 ---
 
-## 📜 License
+# 📄 License
 
-This project is developed for the **House of EdTech Full Stack Assignment**.
+This project was developed as part of the **House of EdTech Full Stack Developer Assignment**.
