@@ -2,7 +2,7 @@
 
 Full-stack AI assessment platform with role-based access, course management, Gemini-powered curriculum generation, submission grading, and analytics.
 
-**Live:** [https://skillforge-ai-orpin.vercel.app](https://skillforge-ai-orpin.vercel.app)
+**Live:** [https://skillforge-ai-h35u.vercel.app/](https://skillforge-ai-orpin.vercel.app)
 
 ## Features
 
