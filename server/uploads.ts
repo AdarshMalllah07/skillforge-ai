@@ -5,14 +5,23 @@ import multer from 'multer';
 export const DEFAULT_AVATAR =
   'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&q=80';
 
-export const UPLOADS_ROOT = path.join(process.cwd(), 'uploads');
+// Vercel’s filesystem is read-only except /tmp; use that for uploads there.
+const uploadsBase = process.env.VERCEL
+  ? path.join('/tmp', 'skillforge-uploads')
+  : path.join(process.cwd(), 'uploads');
+
+export const UPLOADS_ROOT = uploadsBase;
 export const PROFILE_UPLOADS_DIR = path.join(UPLOADS_ROOT, 'profiles');
 export const PROFILE_UPLOADS_URL_PREFIX = '/uploads/profiles/';
 
 const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 
 export function ensureUploadDirs(): void {
-  fs.mkdirSync(PROFILE_UPLOADS_DIR, { recursive: true });
+  try {
+    fs.mkdirSync(PROFILE_UPLOADS_DIR, { recursive: true });
+  } catch (err) {
+    console.warn('Could not create upload dirs:', err);
+  }
 }
 
 export function isLocalProfileAvatar(avatarUrl?: string | null): boolean {

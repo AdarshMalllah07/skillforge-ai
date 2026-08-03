@@ -1,8 +1,22 @@
 import mongoose from 'mongoose';
 import process from 'node:process';
 
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://adarshmallah1357_db_user:bWWliUwYt5IS9COY@cluster0.acff7ci.mongodb.net"
-  ;
+const rawUri = process.env.MONGODB_URI || "mongodb+srv://adarshmallah1357_db_user:bWWliUwYt5IS9COY@cluster0.acff7ci.mongodb.net";
+
+/** Ensure Atlas URIs without a DB path use a stable app database name. */
+function withDatabaseName(uri: string, dbName = 'edtech_matrix'): string {
+  try {
+    const url = new URL(uri);
+    if (!url.pathname || url.pathname === '/') {
+      url.pathname = `/${dbName}`;
+    }
+    return url.toString();
+  } catch {
+    return uri;
+  }
+}
+
+const MONGODB_URI = withDatabaseName(rawUri);
 
 /** Ensures the configured database exists (MongoDB creates DBs on first write). */
 async function ensureDatabaseExists(): Promise<void> {
