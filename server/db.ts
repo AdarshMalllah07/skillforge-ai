@@ -1,5 +1,10 @@
+import dns from 'node:dns';
 import mongoose from 'mongoose';
 import process from 'node:process';
+
+// Prefer public DNS + IPv4 in serverless (avoids intermittent Atlas SRV/IPv6 failures on Vercel).
+dns.setServers(['8.8.8.8', '1.1.1.1']);
+dns.setDefaultResultOrder('ipv4first');
 
 const rawUri = process.env.MONGODB_URI;
 
@@ -10,9 +15,24 @@ function withDatabaseName(uri: string, dbName = 'edtech_matrix'): string {
     if (!url.pathname || url.pathname === '/') {
       url.pathname = `/${dbName}`;
     }
+    if (!url.searchParams.has('retryWrites')) {
+      url.searchParams.set('retryWrites', 'true');
+    }
+    if (!url.searchParams.has('w')) {
+      url.searchParams.set('w', 'majority');
+    }
     return url.toString();
   } catch {
     return uri;
+  }
+}
+
+function describeUri(uri: string): string {
+  try {
+    const url = new URL(uri);
+    return `${url.protocol}//${url.hostname}${url.pathname}`;
+  } catch {
+    return '(invalid MONGODB_URI)';
   }
 }
 
@@ -44,9 +64,18 @@ export async function connectDB(): Promise<typeof mongoose> {
   const MONGODB_URI = withDatabaseName(rawUri);
   mongoose.set('strictQuery', true);
 
-  await mongoose.connect(MONGODB_URI, {
-    serverSelectionTimeoutMS: 10000,
-  });
+  console.log(`Connecting to MongoDB: ${describeUri(MONGODB_URI)}`);
+
+  try {
+    await mongoose.connect(MONGODB_URI, {
+      serverSelectionTimeoutMS: 10000,
+      family: 4,
+    });
+  } catch (err) {
+    console.error(`MongoDB connect failed for ${describeUri(MONGODB_URI)}:`, err);
+    throw err;
+  }
+
   await ensureDatabaseExists();
 
   console.log(`MongoDB connected: ${mongoose.connection.db?.databaseName}`);
