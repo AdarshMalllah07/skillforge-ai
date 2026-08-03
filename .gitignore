@@ -10,3 +10,5 @@ coverage/
 uploads/*
 !uploads/**/.gitkeep
 .vercel
+public/assets/
+public/index.html

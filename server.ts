@@ -55,8 +55,7 @@ function isSpaExcluded(reqPath: string): boolean {
   );
 }
 
-// DB only required for API routes
-app.use('/api', async (req, res, next) => {
+app.use('/api', async (_req, res, next) => {
   try {
     await ensureDb();
     next();
@@ -73,50 +72,40 @@ app.use('/api/courses', courseRoutes);
 app.use('/api/submissions', submissionRoutes);
 app.use('/api/ai', aiRoutes);
 
-async function attachFrontend(): Promise<void> {
-  if (!isProd) {
-    const { createServer: createViteServer } = await import('vite');
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
-    app.use(vite.middlewares);
-    return;
-  }
-
-  // On Vercel, Vite output lives in the function under public/ (CDN static/ is empty),
-  // so Express must serve JS/CSS itself.
+function attachProductionFrontend(): void {
+  // Vercel Express packs Vite output under public/ inside the function bundle
+  // (CDN static/ is empty), so Express must serve JS/CSS.
   const staticRoot = resolveStaticRoot();
+  console.log('Serving frontend from', staticRoot);
   app.use(express.static(staticRoot, { index: false, fallthrough: true }));
   app.get('*', (req, res, next) => {
     if (isSpaExcluded(req.path)) return next();
     const indexPath = path.join(staticRoot, 'index.html');
     if (!fs.existsSync(indexPath)) {
-      return res.status(500).send('Frontend build missing. Run vite build --outDir public.');
+      return res.status(500).send('Frontend build missing.');
     }
     res.sendFile(indexPath);
   });
 }
 
-const frontendReady = attachFrontend().catch((err) => {
-  console.error('Frontend setup failed:', err);
-  throw err;
-});
+async function attachDevFrontend(): Promise<void> {
+  const { createServer: createViteServer } = await import('vite');
+  const vite = await createViteServer({
+    server: { middlewareMode: true },
+    appType: 'spa',
+  });
+  app.use(vite.middlewares);
+}
 
-// Ensure frontend middleware is attached before handling non-API traffic.
-app.use(async (req, res, next) => {
-  if (req.path.startsWith('/api')) return next();
-  try {
-    await frontendReady;
-    next();
-  } catch {
-    res.status(503).send('Service unavailable');
-  }
-});
+if (isProd) {
+  attachProductionFrontend();
+}
 
 async function startServer() {
   await ensureDb();
-  await frontendReady;
+  if (!isProd) {
+    await attachDevFrontend();
+  }
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://0.0.0.0:${PORT}`);

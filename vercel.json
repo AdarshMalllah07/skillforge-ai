@@ -1,0 +1,6 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "express",
+  "buildCommand": "npx vite build && rm -rf public && mkdir -p public && cp -R dist/. public/",
+  "installCommand": "npm install"
+}
