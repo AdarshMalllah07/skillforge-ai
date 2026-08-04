@@ -20,7 +20,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     const isAuthPage = AUTH_PATHS.some((p) => pathname.startsWith(p));
 
     if (!isAuthenticated) {
-      if (!isAuthPage && pathname !== '/') {
+      if (!isAuthPage) {
         router.replace('/login');
       }
       return;
