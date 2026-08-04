@@ -1,12 +1,17 @@
+'use client';
+
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Mail, KeyRound, ArrowLeft, CheckCircle2, Sparkles, Shield } from 'lucide-react';
 import { api } from '../../lib/api';
 
 interface ForgotPasswordPageProps {
-  onNavigateToLogin: () => void;
+  onNavigateToLogin?: () => void;
 }
 
 export default function ForgotPasswordPage({ onNavigateToLogin }: ForgotPasswordPageProps) {
+  const router = useRouter();
+  const goLogin = onNavigateToLogin || (() => router.push('/login'));
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -88,7 +93,7 @@ export default function ForgotPasswordPage({ onNavigateToLogin }: ForgotPassword
 
         <div className="text-center pt-2 border-t border-slate-100">
           <button
-            onClick={onNavigateToLogin}
+            onClick={goLogin}
             className="inline-flex items-center space-x-1.5 text-xs font-bold text-slate-600 hover:text-indigo-600 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />

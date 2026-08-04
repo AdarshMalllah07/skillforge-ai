@@ -1,19 +1,22 @@
 const TOKEN_KEY = 'edtech_matrix_token';
 
 export function getToken(): string {
+  if (typeof window === 'undefined') return '';
   return localStorage.getItem(TOKEN_KEY) || '';
 }
 
 export function setToken(token: string) {
+  if (typeof window === 'undefined') return;
   if (token) localStorage.setItem(TOKEN_KEY, token);
   else localStorage.removeItem(TOKEN_KEY);
 }
 
 export function clearToken() {
+  if (typeof window === 'undefined') return;
   localStorage.removeItem(TOKEN_KEY);
 }
 
-export async function api<T = any>(
+export async function api<T = unknown>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
@@ -31,7 +34,7 @@ export async function api<T = any>(
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
-    const message = (data && data.error) || res.statusText || 'Request failed';
+    const message = (data && (data as { error?: string }).error) || res.statusText || 'Request failed';
     throw new Error(message);
   }
 

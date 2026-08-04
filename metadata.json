@@ -1,6 +1,0 @@
-{
-  "name": "SkillForge AI",
-  "description": "Full-stack SkillForge AI platform with AI curriculum generation, submission grading, role-based authorization, and assessment analytics.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}

@@ -1,3 +1,4 @@
+'use client';
 import React, { useState } from 'react';
 import { Github, Linkedin, UserCheck, Code2, Award, Sparkles, ExternalLink, ShieldAlert } from 'lucide-react';
 import { useAuth } from '../lib/authContext';

@@ -1,15 +1,25 @@
+'use client';
+
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '../../lib/authContext';
 import { LogIn, Mail, Lock, GraduationCap, Eye, EyeOff } from 'lucide-react';
 
 interface LoginPageProps {
-  onNavigateToSignup: () => void;
-  onNavigateToForgotPassword: () => void;
-  onLoginSuccess: () => void;
+  onNavigateToSignup?: () => void;
+  onNavigateToForgotPassword?: () => void;
+  onLoginSuccess?: () => void;
 }
 
-export default function LoginPage({ onNavigateToSignup, onNavigateToForgotPassword, onLoginSuccess }: LoginPageProps) {
+export default function LoginPage({
+  onNavigateToSignup,
+  onNavigateToForgotPassword,
+  onLoginSuccess,
+}: LoginPageProps) {
   const { login } = useAuth();
+  const router = useRouter();
+  const goSignup = onNavigateToSignup || (() => router.push('/signup'));
+  const goForgot = onNavigateToForgotPassword || (() => router.push('/forgot-password'));
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,7 +37,7 @@ export default function LoginPage({ onNavigateToSignup, onNavigateToForgotPasswo
     setError('');
     try {
       await login(email, password);
-      onLoginSuccess();
+      onLoginSuccess?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
@@ -78,7 +88,7 @@ export default function LoginPage({ onNavigateToSignup, onNavigateToForgotPasswo
               <label className="block text-xs font-bold text-slate-700">Password</label>
               <button
                 type="button"
-                onClick={onNavigateToForgotPassword}
+                onClick={goForgot}
                 className="text-xs text-indigo-600 hover:text-indigo-800 font-bold"
               >
                 Forgot Password?
@@ -119,7 +129,7 @@ export default function LoginPage({ onNavigateToSignup, onNavigateToForgotPasswo
           <p className="text-xs text-slate-600">
             Don't have a student account yet?{' '}
             <button
-              onClick={onNavigateToSignup}
+              onClick={goSignup}
               className="font-bold text-indigo-600 hover:text-indigo-800 underline"
             >
               Create Student Account

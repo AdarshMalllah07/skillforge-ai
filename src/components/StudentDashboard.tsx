@@ -1,3 +1,4 @@
+'use client';
 import React from 'react';
 import { useAuth } from '../lib/authContext';
 import { Course, Submission, Assignment } from '../types';

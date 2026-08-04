@@ -8,6 +8,19 @@ dns.setDefaultResultOrder('ipv4first');
 
 const rawUri = process.env.MONGODB_URI;
 
+type MongooseCache = {
+  conn: typeof mongoose | null;
+  promise: Promise<typeof mongoose> | null;
+};
+
+declare global {
+  // eslint-disable-next-line no-var
+  var mongooseCache: MongooseCache | undefined;
+}
+
+const cache: MongooseCache = global.mongooseCache || { conn: null, promise: null };
+global.mongooseCache = cache;
+
 /** Ensure Atlas URIs without a DB path use a stable app database name. */
 function withDatabaseName(uri: string, dbName = 'edtech_matrix'): string {
   try {
@@ -47,7 +60,6 @@ async function ensureDatabaseExists(): Promise<void> {
   const collections = await db.listCollections().toArray();
 
   if (collections.length === 0) {
-    // Creating a collection materializes the database if it does not exist yet
     await db.createCollection('_app_init');
     await db.dropCollection('_app_init');
     console.log(`MongoDB database created: ${dbName}`);
@@ -57,6 +69,10 @@ async function ensureDatabaseExists(): Promise<void> {
 }
 
 export async function connectDB(): Promise<typeof mongoose> {
+  if (cache.conn) {
+    return cache.conn;
+  }
+
   if (!rawUri) {
     throw new Error('MONGODB_URI is not set');
   }
@@ -64,20 +80,25 @@ export async function connectDB(): Promise<typeof mongoose> {
   const MONGODB_URI = withDatabaseName(rawUri);
   mongoose.set('strictQuery', true);
 
-  console.log(`Connecting to MongoDB: ${describeUri(MONGODB_URI)}`);
-
-  try {
-    await mongoose.connect(MONGODB_URI, {
-      serverSelectionTimeoutMS: 10000,
-      family: 4,
-    });
-  } catch (err) {
-    console.error(`MongoDB connect failed for ${describeUri(MONGODB_URI)}:`, err);
-    throw err;
+  if (!cache.promise) {
+    console.log(`Connecting to MongoDB: ${describeUri(MONGODB_URI)}`);
+    cache.promise = mongoose
+      .connect(MONGODB_URI, {
+        serverSelectionTimeoutMS: 10000,
+        family: 4,
+      })
+      .then(async (m) => {
+        await ensureDatabaseExists();
+        console.log(`MongoDB connected: ${m.connection.db?.databaseName}`);
+        return m;
+      })
+      .catch((err) => {
+        cache.promise = null;
+        console.error(`MongoDB connect failed for ${describeUri(MONGODB_URI)}:`, err);
+        throw err;
+      });
   }
 
-  await ensureDatabaseExists();
-
-  console.log(`MongoDB connected: ${mongoose.connection.db?.databaseName}`);
-  return mongoose;
+  cache.conn = await cache.promise;
+  return cache.conn;
 }

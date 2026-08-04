@@ -1,6 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import multer from 'multer';
 
 export const DEFAULT_AVATAR =
   'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&q=80';
@@ -8,7 +7,7 @@ export const DEFAULT_AVATAR =
 // Vercel’s filesystem is read-only except /tmp; use that for uploads there.
 const uploadsBase = process.env.VERCEL
   ? path.join('/tmp', 'skillforge-uploads')
-  : path.join(process.cwd(), 'uploads');
+  : path.join(process.cwd(), 'public', 'uploads');
 
 export const UPLOADS_ROOT = uploadsBase;
 export const PROFILE_UPLOADS_DIR = path.join(UPLOADS_ROOT, 'profiles');
@@ -40,27 +39,32 @@ export function deleteLocalProfileAvatar(avatarUrl?: string | null): void {
   }
 }
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    ensureUploadDirs();
-    cb(null, PROFILE_UPLOADS_DIR);
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
-    const safeExt = ['.jpg', '.jpeg', '.png', '.webp', '.gif'].includes(ext) ? ext : '.jpg';
-    const userId = (req.user?.id || 'user').replace(/[^a-zA-Z0-9_-]/g, '');
-    cb(null, `profile_${userId}_${Date.now()}${safeExt}`);
-  },
-});
+export async function saveProfileAvatar(
+  file: File,
+  userId: string
+): Promise<{ filename: string; url: string }> {
+  if (!ALLOWED_MIME.has(file.type)) {
+    throw new Error('Only JPEG, PNG, WebP, and GIF images are allowed');
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    throw new Error('Image must be 5MB or smaller');
+  }
 
-export const profileUpload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: (_req, file, cb) => {
-    if (!ALLOWED_MIME.has(file.mimetype)) {
-      cb(new Error('Only JPEG, PNG, WebP, and GIF images are allowed'));
-      return;
-    }
-    cb(null, true);
-  },
-});
+  ensureUploadDirs();
+
+  const originalExt = path.extname(file.name).toLowerCase() || '.jpg';
+  const safeExt = ['.jpg', '.jpeg', '.png', '.webp', '.gif'].includes(originalExt)
+    ? originalExt
+    : '.jpg';
+  const safeUserId = userId.replace(/[^a-zA-Z0-9_-]/g, '') || 'user';
+  const filename = `profile_${safeUserId}_${Date.now()}${safeExt}`;
+  const filePath = path.join(PROFILE_UPLOADS_DIR, filename);
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  fs.writeFileSync(filePath, buffer);
+
+  return {
+    filename,
+    url: `${PROFILE_UPLOADS_URL_PREFIX}${filename}`,
+  };
+}

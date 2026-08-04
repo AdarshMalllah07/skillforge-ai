@@ -1,3 +1,5 @@
+'use client';
+
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { User, CandidateInfo } from '../types';
 import { api, getToken, setToken, clearToken } from './api';
