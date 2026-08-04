@@ -1,177 +1,380 @@
+<div align="center">
+
 # ⚔️ SkillForge AI
 
-> An AI-powered assessment platform for courses, submissions, grading, and analytics — built for students, instructors, evaluators, and admins.
+### AI-Powered Learning Management & Assessment Platform
 
-**🚀 Live demo:** [[https://skillforge-ai-orpin.vercel.app]](https://skillforge-ai-h35u.vercel.app/)
+Build • Learn • Evaluate • Grow with Artificial Intelligence
 
----
+<p align="center">
+  <a href="https://skillforge-ai-h35u.vercel.app">
+    <img src="https://img.shields.io/badge/Live-Demo-4CAF50?style=for-the-badge&logo=vercel&logoColor=white" />
+  </a>
+  <a href="https://github.com/AdarshMalllah07/skillforge-ai">
+    <img src="https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github" />
+  </a>
+</p>
 
-## ✨ What you get
+<p align="center">
+An AI-powered Learning Management System that streamlines course creation, student assessments, AI-assisted grading, and role-based learning experiences for modern educational institutions.
+</p>
 
-| Feature | What it does |
-| --- | --- |
-| 🔐 **Role-based access** | Separate dashboards for `STUDENT`, `INSTRUCTOR`, `EVALUATOR`, and `ADMIN` |
-| 📚 **Courses & enrollments** | Browse the catalog, view details, and manage assignments |
-| 🤖 **AI curriculum generator** | Create courses with help from Google Gemini |
-| 📝 **Submission portal** | Students submit work; AI assists with evaluation |
-| 📊 **Analytics** | Assessment overview for staff roles |
-| 👤 **Auth & profiles** | JWT sessions, registration, and profile avatars |
-
----
-
-## 🛠️ Tech stack
-
-| Layer | Tech |
-| --- | --- |
-| 🎨 Frontend | React 19 · Vite 6 · Tailwind CSS 4 · Motion |
-| ⚙️ Backend | Express · TypeScript |
-| 🗄️ Database | MongoDB (Mongoose) |
-| 🧠 AI | Google Gemini (`@google/genai`) |
-| ☁️ Deploy | Vercel (Express Fluid Compute) |
+</div>
 
 ---
 
-## ✅ Prerequisites
+# 📖 Overview
 
-Before you start, make sure you have:
+SkillForge AI is a modern Full Stack Learning Management System built to simplify online education using Artificial Intelligence.
 
-- **Node.js 20+**
-- **MongoDB** — local install or [MongoDB Atlas](https://www.mongodb.com/atlas)
-- A **Gemini API key** (needed for AI features)
+The platform enables instructors to create AI-assisted courses, students to learn through an interactive dashboard, evaluators to review submissions efficiently, and administrators to manage the entire learning ecosystem from a single platform.
+
+Unlike traditional LMS platforms, SkillForge AI leverages **Google Gemini AI** to automate curriculum generation, assist in evaluation, and provide intelligent learning support.
 
 ---
 
-## 🚀 Quick start
+# ✨ Core Features
 
-### 1️⃣ Clone & install
+## 🤖 AI Powered Learning
+
+- AI Course Generation
+- AI Assignment Evaluation
+- AI Assisted Grading
+- AI Tutor Assistance
+- Intelligent Curriculum Planning
+
+---
+
+## 👨‍🎓 Student Portal
+
+- Secure Authentication
+- Browse Available Courses
+- Course Enrollment
+- Assignment Submission
+- Track Learning Progress
+- Personal Dashboard
+- AI Learning Assistant
+
+---
+
+## 👨‍🏫 Instructor Portal
+
+- Create & Manage Courses
+- Create Assignments
+- AI Generated Course Content
+- Student Performance Tracking
+- Course Analytics
+
+---
+
+## 📝 Evaluator Portal
+
+- Review Student Submissions
+- AI Assisted Evaluation
+- Performance Reports
+- Assessment Analytics
+
+---
+
+## 👑 Admin Panel
+
+- User Management
+- Role Management
+- Course Management
+- Platform Analytics
+- Dashboard Overview
+
+---
+
+# 🚀 Live Project
+
+### 🌐 Live Application
+
+https://skillforge-ai-h35u.vercel.app
+
+### 💻 GitHub Repository
+
+https://github.com/AdarshMalllah07/skillforge-ai
+
+---
+
+# 🛠 Technology Stack
+
+| Layer | Technologies |
+|--------|--------------|
+| Frontend | React 19, Vite 6, TypeScript |
+| Styling | Tailwind CSS 4, Motion |
+| Backend | Express.js, TypeScript |
+| Database | MongoDB, Mongoose |
+| Authentication | JWT |
+| AI | Google Gemini API |
+| Deployment | Vercel |
+
+---
+
+# 🏗 System Architecture
+
+```
+                    Client
+
+                      │
+
+             React + Vite SPA
+
+                      │
+
+            Express REST API Server
+
+     ┌──────────────┼──────────────┐
+
+ Authentication   Business Logic    AI Engine
+
+      JWT           CRUD APIs       Gemini AI
+
+     └──────────────┼──────────────┘
+
+                 MongoDB Atlas
+```
+
+---
+
+# 🔐 Authentication & Authorization
+
+✔ JWT Authentication
+
+✔ Secure Password Hashing
+
+✔ Role-Based Access Control (RBAC)
+
+✔ Protected API Routes
+
+✔ Authorization Middleware
+
+---
+
+# 👥 User Roles
+
+| Role | Permissions |
+|------|-------------|
+| 👨‍🎓 Student | Learn, Submit Assignments, AI Tutor |
+| 👨‍🏫 Instructor | Manage Courses, Create Assignments |
+| 📝 Evaluator | Review & Evaluate Submissions |
+| 👑 Admin | Complete Platform Management |
+
+---
+
+# 📂 Project Structure
+
+```
+server/
+│
+├── models/
+├── routes/
+├── middleware/
+├── db.ts
+├── uploads.ts
+└── seed.ts
+
+src/
+│
+├── components/
+├── pages/
+├── hooks/
+├── services/
+├── layouts/
+└── assets/
+
+public/
+
+vercel.json
+server.ts
+```
+
+---
+
+# 📡 API Overview
+
+| Endpoint | Description |
+|-----------|-------------|
+| /api/auth | Authentication APIs |
+| /api/users | User Management |
+| /api/courses | Courses & Assignments |
+| /api/submissions | Student Submissions |
+| /api/ai | AI Services |
+| /api/candidate | Candidate Information |
+
+---
+
+# ⚡ Performance Optimizations
+
+- Optimized API Design
+- Modular Architecture
+- Efficient MongoDB Queries
+- Lazy Loading
+- Component Reusability
+- Type Safety with TypeScript
+- Production Ready Build
+
+---
+
+# 🔒 Security Features
+
+- JWT Authentication
+- Password Hashing
+- Input Validation
+- Protected Routes
+- Environment Variables
+- MongoDB Secure Connection
+
+---
+
+# 🚀 Getting Started
+
+## Clone Repository
 
 ```bash
-git clone <repo-url>
-cd skillforge-ai
-npm install
-cp .env.example .env
+git clone https://github.com/AdarshMalllah07/skillforge-ai.git
 ```
 
-### 2️⃣ Configure environment
+```bash
+cd skillforge-ai
+```
 
-Edit `.env` with your values:
+---
+
+## Install Dependencies
+
+```bash
+npm install
+```
+
+---
+
+## Configure Environment
+
+Create a `.env` file.
 
 ```env
-MONGODB_URI=mongodb://127.0.0.1:27017/edtech_matrix
-JWT_SECRET=change_me_in_production
+MONGODB_URI=
+
+JWT_SECRET=
+
 JWT_EXPIRES_IN=7d
+
 PORT=3000
-GEMINI_API_KEY=your_gemini_api_key
+
+GEMINI_API_KEY=
 ```
 
-> 💡 **Using MongoDB Atlas?** Paste an `mongodb+srv://...` URI and allow your IP (or `0.0.0.0/0` for serverless hosts like Vercel) under **Network Access**.
+---
 
-### 3️⃣ Run locally
+## Start Development
 
 ```bash
 npm run dev
 ```
 
-That’s it — Express API + Vite HMR will start together. Open the app in your browser and you’re ready to go! 🎉
-
 ---
 
-## 📜 Available scripts
-
-| Command | Description |
-| --- | --- |
-| `npm run dev` | 🔥 Start Express + Vite HMR (local) |
-| `npm run build` | 📦 Build client + bundle server to `dist/` |
-| `npm start` | ▶️ Run production server from `dist/server.cjs` |
-| `npm run lint` | 🔍 Typecheck with `tsc --noEmit` |
-| `npm run create-super-admin` | 👑 Ensure bootstrap admin user exists |
-| `npm run seed` | 🌱 Run database seed |
-| `npm run clean` | 🧹 Remove build artifacts |
-
----
-
-## 👑 Default admin account
-
-On first DB connect, the app creates a super admin:
-
-| Field | Value |
-| --- | --- |
-| Username | `admin` |
-| Password | `Password@12345` |
-
-> ⚠️ **Change this password** after first login in production.
-
----
-
-## 📁 Project structure
-
-```
-├── server.ts              # Express entry (API + SPA / Vite middleware)
-├── server/
-│   ├── db.ts              # MongoDB connection
-│   ├── seed.ts            # Admin bootstrap / seed
-│   ├── models/            # Mongoose models
-│   ├── routes/            # REST API routes
-│   ├── middleware/        # Auth / RBAC
-│   └── uploads.ts         # Profile image uploads
-├── src/                   # React SPA
-├── vercel.json            # Vercel Express build config
-└── .env.example           # Environment template
-```
-
----
-
-## 🔌 API overview
-
-| Prefix | Purpose |
-| --- | --- |
-| `/api/auth` | 🔑 Register, login, profile, avatar |
-| `/api/users` | 👥 Admin user management |
-| `/api/courses` | 📚 Courses, assignments, enrollments |
-| `/api/submissions` | 📝 Student submissions & reviews |
-| `/api/ai` | 🤖 Curriculum generation & AI grading |
-| `/api/candidate` | 🎓 Candidate metadata |
-
----
-
-## ☁️ Deploy on Vercel
-
-1. **Install & log in** to the Vercel CLI:
-   ```bash
-   npm i -g vercel
-   vercel login
-   ```
-2. **Link** the project:
-   ```bash
-   vercel link
-   ```
-3. **Set env vars** for Production (and Preview):
-   - `MONGODB_URI` — Atlas URI including DB name, e.g. `...mongodb.net/edtech_matrix`
-   - `JWT_SECRET`
-   - `JWT_EXPIRES_IN` (optional, default `7d`)
-   - `GEMINI_API_KEY`
-   - `VERCEL_EXPERIMENTAL_BACKENDS=1` (recommended for Express bundling)
-4. In Atlas → **Network Access**, add `0.0.0.0/0` so Vercel can connect.
-5. **Deploy:**
-   ```bash
-   vercel --prod
-   ```
-
-Build uses `vercel.json`: Vite → `dist/`, then copies into `public/` for the Express function bundle.
-
----
-
-## 🏗️ Local production build
-
-Want to test a production build on your machine?
+## Production Build
 
 ```bash
 npm run build
-NODE_ENV=production npm start
+```
+
+```bash
+npm start
 ```
 
 ---
 
-## 📄 License
+# 📜 Available Scripts
 
-Private / proprietary — all rights reserved unless otherwise noted.
+| Command | Description |
+|----------|-------------|
+| npm run dev | Development Server |
+| npm run build | Production Build |
+| npm start | Start Production Server |
+| npm run lint | Type Checking |
+| npm run seed | Seed Database |
+| npm run clean | Clean Build Files |
+| npm run create-super-admin | Create Super Admin |
+
+---
+
+# 👑 Default Admin Credentials
+
+| Username | Password |
+|----------|----------|
+| admin | Password@12345 |
+
+> ⚠️ Change the default password immediately after the first login in a production environment.
+
+---
+
+# 📸 Application Preview
+
+> Add screenshots here
+
+- Dashboard
+- Student Panel
+- Instructor Dashboard
+- AI Course Generator
+- AI Evaluation
+- Analytics
+- Admin Dashboard
+
+---
+
+# 🌟 Highlights
+
+- Full Stack Architecture
+- AI Powered Learning
+- Role Based Access Control
+- Secure JWT Authentication
+- Responsive UI
+- RESTful APIs
+- MongoDB Integration
+- Production Deployment
+- Modular Codebase
+- Scalable Design
+
+---
+
+# 🚀 Future Enhancements
+
+- Live Classes
+- Certificate Generation
+- Discussion Forum
+- Real-time Notifications
+- AI Study Planner
+- Leaderboards
+- Email Notifications
+
+---
+
+# 👨‍💻 Author
+
+## Adarsh Mallah
+
+Full Stack Developer passionate about building scalable, secure, and AI-powered web applications.
+
+### Connect
+
+**GitHub**
+
+https://github.com/AdarshMalllah07
+
+**LinkedIn**
+
+https://www.linkedin.com/in/adarsh-mallah-011279312/
+
+---
+
+<div align="center">
+
+### ⭐ If you found this project useful, consider giving it a star!
+
+Made with ❤️ using React, Express, MongoDB & Google Gemini AI
+
+</div>
