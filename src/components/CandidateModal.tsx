@@ -1,3 +1,4 @@
+'use client';
 import React, { useState } from 'react';
 import { X, CheckCircle2, User, Github, Linkedin, Mail, ExternalLink, ShieldCheck, Sparkles, Server, BookOpen } from 'lucide-react';
 import { useAuth } from '../lib/authContext';

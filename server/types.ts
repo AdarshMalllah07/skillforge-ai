@@ -13,13 +13,3 @@ export interface AuthUser {
   linkedInUrl?: string;
   createdAt?: string;
 }
-
-declare global {
-  namespace Express {
-    interface Request {
-      user?: AuthUser;
-    }
-  }
-}
-
-export {};

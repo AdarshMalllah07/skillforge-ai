@@ -1,3 +1,4 @@
+'use client';
 import React, { useState } from 'react';
 import { Submission, Course, AIEvaluationResult } from '../types';
 import { useAuth } from '../lib/authContext';

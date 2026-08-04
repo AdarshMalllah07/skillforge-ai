@@ -2,44 +2,36 @@
   "name": "skillforge-ai",
   "private": true,
   "version": "0.0.0",
-  "type": "module",
   "scripts": {
-    "dev": "tsx server.ts",
-    "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
-    "build:vercel": "vite build && rm -rf public && mkdir -p public && cp -R dist/. public/",
-    "start": "node dist/server.cjs",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "tsc --noEmit",
     "seed": "tsx -e \"import('dotenv/config'); import('./server/db.ts').then(m => m.connectDB()).then(() => import('./server/seed.ts')).then(s => s.seedDatabase()).then(() => process.exit(0))\"",
     "create-super-admin": "tsx -e \"import('dotenv/config'); import('./server/db.ts').then(m => m.connectDB()).then(() => import('./server/seed.ts')).then(s => s.ensureSuperAdmin()).then(() => process.exit(0))\"",
-    "clean": "rm -rf dist server.js",
-    "lint": "tsc --noEmit"
+    "clean": "rm -rf .next dist"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
-    "@tailwindcss/vite": "^4.1.14",
-    "@vitejs/plugin-react": "^5.0.4",
     "bcryptjs": "^3.0.3",
-    "dotenv": "^17.2.3",
-    "express": "^4.21.2",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.546.0",
     "mongoose": "^9.9.1",
     "motion": "^12.23.24",
-    "multer": "^2.2.0",
+    "next": "^15.5.2",
     "react": "^19.0.1",
-    "react-dom": "^19.0.1",
-    "vite": "^6.2.3"
+    "react-dom": "^19.0.1"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.14",
     "@types/bcryptjs": "^2.4.6",
-    "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/multer": "^2.2.0",
     "@types/node": "^22.14.0",
-    "autoprefixer": "^10.4.21",
-    "esbuild": "^0.25.0",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "dotenv": "^17.2.3",
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
-    "typescript": "~5.8.2",
-    "vite": "^6.2.3"
+    "typescript": "~5.8.2"
   }
 }

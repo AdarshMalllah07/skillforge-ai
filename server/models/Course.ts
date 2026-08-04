@@ -89,4 +89,4 @@ const courseSchema = new Schema(
 courseSchema.index({ category: 1, level: 1, status: 1 });
 courseSchema.index({ title: 'text', description: 'text', category: 'text' });
 
-export const Course = mongoose.model('Course', courseSchema);
+export const Course = mongoose.models.Course || mongoose.model('Course', courseSchema);

@@ -14,4 +14,5 @@ const candidateSchema = new Schema(
   { timestamps: { createdAt: false, updatedAt: true } }
 );
 
-export const Candidate = mongoose.model('Candidate', candidateSchema);
+export const Candidate =
+  mongoose.models.Candidate || mongoose.model('Candidate', candidateSchema);

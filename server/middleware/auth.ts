@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { NextRequest, NextResponse } from 'next/server';
 import { User } from '../models/User';
 import { AuthUser, UserRole } from '../types';
 import { toClient } from '../utils';
@@ -19,44 +19,16 @@ export function verifyToken(token: string): { sub: string; email: string; role: 
   return jwt.verify(token, JWT_SECRET) as { sub: string; email: string; role: UserRole };
 }
 
-export async function authenticate(req: Request, res: Response, next: NextFunction) {
-  try {
-    const header = req.headers.authorization;
-    if (!header?.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Authentication required' });
-    }
-
-    const token = header.slice(7);
-    const payload = verifyToken(token);
-    const user = await User.findById(payload.sub);
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid session' });
-    }
-
-    const client = toClient(user) as AuthUser;
-    req.user = client;
-    next();
-  } catch {
-    return res.status(401).json({ error: 'Invalid or expired token' });
-  }
+function extractBearer(req: NextRequest): string | null {
+  const header = req.headers.get('authorization');
+  if (!header?.startsWith('Bearer ')) return null;
+  return header.slice(7);
 }
 
-export function optionalAuth(req: Request, _res: Response, next: NextFunction) {
-  const header = req.headers.authorization;
-  if (!header?.startsWith('Bearer ')) {
-    return next();
-  }
+export async function getAuthUser(req: NextRequest): Promise<AuthUser | null> {
+  const token = extractBearer(req);
+  if (!token) return null;
 
-  const token = header.slice(7);
-  verifyTokenAsync(token)
-    .then((user) => {
-      if (user) req.user = user;
-      next();
-    })
-    .catch(() => next());
-}
-
-async function verifyTokenAsync(token: string): Promise<AuthUser | null> {
   try {
     const payload = verifyToken(token);
     const user = await User.findById(payload.sub);
@@ -66,14 +38,41 @@ async function verifyTokenAsync(token: string): Promise<AuthUser | null> {
   }
 }
 
-export function requireRoles(...roles: UserRole[]) {
-  return (req: Request, res: Response, next: NextFunction) => {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Authentication required' });
+export async function requireAuth(
+  req: NextRequest
+): Promise<{ user: AuthUser } | { error: NextResponse }> {
+  const token = extractBearer(req);
+  if (!token) {
+    return { error: NextResponse.json({ error: 'Authentication required' }, { status: 401 }) };
+  }
+
+  try {
+    const payload = verifyToken(token);
+    const user = await User.findById(payload.sub);
+    if (!user) {
+      return { error: NextResponse.json({ error: 'Invalid session' }, { status: 401 }) };
     }
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ error: `Access denied. Required roles: ${roles.join(', ')}` });
-    }
-    next();
-  };
+    return { user: toClient(user) as AuthUser };
+  } catch {
+    return { error: NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 }) };
+  }
+}
+
+export async function requireRoles(
+  req: NextRequest,
+  ...roles: UserRole[]
+): Promise<{ user: AuthUser } | { error: NextResponse }> {
+  const result = await requireAuth(req);
+  if ('error' in result) return result;
+
+  if (!roles.includes(result.user.role)) {
+    return {
+      error: NextResponse.json(
+        { error: `Access denied. Required roles: ${roles.join(', ')}` },
+        { status: 403 }
+      ),
+    };
+  }
+
+  return result;
 }

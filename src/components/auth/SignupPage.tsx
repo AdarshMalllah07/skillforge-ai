@@ -1,14 +1,19 @@
+'use client';
+
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '../../lib/authContext';
 import { UserPlus, Mail, Lock, User as UserIcon, Eye, EyeOff } from 'lucide-react';
 
 interface SignupPageProps {
-  onNavigateToLogin: () => void;
-  onSignupSuccess: () => void;
+  onNavigateToLogin?: () => void;
+  onSignupSuccess?: () => void;
 }
 
 export default function SignupPage({ onNavigateToLogin, onSignupSuccess }: SignupPageProps) {
   const { signup } = useAuth();
+  const router = useRouter();
+  const goLogin = onNavigateToLogin || (() => router.push('/login'));
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -35,7 +40,7 @@ export default function SignupPage({ onNavigateToLogin, onSignupSuccess }: Signu
 
     try {
       await signup(name || 'New Candidate', email, password);
-      onSignupSuccess();
+      onSignupSuccess?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed');
     } finally {
@@ -155,7 +160,7 @@ export default function SignupPage({ onNavigateToLogin, onSignupSuccess }: Signu
           <p className="text-xs text-slate-600">
             Already have an account?{' '}
             <button
-              onClick={onNavigateToLogin}
+              onClick={goLogin}
               className="font-bold text-indigo-600 hover:text-indigo-800 underline"
             >
               Sign In Here

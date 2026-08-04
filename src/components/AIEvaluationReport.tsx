@@ -1,3 +1,4 @@
+'use client';
 import React, { useState } from 'react';
 import { AIEvaluationResult } from '../types';
 import { X, Sparkles, CheckCircle, AlertTriangle, ShieldCheck, Award, ThumbsUp, HelpCircle, Edit3 } from 'lucide-react';

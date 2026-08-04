@@ -1,3 +1,4 @@
+'use client';
 import React, { useState } from 'react';
 import { Course, Assignment, Lesson } from '../types';
 import { useAuth } from '../lib/authContext';

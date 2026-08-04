@@ -31,4 +31,5 @@ submissionSchema.index({ studentId: 1 });
 submissionSchema.index({ courseId: 1 });
 submissionSchema.index({ status: 1 });
 
-export const Submission = mongoose.model('Submission', submissionSchema);
+export const Submission =
+  mongoose.models.Submission || mongoose.model('Submission', submissionSchema);
