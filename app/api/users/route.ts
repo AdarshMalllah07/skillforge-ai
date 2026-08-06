@@ -29,9 +29,16 @@ export async function POST(req: NextRequest) {
       if ('error' in auth) return auth.error;
 
       const { name, email, role, title, bio, skills, avatar, password } = await req.json();
-      if (!name || !email || !role) {
+      if (!name || !email || !role || !password) {
         return NextResponse.json(
-          { error: 'Name, email, and role are required' },
+          { error: 'Name, email, role, and password are required' },
+          { status: 400 }
+        );
+      }
+
+      if (String(password).length < 6) {
+        return NextResponse.json(
+          { error: 'Password must be at least 6 characters' },
           { status: 400 }
         );
       }
@@ -46,7 +53,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Email already registered' }, { status: 409 });
       }
 
-      const hashed = await bcrypt.hash(password || 'password123', 10);
+      const hashed = await bcrypt.hash(password, 10);
       const user = await User.create({
         _id: newId(`user_${String(role).toLowerCase()}`),
         name,

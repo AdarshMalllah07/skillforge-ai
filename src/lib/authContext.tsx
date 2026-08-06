@@ -22,7 +22,7 @@ interface AuthContextType {
 
   // Admin User Management
   addUserByAdmin: (user: Omit<User, 'id' | 'createdAt'> & { password?: string }) => Promise<void>;
-  updateUserByAdmin: (id: string, updatedFields: Partial<User>) => Promise<void>;
+  updateUserByAdmin: (id: string, updatedFields: Partial<User> & { password?: string }) => Promise<void>;
   deleteUserByAdmin: (id: string) => Promise<void>;
 
   // Modal controls
@@ -189,7 +189,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUsersList((prev) => [created, ...prev]);
   };
 
-  const updateUserByAdmin = async (id: string, updatedFields: Partial<User>) => {
+  const updateUserByAdmin = async (id: string, updatedFields: Partial<User> & { password?: string }) => {
     const updated = await api<User>(`/api/users/${id}`, {
       method: 'PUT',
       body: JSON.stringify(updatedFields),
