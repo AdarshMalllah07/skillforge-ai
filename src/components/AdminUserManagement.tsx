@@ -4,7 +4,8 @@ import { useAuth } from '../lib/authContext';
 import { User, UserRole } from '../types';
 import { 
   UserPlus, Search, Filter, Shield, GraduationCap, CheckCircle2, 
-  Edit3, Trash2, BookOpen, FileCheck2, X, Lock, User as UserIcon, Eye, EyeOff
+  Edit3, Trash2, BookOpen, FileCheck2, X, Lock, User as UserIcon, Eye, EyeOff,
+  Mail, Loader2, KeyRound
 } from 'lucide-react';
 
 interface AdminUserManagementProps {
@@ -13,12 +14,22 @@ interface AdminUserManagementProps {
 }
 
 export default function AdminUserManagement({ onViewUserCurriculums, onViewUserSubmissions }: AdminUserManagementProps) {
-  const { usersList, currentUser, addUserByAdmin, updateUserByAdmin, deleteUserByAdmin } = useAuth();
+  const {
+    usersList,
+    currentUser,
+    addUserByAdmin,
+    updateUserByAdmin,
+    deleteUserByAdmin,
+    resendSetupEmailByAdmin,
+  } = useAuth();
 
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('ALL');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [resendingId, setResendingId] = useState<string | null>(null);
 
   // Form State for Create/Edit
   const [formData, setFormData] = useState({
@@ -54,6 +65,8 @@ export default function AdminUserManagement({ onViewUserCurriculums, onViewUserS
     setEditingUser(null);
     setShowPassword(false);
     setShowConfirmPassword(false);
+    setFormError('');
+    setSaving(false);
     setFormData({
       name: '',
       email: '',
@@ -72,6 +85,8 @@ export default function AdminUserManagement({ onViewUserCurriculums, onViewUserS
     setEditingUser(user);
     setShowPassword(false);
     setShowConfirmPassword(false);
+    setFormError('');
+    setSaving(false);
     setFormData({
       name: user.name,
       email: user.email,
@@ -88,30 +103,34 @@ export default function AdminUserManagement({ onViewUserCurriculums, onViewUserS
 
   const handleSubmitUser = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (saving) return;
+
     const skillsArray = formData.skills.split(',').map(s => s.trim()).filter(Boolean);
+    setFormError('');
 
     if (!editingUser) {
       if (formData.password) {
         if (formData.password.length < 6) {
-          alert('Password must be at least 6 characters');
+          setFormError('Password must be at least 6 characters');
           return;
         }
         if (formData.password !== formData.confirmPassword) {
-          alert('Passwords do not match');
+          setFormError('Passwords do not match');
           return;
         }
       }
     } else if (formData.password) {
       if (formData.password.length < 6) {
-        alert('Password must be at least 6 characters');
+        setFormError('Password must be at least 6 characters');
         return;
       }
       if (formData.password !== formData.confirmPassword) {
-        alert('Passwords do not match');
+        setFormError('Passwords do not match');
         return;
       }
     }
 
+    setSaving(true);
     try {
       if (editingUser) {
         await updateUserByAdmin(editingUser.id, {
@@ -138,7 +157,37 @@ export default function AdminUserManagement({ onViewUserCurriculums, onViewUserS
       }
       setIsCreateModalOpen(false);
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to save user');
+      setFormError(err instanceof Error ? err.message : 'Failed to save user');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleResendSetup = async (user: User, force = false) => {
+    if (resendingId) return;
+    setResendingId(user.id);
+    try {
+      const result = await resendSetupEmailByAdmin(user.id, { force });
+      if (result.status === 'needs_confirm') {
+        const when = result.expiresAt
+          ? new Date(result.expiresAt).toLocaleString()
+          : 'soon';
+        const proceed = window.confirm(
+          `${result.message}\n\nActive link expires: ${when}\n\nSend Anyway? This will expire the old link and email a new setup link.`
+        );
+        if (proceed) {
+          const forced = await resendSetupEmailByAdmin(user.id, { force: true });
+          if (forced.status === 'sent') {
+            alert(forced.message);
+          }
+        }
+        return;
+      }
+      alert(result.message);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to resend setup email');
+    } finally {
+      setResendingId(null);
     }
   };
 
@@ -289,6 +338,13 @@ export default function AdminUserManagement({ onViewUserCurriculums, onViewUserS
                 {getRoleBadge(user.role)}
               </div>
 
+              {user.invitePending && (
+                <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-200 text-[10px] font-bold text-amber-800 uppercase tracking-wide">
+                  <KeyRound className="w-3 h-3" />
+                  Password setup pending
+                </div>
+              )}
+
               {/* Title & Bio */}
               <div className="mt-3 space-y-1">
                 <p className="text-xs font-bold text-slate-800">{user.title || 'Platform Member'}</p>
@@ -336,6 +392,22 @@ export default function AdminUserManagement({ onViewUserCurriculums, onViewUserS
               </div>
 
               <div className="flex items-center space-x-1">
+                {user.invitePending && (
+                  <button
+                    onClick={() => handleResendSetup(user)}
+                    disabled={resendingId === user.id}
+                    className="px-2.5 py-1.5 text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-lg font-bold text-[11px] transition-colors flex items-center space-x-1 disabled:opacity-60"
+                    title="Resend account setup email"
+                  >
+                    {resendingId === user.id ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Mail className="w-3.5 h-3.5" />
+                    )}
+                    <span>{resendingId === user.id ? 'Sending...' : 'Resend Setup'}</span>
+                  </button>
+                )}
+
                 <button
                   onClick={() => handleOpenEditModal(user)}
                   className="p-1.5 text-slate-600 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors"
@@ -372,8 +444,9 @@ export default function AdminUserManagement({ onViewUserCurriculums, onViewUserS
             {/* Modal Header */}
             <div className="p-6 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white relative rounded-t-2xl">
               <button
-                onClick={() => setIsCreateModalOpen(false)}
-                className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                onClick={() => !saving && setIsCreateModalOpen(false)}
+                disabled={saving}
+                className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors disabled:opacity-50"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -394,6 +467,11 @@ export default function AdminUserManagement({ onViewUserCurriculums, onViewUserS
 
             {/* Modal Body Form */}
             <form onSubmit={handleSubmitUser} className="p-6 space-y-4">
+              {formError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-medium">
+                  {formError}
+                </div>
+              )}
               
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Assign User Role *</label>
@@ -574,16 +652,27 @@ export default function AdminUserManagement({ onViewUserCurriculums, onViewUserS
               <div className="pt-4 border-t border-slate-200 flex justify-end space-x-2">
                 <button
                   type="button"
+                  disabled={saving}
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl"
+                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs rounded-xl shadow-md"
+                  disabled={saving}
+                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs rounded-xl shadow-md disabled:opacity-60 flex items-center gap-2"
                 >
-                  {editingUser ? 'Save User Changes' : 'Provision User Account'}
+                  {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  <span>
+                    {saving
+                      ? editingUser
+                        ? 'Saving...'
+                        : 'Provisioning...'
+                      : editingUser
+                        ? 'Save User Changes'
+                        : 'Provision User Account'}
+                  </span>
                 </button>
               </div>
 

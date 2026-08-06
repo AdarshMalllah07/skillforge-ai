@@ -34,6 +34,7 @@ export async function PUT(req: NextRequest, context: Ctx) {
 
       if (body.password) {
         updates.password = await bcrypt.hash(body.password, 10);
+        updates.invitePending = false;
       }
 
       const existing = await User.findById(id);

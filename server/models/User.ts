@@ -13,6 +13,8 @@ export interface IUser {
   skills?: string[];
   githubUrl?: string;
   linkedInUrl?: string;
+  /** True when admin provisioned the account without a password (setup email pending). */
+  invitePending?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -38,6 +40,7 @@ const userSchema = new Schema(
     skills: [String],
     githubUrl: String,
     linkedInUrl: String,
+    invitePending: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

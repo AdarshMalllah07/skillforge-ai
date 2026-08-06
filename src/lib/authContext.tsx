@@ -25,6 +25,13 @@ interface AuthContextType {
   addUserByAdmin: (user: Omit<User, 'id' | 'createdAt'> & { password?: string }) => Promise<void>;
   updateUserByAdmin: (id: string, updatedFields: Partial<User> & { password?: string }) => Promise<void>;
   deleteUserByAdmin: (id: string) => Promise<void>;
+  resendSetupEmailByAdmin: (
+    id: string,
+    options?: { force?: boolean }
+  ) => Promise<
+    | { status: 'sent'; message: string }
+    | { status: 'needs_confirm'; message: string; expiresAt?: string }
+  >;
 
   // Modal controls
   isAuthModalOpen: boolean;
@@ -213,6 +220,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUsersList((prev) => prev.filter((u) => u.id !== id));
   };
 
+  const resendSetupEmailByAdmin = async (
+    id: string,
+    options?: { force?: boolean }
+  ): Promise<
+    | { status: 'sent'; message: string }
+    | { status: 'needs_confirm'; message: string; expiresAt?: string }
+  > => {
+    const headers = new Headers({ 'Content-Type': 'application/json' });
+    const token = getToken();
+    if (token) headers.set('Authorization', `Bearer ${token}`);
+
+    const res = await fetch(`/api/users/${id}/resend-setup`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ force: Boolean(options?.force) }),
+    });
+    const data = (await res.json().catch(() => ({}))) as {
+      error?: string;
+      message?: string;
+      requiresConfirm?: boolean;
+      expiresAt?: string;
+    };
+
+    if (res.status === 409 && data.requiresConfirm) {
+      return {
+        status: 'needs_confirm',
+        message: data.message || data.error || 'An active setup link already exists.',
+        expiresAt: data.expiresAt,
+      };
+    }
+
+    if (!res.ok) {
+      throw new Error(data.error || data.message || 'Failed to resend setup email');
+    }
+
+    return { status: 'sent', message: data.message || 'Account setup email sent.' };
+  };
+
   const updateCandidateInfo = async (info: Partial<CandidateInfo>) => {
     const updated = { ...candidateInfo, ...info };
     setCandidateInfo(updated);
@@ -261,6 +306,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         addUserByAdmin,
         updateUserByAdmin,
         deleteUserByAdmin,
+        resendSetupEmailByAdmin,
         isAuthModalOpen,
         authModalMode,
         openLoginModal,

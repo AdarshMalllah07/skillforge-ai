@@ -11,5 +11,6 @@ export interface AuthUser {
   skills?: string[];
   githubUrl?: string;
   linkedInUrl?: string;
+  invitePending?: boolean;
   createdAt?: string;
 }

@@ -41,6 +41,34 @@ export async function createPasswordToken(
   return { rawToken, expiresAt };
 }
 
+/** Returns an unused, unexpired SETUP/RESET token for the user if one exists. */
+export async function findActivePasswordToken(
+  userId: string,
+  type: PasswordTokenType
+): Promise<{ id: string; expiresAt: Date } | null> {
+  const token = await PasswordToken.findOne({
+    userId,
+    type,
+    usedAt: null,
+    expiresAt: { $gt: new Date() },
+  }).sort({ createdAt: -1 });
+
+  if (!token) return null;
+  return { id: token._id, expiresAt: token.expiresAt };
+}
+
+/** Marks all unused tokens of a type as used (expired for reuse). */
+export async function expirePasswordTokens(
+  userId: string,
+  type: PasswordTokenType
+): Promise<number> {
+  const result = await PasswordToken.updateMany(
+    { userId, type, usedAt: null },
+    { $set: { usedAt: new Date() } }
+  );
+  return result.modifiedCount || 0;
+}
+
 export function buildPasswordLink(rawToken: string, type: PasswordTokenType): string {
   const path = type === 'SETUP' ? '/setup-password' : '/reset-password';
   return `${getAppBaseUrl()}${path}?token=${encodeURIComponent(rawToken)}`;

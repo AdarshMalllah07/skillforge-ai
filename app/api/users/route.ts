@@ -10,6 +10,14 @@ import { DEFAULT_AVATAR } from '@/server/uploads';
 import { buildPasswordLink, createPasswordToken } from '@/server/email/tokens';
 import { sendSetupPasswordInviteEmail, sendWelcomeEmail } from '@/server/email/templates';
 
+function isDuplicateKeyError(err: unknown): boolean {
+  return Boolean(
+    err &&
+      typeof err === 'object' &&
+      ('code' in err ? (err as { code?: number }).code === 11000 : false)
+  );
+}
+
 export async function GET(req: NextRequest) {
   return withApi(req, async () => {
     try {
@@ -52,7 +60,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
       }
 
-      const existing = await User.findOne({ email: String(email).toLowerCase() });
+      const normalizedEmail = String(email).toLowerCase().trim();
+      const existing = await User.findOne({ email: normalizedEmail });
       if (existing) {
         return NextResponse.json({ error: 'Email already registered' }, { status: 409 });
       }
@@ -62,17 +71,26 @@ export async function POST(req: NextRequest) {
         : crypto.randomBytes(32).toString('hex');
       const hashed = await bcrypt.hash(passwordToHash, 10);
 
-      const user = await User.create({
-        _id: newId(`user_${String(role).toLowerCase()}`),
-        name,
-        email: String(email).toLowerCase(),
-        password: hashed,
-        role,
-        title: title || `${role} Member`,
-        bio: bio || '',
-        skills: skills || [],
-        avatar: avatar || DEFAULT_AVATAR,
-      });
+      let user;
+      try {
+        user = await User.create({
+          _id: newId(`user_${String(role).toLowerCase()}`),
+          name: String(name).trim(),
+          email: normalizedEmail,
+          password: hashed,
+          role,
+          title: title || `${role} Member`,
+          bio: bio || '',
+          skills: skills || [],
+          avatar: avatar || DEFAULT_AVATAR,
+          invitePending: !hasPassword,
+        });
+      } catch (err) {
+        if (isDuplicateKeyError(err)) {
+          return NextResponse.json({ error: 'Email already registered' }, { status: 409 });
+        }
+        throw err;
+      }
 
       try {
         if (hasPassword) {

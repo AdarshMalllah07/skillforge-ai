@@ -44,6 +44,7 @@ export async function POST(req: NextRequest) {
       }
 
       user.password = await bcrypt.hash(newPassword, 10);
+      user.invitePending = false;
       await user.save();
 
       try {
