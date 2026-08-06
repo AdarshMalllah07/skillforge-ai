@@ -62,7 +62,20 @@ function roleSteps(role: UserRole): string {
   }
 }
 
-function welcomeContent(params: { name: string; role: UserRole; dashboardUrl: string }): string {
+function welcomeContent(params: {
+  name: string;
+  role: UserRole;
+  dashboardUrl: string;
+  loginUrl: string;
+  passwordProvidedByAdmin?: boolean;
+}): string {
+  const credentialNote = params.passwordProvidedByAdmin
+    ? `<p style="margin:12px 0 0 0;color:#5a5f80;font-size:15px;line-height:24px;">
+         Your administrator already set your password. Sign in with your email
+         (<strong style="color:#12132e;">use the password they shared with you</strong>).
+       </p>`
+    : '';
+
   return contentShell(`
     <tr>
       <td style="padding:36px 36px 8px 36px;font-family:Arial,Helvetica,sans-serif;">
@@ -73,6 +86,7 @@ function welcomeContent(params: { name: string; role: UserRole; dashboardUrl: st
           <strong style="color:#12132e;">${escapeHtml(roleLabel(params.role))}</strong> role. Here's how to get
           productive in the next five minutes.
         </p>
+        ${credentialNote}
       </td>
     </tr>
     <tr>
@@ -84,7 +98,11 @@ function welcomeContent(params: { name: string; role: UserRole; dashboardUrl: st
     </tr>
     <tr>
       <td style="padding:26px 36px 36px 36px;">
-        ${ctaButton(params.dashboardUrl, 'Open my dashboard')}
+        ${ctaButton(params.loginUrl, 'Sign in to SkillForge AI')}
+        <div style="padding-top:12px;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#8f93bf;">
+          Or go straight to your dashboard:
+          <a href="${escapeHtml(params.dashboardUrl)}" style="color:#5b3ee8;text-decoration:none;">${escapeHtml(params.dashboardUrl)}</a>
+        </div>
       </td>
     </tr>
   `);
@@ -274,23 +292,31 @@ export async function sendWelcomeEmail(params: {
   to: string;
   name: string;
   role: UserRole;
+  passwordProvidedByAdmin?: boolean;
 }): Promise<void> {
+  const loginUrl = `${getAppBaseUrl()}/login`;
   const dashboardUrl = `${getAppBaseUrl()}${ROLE_HOME[params.role]}`;
   const subject = `Welcome to SkillForge AI — ${roleLabel(params.role)} account ready`;
   const html = renderEmailDocument({
     title: subject,
-    preheader: `Your ${roleLabel(params.role)} account on SkillForge AI is ready.`,
+    preheader: params.passwordProvidedByAdmin
+      ? `Your ${roleLabel(params.role)} account is ready. Sign in with the password from your admin.`
+      : `Your ${roleLabel(params.role)} account on SkillForge AI is ready.`,
     contentHtml: welcomeContent({
       name: params.name,
       role: params.role,
       dashboardUrl,
+      loginUrl,
+      passwordProvidedByAdmin: params.passwordProvidedByAdmin,
     }),
   });
   await sendEmail({
     to: params.to,
     subject,
     html,
-    text: `Hi ${params.name}, welcome to SkillForge AI as a ${params.role}. Open your dashboard: ${dashboardUrl}`,
+    text: params.passwordProvidedByAdmin
+      ? `Hi ${params.name}, welcome to SkillForge AI as a ${params.role}. Your admin set your password — sign in at ${loginUrl}`
+      : `Hi ${params.name}, welcome to SkillForge AI as a ${params.role}. Open your dashboard: ${dashboardUrl}`,
   });
 }
 

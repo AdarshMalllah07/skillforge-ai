@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import { withApi } from '@/lib/server/api';
 import { requireRoles } from '@/server/middleware/auth';
 import { User } from '@/server/models/User';
+import { PasswordToken } from '@/server/models/PasswordToken';
 import { toClient, toClientList, newId } from '@/server/utils';
 import { UserRole } from '@/server/types';
 import { DEFAULT_AVATAR } from '@/server/uploads';
@@ -18,12 +19,26 @@ function isDuplicateKeyError(err: unknown): boolean {
   );
 }
 
+/** Mark users with unused SETUP tokens as invitePending (repairs older rows missing the flag). */
+async function syncInvitePendingFromTokens(): Promise<void> {
+  const pendingUserIds = await PasswordToken.distinct('userId', {
+    type: 'SETUP',
+    $or: [{ usedAt: null }, { usedAt: { $exists: false } }],
+  });
+  if (pendingUserIds.length === 0) return;
+  await User.updateMany(
+    { _id: { $in: pendingUserIds }, invitePending: { $ne: true } },
+    { $set: { invitePending: true } }
+  );
+}
+
 export async function GET(req: NextRequest) {
   return withApi(req, async () => {
     try {
       const auth = await requireRoles(req, 'ADMIN');
       if ('error' in auth) return auth.error;
 
+      await syncInvitePendingFromTokens();
       const users = await User.find().sort({ createdAt: -1 });
       return NextResponse.json(toClientList(users));
     } catch (err: unknown) {
@@ -40,6 +55,7 @@ export async function POST(req: NextRequest) {
       if ('error' in auth) return auth.error;
 
       const { name, email, role, title, bio, skills, avatar, password } = await req.json();
+
       if (!name || !email || !role) {
         return NextResponse.json(
           { error: 'Name, email, and role are required' },
@@ -48,7 +64,7 @@ export async function POST(req: NextRequest) {
       }
 
       const hasPassword = Boolean(password && String(password).trim());
-      if (hasPassword && String(password).length < 6) {
+      if (hasPassword && String(password).trim().length < 6) {
         return NextResponse.json(
           { error: 'Password must be at least 6 characters' },
           { status: 400 }
@@ -67,14 +83,16 @@ export async function POST(req: NextRequest) {
       }
 
       const passwordToHash = hasPassword
-        ? String(password)
+        ? String(password).trim()
         : crypto.randomBytes(32).toString('hex');
       const hashed = await bcrypt.hash(passwordToHash, 10);
+      const userId = newId(`user_${String(role).toLowerCase()}`);
+      const invitePending = !hasPassword;
 
       let user;
       try {
         user = await User.create({
-          _id: newId(`user_${String(role).toLowerCase()}`),
+          _id: userId,
           name: String(name).trim(),
           email: normalizedEmail,
           password: hashed,
@@ -83,8 +101,14 @@ export async function POST(req: NextRequest) {
           bio: bio || '',
           skills: skills || [],
           avatar: avatar || DEFAULT_AVATAR,
-          invitePending: !hasPassword,
+          invitePending,
         });
+        // Native $set so the flag is never dropped by a stale mongoose schema cache
+        await User.collection.updateOne(
+          { _id: userId } as Record<string, unknown>,
+          { $set: { invitePending } }
+        );
+        user.invitePending = invitePending;
       } catch (err) {
         if (isDuplicateKeyError(err)) {
           return NextResponse.json({ error: 'Email already registered' }, { status: 409 });
@@ -92,12 +116,14 @@ export async function POST(req: NextRequest) {
         throw err;
       }
 
+      const emailType: 'welcome' | 'setup' = hasPassword ? 'welcome' : 'setup';
       try {
         if (hasPassword) {
           await sendWelcomeEmail({
             to: user.email,
             name: user.name,
             role: user.role,
+            passwordProvidedByAdmin: true,
           });
         } else {
           const { rawToken } = await createPasswordToken(user._id, 'SETUP');
@@ -113,7 +139,7 @@ export async function POST(req: NextRequest) {
         console.error('[email] Failed to send admin-created user email', err);
       }
 
-      return NextResponse.json(toClient(user), { status: 201 });
+      return NextResponse.json({ ...toClient(user), emailType }, { status: 201 });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       return NextResponse.json({ error: 'Failed to create user', message }, { status: 500 });

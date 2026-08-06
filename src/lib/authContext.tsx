@@ -197,11 +197,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const addUserByAdmin = async (user: Omit<User, 'id' | 'createdAt'> & { password?: string }) => {
-    const created = await api<User>('/api/users', {
+    const payload = {
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      title: user.title,
+      bio: user.bio,
+      skills: user.skills,
+      avatar: user.avatar,
+      githubUrl: user.githubUrl,
+      linkedInUrl: user.linkedInUrl,
+      password: user.password, // may be undefined → API sends setup invite
+    };
+    const created = await api<User & { emailType?: string }>('/api/users', {
       method: 'POST',
-      body: JSON.stringify(user),
+      body: JSON.stringify(payload),
     });
-    setUsersList((prev) => [created, ...prev]);
+    const { emailType: _emailType, ...userOnly } = created as User & { emailType?: string };
+    setUsersList((prev) => [userOnly as User, ...prev]);
   };
 
   const updateUserByAdmin = async (id: string, updatedFields: Partial<User> & { password?: string }) => {
@@ -241,6 +254,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       message?: string;
       requiresConfirm?: boolean;
       expiresAt?: string;
+      user?: User;
     };
 
     if (res.status === 409 && data.requiresConfirm) {
@@ -253,6 +267,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (!res.ok) {
       throw new Error(data.error || data.message || 'Failed to resend setup email');
+    }
+
+    if (data.user) {
+      setUsersList((prev) => prev.map((u) => (u.id === id ? { ...u, ...data.user } : u)));
+    } else {
+      setUsersList((prev) =>
+        prev.map((u) => (u.id === id ? { ...u, invitePending: true } : u))
+      );
     }
 
     return { status: 'sent', message: data.message || 'Account setup email sent.' };

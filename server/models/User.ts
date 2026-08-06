@@ -47,4 +47,10 @@ const userSchema = new Schema(
 
 userSchema.index({ role: 1 });
 
-export const User = mongoose.models.User || mongoose.model('User', userSchema);
+export const User =
+  (mongoose.models.User as mongoose.Model<IUser>) || mongoose.model<IUser>('User', userSchema);
+
+// Repair stale Next.js model cache that predates invitePending
+if (!User.schema.path('invitePending')) {
+  User.schema.add({ invitePending: { type: Boolean, default: false } });
+}

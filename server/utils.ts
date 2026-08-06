@@ -6,6 +6,8 @@ export function toClient(doc: any): any | null {
   delete obj._id;
   delete obj.__v;
   delete obj.password;
+  // Always expose so admin UI can show setup-link actions reliably
+  obj.invitePending = Boolean(obj.invitePending);
   return obj;
 }
 

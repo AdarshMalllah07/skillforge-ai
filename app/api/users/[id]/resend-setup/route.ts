@@ -36,19 +36,6 @@ export async function POST(req: NextRequest, context: Ctx) {
         return NextResponse.json({ error: 'User not found' }, { status: 404 });
       }
 
-      if (!user.invitePending) {
-        const lingering = await findActivePasswordToken(user._id, 'SETUP');
-        if (!lingering) {
-          return NextResponse.json(
-            {
-              error:
-                'This user already has a password set. Use password reset instead of account setup.',
-            },
-            { status: 400 }
-          );
-        }
-      }
-
       const active = await findActivePasswordToken(user._id, 'SETUP');
       if (active && !force) {
         return NextResponse.json(
@@ -67,10 +54,8 @@ export async function POST(req: NextRequest, context: Ctx) {
       const { rawToken, expiresAt } = await createPasswordToken(user._id, 'SETUP');
       const setupUrl = buildPasswordLink(rawToken, 'SETUP');
 
-      if (!user.invitePending) {
-        user.invitePending = true;
-        await user.save();
-      }
+      user.invitePending = true;
+      await user.save();
 
       await sendSetupPasswordInviteEmail({
         to: user.email,

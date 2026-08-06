@@ -101,30 +101,45 @@ export default function AdminUserManagement({ onViewUserCurriculums, onViewUserS
     setIsCreateModalOpen(true);
   };
 
-  const handleSubmitUser = async (e: React.FormEvent) => {
+  const handleSubmitUser = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (saving) return;
+
+    // Prefer native form values so browser autofill is captured even if React state lagged
+    const native = new FormData(e.currentTarget);
+    const passwordValue = String(
+      native.get('password') ??
+        native.get('admin-new-password') ??
+        formData.password ??
+        ''
+    ).trim();
+    const confirmValue = String(
+      native.get('confirmPassword') ??
+        native.get('admin-confirm-password') ??
+        formData.confirmPassword ??
+        ''
+    ).trim();
 
     const skillsArray = formData.skills.split(',').map(s => s.trim()).filter(Boolean);
     setFormError('');
 
     if (!editingUser) {
-      if (formData.password) {
-        if (formData.password.length < 6) {
+      if (passwordValue) {
+        if (passwordValue.length < 6) {
           setFormError('Password must be at least 6 characters');
           return;
         }
-        if (formData.password !== formData.confirmPassword) {
+        if (passwordValue !== confirmValue) {
           setFormError('Passwords do not match');
           return;
         }
       }
-    } else if (formData.password) {
-      if (formData.password.length < 6) {
+    } else if (passwordValue) {
+      if (passwordValue.length < 6) {
         setFormError('Password must be at least 6 characters');
         return;
       }
-      if (formData.password !== formData.confirmPassword) {
+      if (passwordValue !== confirmValue) {
         setFormError('Passwords do not match');
         return;
       }
@@ -141,7 +156,7 @@ export default function AdminUserManagement({ onViewUserCurriculums, onViewUserS
           bio: formData.bio,
           skills: skillsArray,
           avatar: formData.avatar,
-          ...(formData.password ? { password: formData.password } : {}),
+          ...(passwordValue ? { password: passwordValue } : {}),
         });
       } else {
         await addUserByAdmin({
@@ -152,7 +167,8 @@ export default function AdminUserManagement({ onViewUserCurriculums, onViewUserS
           bio: formData.bio,
           skills: skillsArray,
           avatar: formData.avatar,
-          ...(formData.password ? { password: formData.password } : {}),
+          // Always send explicit password key so API can choose welcome vs setup email
+          password: passwordValue || undefined,
         });
       }
       setIsCreateModalOpen(false);
@@ -173,19 +189,25 @@ export default function AdminUserManagement({ onViewUserCurriculums, onViewUserS
           ? new Date(result.expiresAt).toLocaleString()
           : 'soon';
         const proceed = window.confirm(
-          `${result.message}\n\nActive link expires: ${when}\n\nSend Anyway? This will expire the old link and email a new setup link.`
+          `${result.message}\n\nActive link expires: ${when}\n\nSend a new setup link anyway? The old link will stop working.`
         );
         if (proceed) {
           const forced = await resendSetupEmailByAdmin(user.id, { force: true });
           if (forced.status === 'sent') {
             alert(forced.message);
+            setEditingUser((prev) =>
+              prev && prev.id === user.id ? { ...prev, invitePending: true } : prev
+            );
           }
         }
         return;
       }
       alert(result.message);
+      setEditingUser((prev) =>
+        prev && prev.id === user.id ? { ...prev, invitePending: true } : prev
+      );
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to resend setup email');
+      alert(err instanceof Error ? err.message : 'Failed to send setup email');
     } finally {
       setResendingId(null);
     }
@@ -368,8 +390,8 @@ export default function AdminUserManagement({ onViewUserCurriculums, onViewUserS
             </div>
 
             {/* Admin Actions Toolbar */}
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-              <div className="flex items-center space-x-2">
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs gap-2">
+              <div className="flex items-center space-x-2 min-w-0">
                 {onViewUserCurriculums && (user.role === 'INSTRUCTOR' || user.role === 'ADMIN') && (
                   <button
                     onClick={() => onViewUserCurriculums(user.id)}
@@ -391,20 +413,21 @@ export default function AdminUserManagement({ onViewUserCurriculums, onViewUserS
                 )}
               </div>
 
-              <div className="flex items-center space-x-1">
+              <div className="flex items-center gap-1.5 shrink-0">
                 {user.invitePending && (
                   <button
+                    type="button"
                     onClick={() => handleResendSetup(user)}
                     disabled={resendingId === user.id}
-                    className="px-2.5 py-1.5 text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-lg font-bold text-[11px] transition-colors flex items-center space-x-1 disabled:opacity-60"
-                    title="Resend account setup email"
+                    className="p-1.5 text-amber-700 hover:text-amber-800 hover:bg-amber-50 rounded-lg transition-colors disabled:opacity-60"
+                    title="Need the user to choose their own password? Send setup link"
+                    aria-label="Send password setup link"
                   >
                     {resendingId === user.id ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
-                      <Mail className="w-3.5 h-3.5" />
+                      <Mail className="w-4 h-4" />
                     )}
-                    <span>{resendingId === user.id ? 'Sending...' : 'Resend Setup'}</span>
                   </button>
                 )}
 
@@ -466,10 +489,14 @@ export default function AdminUserManagement({ onViewUserCurriculums, onViewUserS
             </div>
 
             {/* Modal Body Form */}
-            <form onSubmit={handleSubmitUser} className="p-6 space-y-4">
+            <form
+              key={editingUser ? `edit-${editingUser.id}` : 'create'}
+              onSubmit={handleSubmitUser}
+              className="p-6 space-y-4"
+              autoComplete="off"
+            >
               {formError && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-medium">
-                  {formError}
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-medium">                  {formError}
                 </div>
               )}
               
@@ -562,14 +589,23 @@ export default function AdminUserManagement({ onViewUserCurriculums, onViewUserS
                   <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
                     type={showPassword ? 'text' : 'password'}
+                    name={editingUser ? 'admin-new-password' : 'password'}
+                    autoComplete="new-password"
                     required={false}
                     minLength={formData.password ? 6 : undefined}
                     value={formData.password}
                     onChange={e => setFormData({ ...formData, password: e.target.value })}
+                    onFocus={(e) => {
+                      // Clear browser autofill if it injected a value without React state update
+                      if (editingUser && !formData.password && e.target.value) {
+                        e.target.value = '';
+                        setFormData((prev) => ({ ...prev, password: '', confirmPassword: '' }));
+                      }
+                    }}
                     placeholder={
                       editingUser
-                        ? 'Leave blank to keep current password'
-                        : 'Leave blank to email a setup link'
+                        ? 'Keep empty to leave current password unchanged'
+                        : 'Set a password to send welcome email (or leave blank for setup link)'
                     }
                     className="w-full text-xs pl-9 pr-10 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500"
                   />
@@ -582,10 +618,14 @@ export default function AdminUserManagement({ onViewUserCurriculums, onViewUserS
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
-                {!editingUser && (
+                {editingUser ? (
                   <p className="mt-1 text-[10px] text-slate-500">
-                    If left blank, the user receives a welcome email with a 30-minute password setup link.
-                    If set, they receive a normal welcome email and can sign in immediately.
+                    Keep empty for old password. Only fill in if you want to set a new one.
+                  </p>
+                ) : (
+                  <p className="mt-1 text-[10px] text-slate-500">
+                    With password: user gets a welcome/onboarding email and can sign in immediately.
+                    Without password: user gets a setup-password invite link (30 min).
                   </p>
                 )}
               </div>
@@ -598,11 +638,13 @@ export default function AdminUserManagement({ onViewUserCurriculums, onViewUserS
                   <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
                     type={showConfirmPassword ? 'text' : 'password'}
+                    name={editingUser ? 'admin-confirm-password' : 'confirmPassword'}
+                    autoComplete="new-password"
                     required={!!formData.password}
                     minLength={formData.password ? 6 : undefined}
                     value={formData.confirmPassword}
                     onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
-                    placeholder="••••••••••••"
+                    placeholder={editingUser ? 'Keep empty to leave current password unchanged' : 'Confirm password'}
                     className="w-full text-xs pl-9 pr-10 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500"
                   />
                   <button
