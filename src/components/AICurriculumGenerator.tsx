@@ -15,8 +15,8 @@ export default function AICurriculumGenerator({
   onCancel,
 }: AICurriculumGeneratorProps) {
   const { currentUser } = useAuth();
-  const [topicPrompt, setTopicPrompt] = useState('Next.js 16 Server Components, Zod Validation, & Edge Middleware Architecture');
-  const [targetLevel, setTargetLevel] = useState<'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED'>('ADVANCED');
+  const [topicPrompt, setTopicPrompt] = useState('');
+  const [targetLevel, setTargetLevel] = useState<'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED'>('INTERMEDIATE');
   const [targetCategory, setTargetCategory] = useState('Next.js & Frontend');
 
   const [isGenerating, setIsGenerating] = useState(false);

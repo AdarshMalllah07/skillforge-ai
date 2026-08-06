@@ -27,8 +27,8 @@ export default function AdminUserManagement({ onViewUserCurriculums, onViewUserS
     role: 'INSTRUCTOR' as UserRole,
     title: '',
     bio: '',
-    skills: 'TypeScript, Next.js, System Architecture',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+    skills: '',
+    avatar: '',
     password: '',
     confirmPassword: '',
   });
@@ -58,10 +58,10 @@ export default function AdminUserManagement({ onViewUserCurriculums, onViewUserS
       name: '',
       email: '',
       role: 'INSTRUCTOR',
-      title: 'Senior Faculty Member',
-      bio: 'Responsible for designing courses and writing automated evaluation rubrics.',
-      skills: 'TypeScript, Next.js 16, System Design',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+      title: '',
+      bio: '',
+      skills: '',
+      avatar: '',
       password: '',
       confirmPassword: '',
     });
@@ -566,7 +566,7 @@ export default function AdminUserManagement({ onViewUserCurriculums, onViewUserS
                   type="text"
                   value={formData.skills}
                   onChange={e => setFormData({ ...formData, skills: e.target.value })}
-                  placeholder="TypeScript, Next.js, Rubric Design"
+                  placeholder="e.g. TypeScript, Next.js, Rubric Design"
                   className="w-full text-xs p-2.5 border border-slate-300 rounded-xl"
                 />
               </div>

@@ -50,7 +50,7 @@ export default function CourseCatalog({
     description: '',
     category: 'Next.js & Frontend',
     level: 'INTERMEDIATE' as 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED',
-    thumbnail: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=600&q=80',
+    thumbnail: '',
     status: 'PUBLISHED' as 'DRAFT' | 'PUBLISHED' | 'ARCHIVED',
   });
 
@@ -77,7 +77,7 @@ export default function CourseCatalog({
       description: '',
       category: 'Next.js & Frontend',
       level: 'INTERMEDIATE',
-      thumbnail: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=600&q=80',
+      thumbnail: '',
       status: 'PUBLISHED',
     });
     setIsModalOpen(true);
@@ -466,6 +466,7 @@ export default function CourseCatalog({
                   value={formData.thumbnail}
                   onChange={e => setFormData({ ...formData, thumbnail: e.target.value })}
                   className="w-full p-2 text-xs border border-slate-300 rounded-lg"
+                  placeholder="https://example.com/course-cover.jpg"
                 />
               </div>
 

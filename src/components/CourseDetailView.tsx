@@ -283,13 +283,13 @@ export default function CourseDetailView({
               <button
                 onClick={() => {
                   onCreateAssignment(course.id, {
-                    title: 'New Next.js 16 Coding Challenge',
-                    description: 'Implement a type-safe API route or Server Action with Zod validation.',
+                    title: '',
+                    description: '',
                     type: 'CODE',
                     maxScore: 100,
                     rubrics: [
-                      { id: `rub_${Date.now()}_1`, title: 'Functionality & Architecture', description: 'Correct execution', maxPoints: 50 },
-                      { id: `rub_${Date.now()}_2`, title: 'Security & Sanitization', description: 'Input checks', maxPoints: 50 }
+                      { id: `rub_${Date.now()}_1`, title: 'Criterion 1', description: '', maxPoints: 50 },
+                      { id: `rub_${Date.now()}_2`, title: 'Criterion 2', description: '', maxPoints: 50 }
                     ]
                   });
                 }}
