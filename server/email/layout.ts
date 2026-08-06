@@ -1,6 +1,10 @@
-import { emailHeader } from './partials/header';
 import { emailFooter } from './partials/footer';
-import { escapeHtml } from './partials/content';
+import {
+  emailHeader,
+  emailOuterClose,
+  emailOuterOpen,
+  escapeHtml,
+} from './partials/content';
 
 export function renderEmailDocument(options: {
   title: string;
@@ -18,9 +22,11 @@ export function renderEmailDocument(options: {
   </head>
   <body style="margin:0;padding:0;background-color:#f4f5fb;">
     <div style="display:none;max-height:0;overflow:hidden;opacity:0;">${escapeHtml(preheader)}</div>
-    ${emailHeader()}
-    ${options.contentHtml}
-    ${emailFooter()}
+    ${emailOuterOpen()}
+      ${emailHeader()}
+      ${options.contentHtml}
+      ${emailFooter()}
+    ${emailOuterClose()}
   </body>
 </html>`;
 }

@@ -1,4 +1,5 @@
-/** Shared helpers for SkillForge email content cards (600px, matches header/footer). */
+/** Shared email width — tablet-like column used by header, body, and footer. */
+export const EMAIL_WIDTH = 600;
 
 export function escapeHtml(value: string): string {
   return value
@@ -8,16 +9,38 @@ export function escapeHtml(value: string): string {
     .replace(/"/g, '&quot;');
 }
 
-export function contentShell(innerRowsHtml: string): string {
+/** Outer page wrapper: centers a fixed tablet-width email column. */
+export function emailOuterOpen(): string {
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f4f5fb;">
   <tr>
-    <td align="center" style="padding:8px 24px 28px 24px;">
-      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:100%;background-color:#ffffff;border:1px solid #e6e7f2;border-radius:14px;">
-        ${innerRowsHtml}
-      </table>
+    <td align="center" style="padding:24px 16px;">
+      <table role="presentation" width="${EMAIL_WIDTH}" cellpadding="0" cellspacing="0" border="0" style="width:${EMAIL_WIDTH}px;max-width:100%;border-collapse:separate;border-spacing:0;overflow:hidden;border-radius:16px;border:1px solid #e6e7f2;">`;
+}
+
+export function emailOuterClose(): string {
+  return `</table>
     </td>
   </tr>
 </table>`;
+}
+
+/** Header block — same width as content/footer (no full-bleed). */
+export function emailHeader(): string {
+  return `<tr>
+  <td style="background-color:#0f1030;padding:28px 36px;font-family:Arial,Helvetica,sans-serif;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td width="34" style="padding-right:10px;">
+          <div style="width:34px;height:34px;line-height:34px;text-align:center;border-radius:9px;background-color:#6d4aff;color:#ffffff;font-size:16px;font-weight:bold;font-family:Arial,Helvetica,sans-serif;">S</div>
+        </td>
+        <td style="vertical-align:middle;">
+          <div style="color:#ffffff;font-size:17px;font-weight:bold;letter-spacing:0.2px;">SkillForge AI</div>
+          <div style="color:#8f93bf;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;padding-top:2px;">AI Assessment Platform</div>
+        </td>
+      </tr>
+    </table>
+  </td>
+</tr>`;
 }
 
 export function badge(label: string, bg: string, color: string): string {
@@ -48,6 +71,17 @@ export function stepRow(num: string, title: string, description: string): string
           <strong style="color:#12132e;">${escapeHtml(title)}</strong><br />${escapeHtml(description)}
         </td>
       </tr>
+    </table>
+  </td>
+</tr>`;
+}
+
+/** Body rows go inside the shared 600px column (white card section). */
+export function contentShell(innerRowsHtml: string): string {
+  return `<tr>
+  <td style="background-color:#ffffff;padding:0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+      ${innerRowsHtml}
     </table>
   </td>
 </tr>`;
