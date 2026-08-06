@@ -1,25 +1,27 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import AnalyticsDashboard from '@/src/components/AnalyticsDashboard';
+import SubmissionsDashboard from '@/src/components/SubmissionsDashboard';
 import { useAppData } from '@/src/lib/appDataContext';
+import { useAuth } from '@/src/lib/authContext';
 
 export default function SubmissionsPage() {
   const router = useRouter();
+  const { currentUser } = useAuth();
   const { submissions, courses } = useAppData();
 
   return (
-    <AnalyticsDashboard
+    <SubmissionsDashboard
       submissions={submissions}
       courses={courses}
       onReviewSubmission={(sub) => {
-        const matchedCourse = courses.find((c) => c.id === sub.courseId) || courses[0];
-        if (!matchedCourse) return;
-        const matchedAssign =
-          matchedCourse.assignments.find((a) => a.id === sub.assignmentId) ||
-          matchedCourse.assignments[0];
-        if (matchedAssign) {
-          router.push(`/courses/${matchedCourse.id}/submit/${matchedAssign.id}`);
+        if (currentUser?.role === 'EVALUATOR') {
+          router.push('/evaluator');
+          return;
+        }
+        const matchedCourse = courses.find((c) => c.id === sub.courseId);
+        if (matchedCourse) {
+          router.push(`/courses/${matchedCourse.id}`);
         }
       }}
     />

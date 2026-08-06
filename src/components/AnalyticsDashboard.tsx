@@ -12,25 +12,24 @@ import {
   YAxis,
 } from 'recharts';
 import { Submission, Course, AIEvaluationResult } from '../types';
-import { Award, BarChart3, FileCheck2, ShieldCheck, TrendingUp, Eye, Search } from 'lucide-react';
+import { Award, BarChart3, FileCheck2, ShieldCheck, TrendingUp, Eye, Search, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 import AIEvaluationReport from './AIEvaluationReport';
 import { PageHero } from './ui/PageHero';
 import { StatCard, Card } from './ui/Card';
 import { Badge, statusBadgeTone } from './ui/Badge';
-import { Table, THead, Th, Td, Tr } from './ui/Table';
+import { THead, Th, Td, Tr } from './ui/Table';
 import { EmptyState } from './ui/EmptyState';
 import { Button } from './ui/Button';
 
 interface AnalyticsDashboardProps {
   submissions: Submission[];
   courses: Course[];
-  onReviewSubmission: (submission: Submission) => void;
 }
 
 export default function AnalyticsDashboard({
   submissions,
   courses,
-  onReviewSubmission,
 }: AnalyticsDashboardProps) {
   const [selectedSubReport, setSelectedSubReport] = useState<AIEvaluationResult | null>(null);
   const [searchFilter, setSearchFilter] = useState('');
@@ -104,8 +103,17 @@ export default function AnalyticsDashboard({
             Assessment Intelligence
           </>
         }
-        title="Candidate Grade & Skill Analytics"
-        description="Track submission scores, Gemini evaluation breakdowns, and skill rubrics in real time."
+        title="Performance analytics"
+        description="Charts and KPIs for scores, pass rates, and submission trends. Use Submissions for the full grading queue."
+        actions={
+          <Link
+            href="/submissions"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-xs font-bold text-white hover:bg-white/15 min-h-11"
+          >
+            Open submissions queue
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        }
         aside={
           <div className="bg-white/10 px-4 py-3 rounded-xl border border-white/15 flex items-center gap-3">
             <Award className="w-8 h-8 text-amber-400 shrink-0" />
@@ -196,14 +204,14 @@ export default function AnalyticsDashboard({
       <Card className="overflow-hidden">
         <div className="p-5 border-b border-sf flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4">
           <div>
-            <h3 className="text-base font-bold text-sf">Submission log</h3>
-            <p className="text-xs text-sf-muted">Scores, status, and AI reports</p>
+            <h3 className="text-base font-bold text-sf">Recent submissions snapshot</h3>
+            <p className="text-xs text-sf-muted">Latest 8 results — full queue lives under Submissions</p>
           </div>
           <div className="relative w-full sm:w-64">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-sf-muted" />
             <input
               type="text"
-              placeholder="Filter candidates..."
+              placeholder="Filter snapshot…"
               value={searchFilter}
               onChange={(e) => setSearchFilter(e.target.value)}
               className="w-full h-10 pl-9 pr-3 text-xs border border-sf rounded-xl bg-sf-surface text-sf focus:ring-2 focus:ring-indigo-500/30 outline-none"
@@ -216,39 +224,25 @@ export default function AnalyticsDashboard({
             <EmptyState title="No submissions found" description="Try a different filter or wait for candidate work." />
           </div>
         ) : (
-          <div className="max-h-[28rem] overflow-auto">
+          <div className="max-h-[22rem] overflow-auto">
             <table className="min-w-full text-sm">
               <THead>
                 <tr>
                   <Th>Candidate</Th>
                   <Th>Assignment</Th>
-                  <Th>Submitted</Th>
                   <Th>Status</Th>
                   <Th>Score</Th>
-                  <Th className="text-right">Action</Th>
+                  <Th className="text-right">Report</Th>
                 </tr>
               </THead>
               <tbody>
-                {filteredSubmissions.map((sub) => (
+                {filteredSubmissions.slice(0, 8).map((sub) => (
                   <Tr key={sub.id}>
                     <Td>
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 font-bold flex items-center justify-center text-xs">
-                          {sub.studentName.charAt(0)}
-                        </div>
-                        <div>
-                          <p className="font-bold text-sf text-xs">{sub.studentName}</p>
-                          <p className="text-[10px] text-sf-muted">{sub.studentEmail}</p>
-                        </div>
-                      </div>
-                    </Td>
-                    <Td>
-                      <p className="font-bold text-sf text-xs">{sub.assignmentTitle}</p>
+                      <p className="font-bold text-sf text-xs">{sub.studentName}</p>
                       <p className="text-[10px] text-sf-muted">{sub.courseTitle}</p>
                     </Td>
-                    <Td className="text-sf-muted text-xs">
-                      {new Date(sub.submittedAt).toLocaleDateString()}
-                    </Td>
+                    <Td className="text-xs text-sf">{sub.assignmentTitle}</Td>
                     <Td>
                       <Badge tone={statusBadgeTone(sub.status)}>{sub.status.replace(/_/g, ' ')}</Badge>
                     </Td>
@@ -256,22 +250,18 @@ export default function AnalyticsDashboard({
                       {sub.finalScore || sub.aiEvaluation?.overallScore || '—'} / {sub.maxScore}
                     </Td>
                     <Td className="text-right">
-                      <div className="row-actions-hover inline-flex justify-end">
-                        {sub.aiEvaluation ? (
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() => setSelectedSubReport(sub.aiEvaluation!)}
-                          >
-                            <Eye className="w-3.5 h-3.5" />
-                            AI Report
-                          </Button>
-                        ) : (
-                          <Button size="sm" onClick={() => onReviewSubmission(sub)}>
-                            Review
-                          </Button>
-                        )}
-                      </div>
+                      {sub.aiEvaluation ? (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => setSelectedSubReport(sub.aiEvaluation!)}
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          AI Report
+                        </Button>
+                      ) : (
+                        <span className="text-[10px] text-sf-muted">—</span>
+                      )}
                     </Td>
                   </Tr>
                 ))}
