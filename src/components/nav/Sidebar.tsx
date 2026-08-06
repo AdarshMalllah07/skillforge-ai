@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { GraduationCap } from 'lucide-react';
 import { useAuth } from '@/src/lib/authContext';
 import { usePreferences } from '@/src/lib/preferencesContext';
-import { TAB_PATH, pathToTab } from '@/src/lib/routes';
+import { TAB_PATH, pathToTab, ROLE_HOME } from '@/src/lib/routes';
 import { activeNavClass, getNavItems } from './navItems';
 
 export function Sidebar() {
@@ -28,7 +28,7 @@ export function Sidebar() {
       <div
         className={`h-16 flex items-center border-b border-sf ${collapsed ? 'justify-center px-2' : 'px-4 gap-2.5'}`}
       >
-        <Link href={TAB_PATH.courses} prefetch className="flex items-center gap-2.5 group min-w-0">
+        <Link href={currentUser ? ROLE_HOME[currentUser.role] : TAB_PATH.courses} prefetch className="flex items-center gap-2.5 group min-w-0">
           <img
             src="/logo.svg"
             alt="SkillForge AI"

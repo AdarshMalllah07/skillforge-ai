@@ -13,8 +13,8 @@ export default function AdminUsersPage() {
 
   return (
     <AdminUserManagement
-      onViewUserCurriculums={() => router.push('/courses')}
-      onViewUserSubmissions={() => router.push('/submissions')}
+      onViewUserCurriculums={() => router.push('/admin/courses')}
+      onViewUserSubmissions={() => router.push('/admin/submissions')}
     />
   );
 }

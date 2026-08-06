@@ -35,7 +35,7 @@ export async function GET(req: NextRequest, context: Ctx) {
 export async function PUT(req: NextRequest, context: Ctx) {
   return withApi(req, async () => {
     try {
-      const auth = await requireRoles(req, 'INSTRUCTOR', 'ADMIN', 'EVALUATOR');
+      const auth = await requireRoles(req, 'INSTRUCTOR', 'ADMIN');
       if ('error' in auth) return auth.error;
 
       const { id } = await context.params;
@@ -86,7 +86,7 @@ export async function PUT(req: NextRequest, context: Ctx) {
 export async function DELETE(req: NextRequest, context: Ctx) {
   return withApi(req, async () => {
     try {
-      const auth = await requireRoles(req, 'INSTRUCTOR', 'ADMIN', 'EVALUATOR');
+      const auth = await requireRoles(req, 'INSTRUCTOR', 'ADMIN');
       if ('error' in auth) return auth.error;
 
       const { id } = await context.params;

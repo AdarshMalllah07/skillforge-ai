@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   return withApi(req, async () => {
     try {
-      const auth = await requireRoles(req, 'INSTRUCTOR', 'ADMIN', 'EVALUATOR');
+      const auth = await requireRoles(req, 'INSTRUCTOR', 'ADMIN');
       if ('error' in auth) return auth.error;
 
       const { title, description, category, level, thumbnail, modules, assignments, status } =

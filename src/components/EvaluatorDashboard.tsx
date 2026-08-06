@@ -1,13 +1,16 @@
 'use client';
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useAuth } from '../lib/authContext';
 import { Submission } from '../types';
 import { PageHero } from './ui/PageHero';
 import { StatCard } from './ui/Card';
 import { AiMessage } from './ui/AiMessage';
+import { Button } from './ui/Button';
 import { 
   ShieldCheck, FileCode2, CheckCircle2, Clock, 
-  Sparkles, MessageSquare, Send, Code, Terminal, ExternalLink, Star
+  Sparkles, MessageSquare, Send, Code, Terminal, ExternalLink, Star,
+  BookOpen, BarChart3
 } from 'lucide-react';
 
 interface EvaluatorDashboardProps {
@@ -57,7 +60,29 @@ export default function EvaluatorDashboard({
           </>
         }
         title={`Assessor Console · ${currentUser.name}`}
-        description="Audit candidate code, review Gemini rubric breakdowns, and issue official grades."
+        description="Review the grading queue, audit AI rubric scores, and issue official grades. Course authoring is not part of this role."
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <Link href="/evaluator/submissions">
+              <Button className="bg-amber-500 hover:bg-amber-400 text-slate-900">
+                <FileCode2 className="w-4 h-4" />
+                Full review queue
+              </Button>
+            </Link>
+            <Link href="/courses">
+              <Button variant="secondary" className="bg-white/10 text-white border-white/20 hover:bg-white/20">
+                <BookOpen className="w-4 h-4" />
+                View courses
+              </Button>
+            </Link>
+            <Link href="/evaluator/analytics">
+              <Button variant="secondary" className="bg-white/10 text-white border-white/20 hover:bg-white/20">
+                <BarChart3 className="w-4 h-4" />
+                Analytics
+              </Button>
+            </Link>
+          </div>
+        }
         aside={
           <div className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl flex items-center gap-4">
             <div className="text-center">

@@ -3,7 +3,7 @@
 import React, { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/src/lib/authContext';
-import { AUTH_PATHS, ROLE_HOME, canAccessPath } from '@/src/lib/routes';
+import { AUTH_PATHS, ROLE_HOME, canAccessPath, legacyRedirectPath } from '@/src/lib/routes';
 import { Sidebar } from '@/src/components/nav/Sidebar';
 import { Topbar } from '@/src/components/nav/Topbar';
 import Footer from '@/src/components/Footer';
@@ -29,6 +29,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
     if (isAuthPage || pathname === '/') {
       router.replace(ROLE_HOME[currentUser!.role]);
+      return;
+    }
+
+    const legacy = legacyRedirectPath(pathname, currentUser!.role);
+    if (legacy) {
+      router.replace(legacy);
       return;
     }
 

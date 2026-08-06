@@ -21,6 +21,8 @@ import { Badge, statusBadgeTone } from './ui/Badge';
 import { THead, Th, Td, Tr } from './ui/Table';
 import { EmptyState } from './ui/EmptyState';
 import { Button } from './ui/Button';
+import { useAuth } from '../lib/authContext';
+import { submissionsPathForRole } from '../lib/permissions';
 
 interface AnalyticsDashboardProps {
   submissions: Submission[];
@@ -31,6 +33,7 @@ export default function AnalyticsDashboard({
   submissions,
   courses,
 }: AnalyticsDashboardProps) {
+  const { currentUser } = useAuth();
   const [selectedSubReport, setSelectedSubReport] = useState<AIEvaluationResult | null>(null);
   const [searchFilter, setSearchFilter] = useState('');
 
@@ -107,7 +110,7 @@ export default function AnalyticsDashboard({
         description="Charts and KPIs for scores, pass rates, and submission trends. Use Submissions for the full grading queue."
         actions={
           <Link
-            href="/submissions"
+            href={submissionsPathForRole(currentUser?.role)}
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-xs font-bold text-white hover:bg-white/15 min-h-11"
           >
             Open submissions queue

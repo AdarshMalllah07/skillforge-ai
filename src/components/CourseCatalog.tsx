@@ -2,6 +2,12 @@
 import React, { useState } from 'react';
 import { Course, FilterOptions } from '../types';
 import { useAuth } from '../lib/authContext';
+import {
+  canEditCourse,
+  canManageCourses,
+  canUseGenerator,
+  canViewDraftCourses,
+} from '../lib/permissions';
 import Select from './ui/Select';
 import { PageHero } from './ui/PageHero';
 import { EmptyState } from './ui/EmptyState';
@@ -30,10 +36,10 @@ export default function CourseCatalog({
   onOpenAIGenerator,
 }: CourseCatalogProps) {
   const { currentUser } = useAuth();
-  const isInstructor =
-    currentUser?.role === 'INSTRUCTOR' ||
-    currentUser?.role === 'EVALUATOR' ||
-    currentUser?.role === 'ADMIN';
+  const canAuthor = canManageCourses(currentUser?.role);
+  const canGenerate = canUseGenerator(currentUser?.role);
+  const showDraftFilter = canViewDraftCourses(currentUser?.role);
+  const isEvaluator = currentUser?.role === 'EVALUATOR';
 
   // State for filtering
   const [filters, setFilters] = useState<FilterOptions>({
@@ -119,20 +125,27 @@ export default function CourseCatalog({
         title="Curriculum & Assessment Catalog"
         description="Explore production-grade courses, coding challenges, and AI submission rubrics."
         actions={
-          isInstructor ? (
+          canAuthor ? (
             <>
               <Button onClick={handleOpenCreateModal}>
                 <Plus className="w-4 h-4" />
                 Create Course
               </Button>
-              <Button
-                onClick={onOpenAIGenerator}
-                className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500"
-              >
-                <Sparkles className="w-4 h-4 text-amber-300" />
-                Generate via AI
-              </Button>
+              {canGenerate ? (
+                <Button
+                  onClick={onOpenAIGenerator}
+                  className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500"
+                >
+                  <Sparkles className="w-4 h-4 text-amber-300" />
+                  Generate via AI
+                </Button>
+              ) : null}
             </>
+          ) : isEvaluator ? (
+            <div className="text-xs text-amber-200 font-medium flex items-center bg-amber-950/40 px-3 py-2 rounded-lg border border-amber-500/20">
+              <CheckCircle className="w-3.5 h-3.5 mr-1.5 text-amber-400" />
+              Assessor view — courses are read-only for grading context
+            </div>
           ) : (
             <div className="text-xs text-emerald-200 font-medium flex items-center bg-emerald-950/40 px-3 py-2 rounded-lg border border-emerald-500/20">
               <CheckCircle className="w-3.5 h-3.5 mr-1.5 text-emerald-400" />
@@ -199,8 +212,8 @@ export default function CourseCatalog({
             ]}
           />
 
-          {/* Status Dropdown (Instructors/Evaluators) */}
-          {isInstructor && (
+          {/* Status Dropdown (staff who can see drafts) */}
+          {showDraftFilter && (
             <Select
               value={filters.status}
               onChange={(status) => setFilters({ ...filters, status })}
@@ -259,8 +272,8 @@ export default function CourseCatalog({
                 </span>
               </div>
 
-              {/* CRUD Action buttons overlay for instructors */}
-              {isInstructor && (
+              {/* CRUD Action buttons overlay for course authors */}
+              {canEditCourse(currentUser?.role, currentUser?.id, course.instructorId) && (
                 <div className="absolute top-3 right-3 flex items-center space-x-1.5 bg-white/90 backdrop-blur-md p-1 rounded-lg border border-white/50 shadow-sm opacity-90 group-hover:opacity-100">
                   <button
                     onClick={(e) => handleOpenEditModal(course, e)}

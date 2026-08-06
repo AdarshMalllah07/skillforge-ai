@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Course, Assignment, Lesson } from '../types';
 import { useAuth } from '../lib/authContext';
+import { canEditCourse } from '../lib/permissions';
 import { api } from '../lib/api';
 import { 
   ArrowLeft, BookOpen, Layers, CheckCircle2, Clock, Code, FileText, 
@@ -25,14 +26,19 @@ export default function CourseDetailView({
   onCreateAssignment,
 }: CourseDetailViewProps) {
   const { currentUser } = useAuth();
-  const isInstructor =
+  const canAuthorCourse = canEditCourse(
+    currentUser?.role,
+    currentUser?.id,
+    course.instructorId
+  );
+  const isStaffViewer =
     currentUser?.role === 'INSTRUCTOR' ||
     currentUser?.role === 'EVALUATOR' ||
     currentUser?.role === 'ADMIN';
 
   const [activeTab, setActiveTab] = useState<'modules' | 'assignments' | 'ai_tutor'>('modules');
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(course.modules[0]?.lessons[0] || null);
-  const [isEnrolled, setIsEnrolled] = useState(currentUser?.role !== 'STUDENT');
+  const [isEnrolled, setIsEnrolled] = useState(isStaffViewer);
 
   // AI Tutor Chat State
   const [chatMessages, setChatMessages] = useState<
@@ -315,7 +321,7 @@ export default function CourseDetailView({
               </p>
             </div>
 
-            {isInstructor && (
+            {canAuthorCourse && (
               <button
                 onClick={() => {
                   onCreateAssignment(course.id, {

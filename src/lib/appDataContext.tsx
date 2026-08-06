@@ -179,8 +179,18 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     [router]
   );
   const openGenerator = useCallback(() => router.push('/generator'), [router]);
-  const openSubmissions = useCallback(() => router.push('/submissions'), [router]);
-  const openCourses = useCallback(() => router.push('/courses'), [router]);
+  const openSubmissions = useCallback(() => {
+    const role = currentUser?.role;
+    if (role === 'ADMIN') router.push('/admin/submissions');
+    else if (role === 'INSTRUCTOR') router.push('/instructor/submissions');
+    else if (role === 'EVALUATOR') router.push('/evaluator/submissions');
+    else if (role === 'STUDENT') router.push('/student/submissions');
+    else router.push('/submissions');
+  }, [router, currentUser?.role]);
+  const openCourses = useCallback(() => {
+    if (currentUser?.role === 'ADMIN') router.push('/admin/courses');
+    else router.push('/courses');
+  }, [router, currentUser?.role]);
 
   const value = useMemo(
     () => ({

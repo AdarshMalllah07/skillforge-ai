@@ -9,13 +9,20 @@ type Ctx = { params: Promise<{ id: string }> };
 export async function POST(req: NextRequest, context: Ctx) {
   return withApi(req, async () => {
     try {
-      const auth = await requireRoles(req, 'INSTRUCTOR', 'ADMIN', 'EVALUATOR');
+      const auth = await requireRoles(req, 'INSTRUCTOR', 'ADMIN');
       if ('error' in auth) return auth.error;
 
       const { id } = await context.params;
       const course = await Course.findById(id);
       if (!course) {
         return NextResponse.json({ error: 'Course not found' }, { status: 404 });
+      }
+
+      if (auth.user.role === 'INSTRUCTOR' && course.instructorId !== auth.user.id) {
+        return NextResponse.json(
+          { error: 'You can only add assignments to your own courses' },
+          { status: 403 }
+        );
       }
 
       const body = await req.json();

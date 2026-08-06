@@ -90,7 +90,7 @@ export async function PUT(req: NextRequest, context: Ctx) {
               name: student.name,
               courseTitle: course?.title || 'your course',
               score: submission.finalScore,
-              submissionsUrl: `${getAppBaseUrl()}/submissions`,
+              submissionsUrl: `${getAppBaseUrl()}/student/submissions`,
             });
           }
         } catch (err) {

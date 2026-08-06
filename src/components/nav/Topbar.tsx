@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Menu, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useAuth } from '@/src/lib/authContext';
 import { usePreferences } from '@/src/lib/preferencesContext';
-import { TAB_PATH, pathToTab } from '@/src/lib/routes';
+import { TAB_PATH, pathToTab, ROLE_HOME } from '@/src/lib/routes';
 import { AvatarDropdown } from '@/src/components/ui/AvatarDropdown';
 import { Breadcrumbs, Crumb } from '@/src/components/ui/Breadcrumbs';
 import { MobileDrawer } from './MobileDrawer';
@@ -22,9 +22,22 @@ function crumbsForPath(pathname: string): Crumb[] {
   if (pathname.startsWith('/courses/') && pathname !== '/courses') {
     return [{ label: 'Catalog', href: '/courses' }, { label: 'Course detail' }];
   }
-  if (pathname.startsWith('/admin')) return [{ label: 'Admin' }, { label: 'Users & Roles' }];
+  if (pathname === '/admin' || pathname === '/admin/') {
+    return [{ label: 'Admin' }, { label: 'Overview' }];
+  }
+  if (pathname.startsWith('/admin/users')) return [{ label: 'Admin', href: '/admin' }, { label: 'Users & Roles' }];
+  if (pathname.startsWith('/admin/courses')) return [{ label: 'Admin', href: '/admin' }, { label: 'Courses' }];
+  if (pathname.startsWith('/admin/submissions')) return [{ label: 'Admin', href: '/admin' }, { label: 'Submissions' }];
+  if (pathname.startsWith('/admin/analytics')) return [{ label: 'Admin', href: '/admin' }, { label: 'Analytics' }];
+  if (pathname.startsWith('/admin')) return [{ label: 'Admin' }];
+  if (pathname.startsWith('/student/submissions')) return [{ label: 'Student Portal', href: '/student' }, { label: 'My Submissions' }];
+  if (pathname.startsWith('/student/analytics')) return [{ label: 'Student Portal', href: '/student' }, { label: 'My Progress' }];
   if (pathname.startsWith('/student')) return [{ label: 'Student Portal' }];
+  if (pathname.startsWith('/instructor/submissions')) return [{ label: 'Faculty Console', href: '/instructor' }, { label: 'Grading' }];
+  if (pathname.startsWith('/instructor/analytics')) return [{ label: 'Faculty Console', href: '/instructor' }, { label: 'Analytics' }];
   if (pathname.startsWith('/instructor')) return [{ label: 'Faculty Console' }];
+  if (pathname.startsWith('/evaluator/submissions')) return [{ label: 'Assessor Console', href: '/evaluator' }, { label: 'Review Queue' }];
+  if (pathname.startsWith('/evaluator/analytics')) return [{ label: 'Assessor Console', href: '/evaluator' }, { label: 'Analytics' }];
   if (pathname.startsWith('/evaluator')) return [{ label: 'Assessor Console' }];
   if (pathname.startsWith('/generator')) return [{ label: 'AI Architect' }];
   if (pathname.startsWith('/analytics')) return [{ label: 'Analytics' }];
@@ -34,7 +47,7 @@ function crumbsForPath(pathname: string): Crumb[] {
 }
 
 export function Topbar() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, currentUser } = useAuth();
   const { preferences, toggleSidebarCollapsed } = usePreferences();
   const pathname = usePathname();
   const router = useRouter();
@@ -42,6 +55,8 @@ export function Topbar() {
   const crumbs = crumbsForPath(pathname);
   const tab = pathToTab(pathname);
   const collapsed = preferences.sidebarCollapsed;
+  const homeHref =
+    isAuthenticated && currentUser ? ROLE_HOME[currentUser.role] : TAB_PATH.login;
 
   return (
     <>
@@ -74,7 +89,7 @@ export function Topbar() {
             ) : null}
 
             <Link
-              href={isAuthenticated ? TAB_PATH.courses : TAB_PATH.login}
+              href={homeHref}
               prefetch
               className="lg:hidden flex items-center gap-2 shrink-0"
             >

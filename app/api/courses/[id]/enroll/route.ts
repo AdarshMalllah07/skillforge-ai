@@ -12,7 +12,7 @@ type Ctx = { params: Promise<{ id: string }> };
 export async function POST(req: NextRequest, context: Ctx) {
   return withApi(req, async () => {
     try {
-      const auth = await requireRoles(req, 'STUDENT');
+      const auth = await requireRoles(req, 'STUDENT', 'ADMIN');
       if ('error' in auth) return auth.error;
 
       const { id } = await context.params;

@@ -12,7 +12,7 @@ import {
 } from './partials/content';
 
 const ROLE_HOME: Record<UserRole, string> = {
-  ADMIN: '/admin/users',
+  ADMIN: '/admin',
   INSTRUCTOR: '/instructor',
   STUDENT: '/student',
   EVALUATOR: '/evaluator',
@@ -36,9 +36,9 @@ function roleSteps(role: UserRole): string {
   switch (role) {
     case 'ADMIN':
       return [
-        stepRow('01', 'Review the user directory', 'Create instructors, evaluators and students, and assign the right roles.'),
-        stepRow('02', 'Supervise platform activity', 'Monitor courses, submissions and AI evaluation health from your admin console.'),
-        stepRow('03', 'Invite your team', 'Provision accounts with a password, or send a secure setup link by email.'),
+        stepRow('01', 'Open the admin overview', 'See platform counts and jump into users, courses, grading and analytics.'),
+        stepRow('02', 'Manage users and roles', 'Create instructors, evaluators and students, and assign the right roles.'),
+        stepRow('03', 'Supervise everything', 'Edit any course, grade any submission, and open every role portal when needed.'),
       ].join('');
     case 'INSTRUCTOR':
       return [
@@ -48,7 +48,7 @@ function roleSteps(role: UserRole): string {
       ].join('');
     case 'EVALUATOR':
       return [
-        stepRow('01', 'Open the evaluation queue', 'Review candidate submissions assigned to your evaluator workspace.'),
+        stepRow('01', 'Open the review queue', 'Work through candidate submissions in your assessor console.'),
         stepRow('02', 'Use AI scoring as a baseline', 'Inspect AI rubric feedback, then finalize scores with your expertise.'),
         stepRow('03', 'Send clear feedback', 'Leave actionable notes so candidates know exactly how to improve.'),
       ].join('');

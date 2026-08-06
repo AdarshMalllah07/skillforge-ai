@@ -17,7 +17,7 @@ function getGeminiClient(): GoogleGenAI | null {
 export async function POST(req: NextRequest) {
   return withApi(req, async () => {
     try {
-      const auth = await requireRoles(req, 'INSTRUCTOR', 'ADMIN', 'EVALUATOR');
+      const auth = await requireRoles(req, 'INSTRUCTOR', 'ADMIN');
       if ('error' in auth) return auth.error;
 
       const { topicPrompt, targetLevel, targetCategory } = await req.json();

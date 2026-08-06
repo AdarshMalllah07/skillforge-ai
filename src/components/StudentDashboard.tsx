@@ -1,5 +1,6 @@
 'use client';
 import React from 'react';
+import Link from 'next/link';
 import { useAuth } from '../lib/authContext';
 import { Course, Submission, Assignment } from '../types';
 import {
@@ -11,6 +12,8 @@ import {
   Award,
   Sparkles,
   ArrowRight,
+  BarChart3,
+  FileCheck2,
 } from 'lucide-react';
 import { PageHero } from './ui/PageHero';
 import { StatCard } from './ui/Card';
@@ -89,8 +92,30 @@ export default function StudentDashboard({
           </>
         }
         title={`Welcome back, ${currentUser.name}`}
-        description="Track active modules, submission deadlines, automated AI rubrics, and skill certifications."
+        description="Enroll in courses, submit assignments, use the AI tutor, and track your progress."
         icon={<GraduationCap className="w-80 h-80 text-emerald-300" />}
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <Link href="/courses">
+              <Button className="bg-emerald-500 hover:bg-emerald-400">
+                <BookOpen className="w-4 h-4" />
+                Browse courses
+              </Button>
+            </Link>
+            <Link href="/student/submissions">
+              <Button variant="secondary" className="bg-white/10 text-white border-white/20 hover:bg-white/20">
+                <FileCheck2 className="w-4 h-4" />
+                My submissions
+              </Button>
+            </Link>
+            <Link href="/student/analytics">
+              <Button variant="secondary" className="bg-white/10 text-white border-white/20 hover:bg-white/20">
+                <BarChart3 className="w-4 h-4" />
+                My progress
+              </Button>
+            </Link>
+          </div>
+        }
         aside={
           <div className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl flex items-center gap-4">
             <div className="text-center">

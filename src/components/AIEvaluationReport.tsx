@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { AIEvaluationResult } from '../types';
 import { ShieldCheck, ThumbsUp, HelpCircle, Edit3 } from 'lucide-react';
 import { useAuth } from '../lib/authContext';
+import { canGradeSubmissions } from '../lib/permissions';
 import { AiMessage } from './ui/AiMessage';
 import { Dialog } from './ui/Dialog';
 import { Button } from './ui/Button';
@@ -20,7 +21,7 @@ export default function AIEvaluationReport({
   onOverrideGrade,
 }: AIEvaluationReportProps) {
   const { currentUser } = useAuth();
-  const isInstructor = currentUser?.role === 'INSTRUCTOR' || currentUser?.role === 'EVALUATOR' || currentUser?.role === 'ADMIN';
+  const canOverride = canGradeSubmissions(currentUser?.role);
 
   const [isOverriding, setIsOverriding] = useState(false);
   const [overrideScore, setOverrideScore] = useState(evaluation.overallScore);
@@ -62,7 +63,7 @@ export default function AIEvaluationReport({
             <Badge tone={statusBadgeTone(evaluation.suggestedGrade)}>
               {evaluation.suggestedGrade.replace(/_/g, ' ')}
             </Badge>
-            {isInstructor && onOverrideGrade && !isOverriding ? (
+            {canOverride && onOverrideGrade && !isOverriding ? (
               <Button size="sm" variant="secondary" onClick={() => setIsOverriding(true)}>
                 <Edit3 className="w-3.5 h-3.5" />
                 Override
