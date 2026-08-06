@@ -2,34 +2,55 @@
 
 import { useEffect } from 'react';
 
-const SW_PATH = '/sw.js';
-
+/**
+ * Registers SW with a build-specific query so each rebuild installs a new worker.
+ * CACHE_VERSION inside sw.js is also rewritten at build time.
+ */
 export function ServiceWorkerRegister() {
   useEffect(() => {
-    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
-
-    // Avoid interfering with Next.js HMR in development
-    if (process.env.NODE_ENV !== 'production') {
-      navigator.serviceWorker.getRegistrations().then((regs) => {
-        regs.forEach((r) => r.unregister());
-      });
+    if (typeof window === 'undefined') return;
+    if (!('serviceWorker' in navigator)) {
+      console.warn('[sf] Service workers are not supported in this browser');
       return;
     }
 
+    const build = process.env.NEXT_PUBLIC_SF_BUILD || 'dev';
+    const version = process.env.NEXT_PUBLIC_SF_SW_VERSION || `sf-${build}`;
+    const swUrl = `/sw.js?v=${encodeURIComponent(build)}`;
+
+    let cancelled = false;
+
     const register = async () => {
       try {
-        const reg = await navigator.serviceWorker.register(SW_PATH, { scope: '/' });
-        reg.update().catch(() => undefined);
+        const reg = await navigator.serviceWorker.register(swUrl, {
+          scope: '/',
+          updateViaCache: 'none',
+        });
+
+        if (cancelled) return;
+
+        if (reg.waiting) {
+          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }
+
+        await reg.update().catch(() => undefined);
+
+        console.info(`[sf] SW ${version} registered`, reg.scope);
       } catch (err) {
-        console.warn('[sw] registration failed', err);
+        console.warn('[sf] Service worker registration failed', err);
       }
     };
 
     if (document.readyState === 'complete') {
-      register();
+      void register();
     } else {
-      window.addEventListener('load', register, { once: true });
+      window.addEventListener('load', () => void register(), { once: true });
+      void register();
     }
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return null;

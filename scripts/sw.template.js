@@ -1,6 +1,6 @@
 /* SkillForge AI service worker — generated; do not edit by hand */
-/* Build: sf-mshp30ix-3e8871 */
-const CACHE_VERSION = 'sf-mshp30ix-3e8871';
+/* Build: __SF_CACHE_VERSION__ */
+const CACHE_VERSION = '__SF_CACHE_VERSION__';
 const PRECACHE = [
   '/manifest.webmanifest',
   '/logo.svg',

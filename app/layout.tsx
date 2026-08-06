@@ -12,6 +12,7 @@ export const metadata: Metadata = {
   },
   description: 'AI Assessment Platform by SkillForge AI',
   applicationName: 'SkillForge AI',
+  manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
@@ -39,6 +40,12 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`} suppressHydrationWarning>
+      <head>
+        <link rel="manifest" href="/manifest.webmanifest" />
+        <meta name="theme-color" content="#312e81" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+      </head>
       <body className="min-h-screen bg-sf-bg text-sf antialiased font-sans" suppressHydrationWarning>
         <script
           dangerouslySetInnerHTML={{

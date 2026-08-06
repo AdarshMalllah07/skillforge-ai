@@ -6,6 +6,7 @@ import { AppDataProvider } from '@/src/lib/appDataContext';
 import { UiProvider } from '@/src/components/ui/UiProvider';
 import { PreferencesProvider } from '@/src/lib/preferencesContext';
 import AppShell from '@/src/components/AppShell';
+import { ServiceWorkerRegister } from '@/src/components/ServiceWorkerRegister';
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
@@ -13,6 +14,7 @@ export function Providers({ children }: { children: ReactNode }) {
       <PreferencesProvider>
         <UiProvider>
           <AppDataProvider>
+            <ServiceWorkerRegister />
             <AppShell>{children}</AppShell>
           </AppDataProvider>
         </UiProvider>

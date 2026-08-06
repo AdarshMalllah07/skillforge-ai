@@ -11,7 +11,6 @@ import AuthModal from '@/src/components/AuthModal';
 import UserProfileModal from '@/src/components/UserProfileModal';
 import { PageSkeleton } from '@/src/components/ui/Skeleton';
 import { NavigationProgress } from '@/src/components/NavigationProgress';
-import { ServiceWorkerRegister } from '@/src/components/ServiceWorkerRegister';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { currentUser, isAuthenticated, isLoading } = useAuth();
@@ -49,7 +48,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     return (
       <div className="min-h-screen bg-sf-bg p-6">
         <PageSkeleton />
-        <ServiceWorkerRegister />
       </div>
     );
   }
@@ -60,7 +58,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <NavigationProgress />
         <main className="flex-1 w-full">{children}</main>
         <AuthModal />
-        <ServiceWorkerRegister />
       </div>
     );
   }
@@ -76,7 +73,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <UserProfileModal />
         <Footer />
       </div>
-      <ServiceWorkerRegister />
     </div>
   );
 }
