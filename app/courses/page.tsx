@@ -1,12 +1,7 @@
 'use client';
 
-import dynamic from 'next/dynamic';
 import { useAppData } from '@/src/lib/appDataContext';
-import { PageSkeleton } from '@/src/components/ui/Skeleton';
-
-const CourseCatalog = dynamic(() => import('@/src/components/CourseCatalog'), {
-  loading: () => <PageSkeleton />,
-});
+import CourseCatalog from '@/src/components/CourseCatalog';
 
 export default function CoursesPage() {
   const {

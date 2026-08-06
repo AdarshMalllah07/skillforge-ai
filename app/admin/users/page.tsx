@@ -1,12 +1,7 @@
 'use client';
 
-import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { PageSkeleton } from '@/src/components/ui/Skeleton';
-
-const AdminUserManagement = dynamic(() => import('@/src/components/AdminUserManagement'), {
-  loading: () => <PageSkeleton />,
-});
+import AdminUserManagement from '@/src/components/AdminUserManagement';
 
 export default function AdminUsersPage() {
   const router = useRouter();

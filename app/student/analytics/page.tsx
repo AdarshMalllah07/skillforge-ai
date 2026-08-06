@@ -1,12 +1,7 @@
 'use client';
 
-import dynamic from 'next/dynamic';
 import { useAppData } from '@/src/lib/appDataContext';
-import { PageSkeleton } from '@/src/components/ui/Skeleton';
-
-const AnalyticsDashboard = dynamic(() => import('@/src/components/AnalyticsDashboard'), {
-  loading: () => <PageSkeleton />,
-});
+import AnalyticsDashboard from '@/src/components/AnalyticsDashboard';
 
 export default function StudentAnalyticsPage() {
   const { submissions, courses } = useAppData();

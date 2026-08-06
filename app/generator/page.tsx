@@ -1,15 +1,10 @@
 'use client';
 
-import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useAppData } from '@/src/lib/appDataContext';
 import { api } from '@/src/lib/api';
 import { Course } from '@/src/types';
-import { PageSkeleton } from '@/src/components/ui/Skeleton';
-
-const AICurriculumGenerator = dynamic(() => import('@/src/components/AICurriculumGenerator'), {
-  loading: () => <PageSkeleton />,
-});
+import AICurriculumGenerator from '@/src/components/AICurriculumGenerator';
 
 export default function GeneratorPage() {
   const router = useRouter();

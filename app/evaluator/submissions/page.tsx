@@ -1,13 +1,8 @@
 'use client';
 
-import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useAppData } from '@/src/lib/appDataContext';
-import { PageSkeleton } from '@/src/components/ui/Skeleton';
-
-const SubmissionsDashboard = dynamic(() => import('@/src/components/SubmissionsDashboard'), {
-  loading: () => <PageSkeleton />,
-});
+import SubmissionsDashboard from '@/src/components/SubmissionsDashboard';
 
 export default function EvaluatorSubmissionsPage() {
   const router = useRouter();

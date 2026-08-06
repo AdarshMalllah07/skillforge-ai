@@ -6,7 +6,7 @@ import { api } from './api';
 import { useAuth } from './authContext';
 import { getUi } from '../components/ui/UiProvider';
 import { Course, Submission, Assignment } from '../types';
-import { TAB_PATH } from './routes';
+import { TAB_PATH, ROLE_HOME } from './routes';
 import { getNavItems } from '../components/nav/navItems';
 
 interface AppDataContextType {
@@ -66,14 +66,27 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
   // Warm route chunks so sidebar clicks feel instant
   useEffect(() => {
     if (!isAuthenticated || !currentUser) return;
-    const paths = getNavItems(currentUser.role).map((item) => TAB_PATH[item.tab]);
+    const paths = new Set([
+      ...getNavItems(currentUser.role).map((item) => TAB_PATH[item.tab]),
+      '/courses',
+      ROLE_HOME[currentUser.role],
+    ]);
+    // Stagger slightly so first paint isn't blocked
+    let i = 0;
+    const ids: ReturnType<typeof setTimeout>[] = [];
     paths.forEach((path) => {
-      try {
-        router.prefetch(path);
-      } catch {
-        // ignore
-      }
+      ids.push(
+        setTimeout(() => {
+          try {
+            router.prefetch(path);
+          } catch {
+            // ignore
+          }
+        }, i * 40)
+      );
+      i += 1;
     });
+    return () => ids.forEach(clearTimeout);
   }, [isAuthenticated, currentUser?.role, router]);
 
   const handleCreateCourse = useCallback(async (courseData: Partial<Course>) => {

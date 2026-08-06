@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { GraduationCap } from 'lucide-react';
 import { useAuth } from '@/src/lib/authContext';
 import { usePreferences } from '@/src/lib/preferencesContext';
@@ -13,6 +13,7 @@ export function Sidebar() {
   const { currentUser, isAuthenticated } = useAuth();
   const { preferences } = usePreferences();
   const pathname = usePathname();
+  const router = useRouter();
   const collapsed = preferences.sidebarCollapsed;
   const activeTab = pathToTab(pathname);
   const items = getNavItems(currentUser?.role);
@@ -28,7 +29,11 @@ export function Sidebar() {
       <div
         className={`h-16 flex items-center border-b border-sf ${collapsed ? 'justify-center px-2' : 'px-4 gap-2.5'}`}
       >
-        <Link href={currentUser ? ROLE_HOME[currentUser.role] : TAB_PATH.courses} prefetch className="flex items-center gap-2.5 group min-w-0">
+        <Link
+          href={currentUser ? ROLE_HOME[currentUser.role] : TAB_PATH.courses}
+          prefetch
+          className="flex items-center gap-2.5 group min-w-0"
+        >
           <img
             src="/logo.svg"
             alt="SkillForge AI"
@@ -47,11 +52,14 @@ export function Sidebar() {
         {items.map((item) => {
           const Icon = item.icon;
           const active = activeTab === item.tab;
+          const href = TAB_PATH[item.tab];
           return (
             <Link
               key={item.tab}
-              href={TAB_PATH[item.tab]}
+              href={href}
               prefetch
+              onMouseEnter={() => router.prefetch(href)}
+              onFocus={() => router.prefetch(href)}
               title={item.label}
               className={`w-full flex items-center gap-3 rounded-xl text-xs font-bold transition-all min-h-11 ${
                 collapsed ? 'justify-center px-2' : 'px-3'

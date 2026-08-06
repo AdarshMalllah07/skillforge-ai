@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { startTransition } from 'react';
 import { createPortal } from 'react-dom';
 import { usePathname, useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'motion/react';
@@ -21,8 +21,11 @@ export function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => 
   const items = getNavItems(currentUser?.role);
 
   const navigate = (tab: AppTab) => {
-    router.push(TAB_PATH[tab]);
+    const href = TAB_PATH[tab];
     onClose();
+    startTransition(() => {
+      router.push(href);
+    });
   };
 
   if (typeof document === 'undefined') return null;
