@@ -2,9 +2,12 @@
 import React, { useState } from 'react';
 import { useAuth } from '../lib/authContext';
 import { Submission } from '../types';
+import { PageHero } from './ui/PageHero';
+import { StatCard } from './ui/Card';
+import { AiMessage } from './ui/AiMessage';
 import { 
-  ShieldCheck, FileCode2, CheckCircle2, Clock, AlertTriangle, 
-  Sparkles, Star, MessageSquare, Send, Code, Terminal, ExternalLink 
+  ShieldCheck, FileCode2, CheckCircle2, Clock, 
+  Sparkles, MessageSquare, Send, Code, Terminal, ExternalLink, Star
 } from 'lucide-react';
 
 interface EvaluatorDashboardProps {
@@ -45,38 +48,48 @@ export default function EvaluatorDashboard({
 
   return (
     <div className="space-y-6">
-      
-      {/* Evaluator Header */}
-      <div className="bg-gradient-to-r from-amber-900 via-slate-900 to-amber-950 rounded-2xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
-        <div className="relative z-10 space-y-4">
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30 text-xs font-bold">
+      <PageHero
+        tone="amber"
+        eyebrow={
+          <>
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>EdTech Evaluator & Code Auditor Workspace</span>
-          </div>
-
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                Assessor Console • {currentUser.name}
-              </h1>
-              <p className="text-amber-100/80 text-xs sm:text-sm max-w-xl mt-1 leading-relaxed">
-                Audit candidate code repositories, review automated Gemini AI rubric breakdowns, test edge cases, and issue official grades.
-              </p>
+            Evaluator & Code Auditor
+          </>
+        }
+        title={`Assessor Console · ${currentUser.name}`}
+        description="Audit candidate code, review Gemini rubric breakdowns, and issue official grades."
+        aside={
+          <div className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl flex items-center gap-4">
+            <div className="text-center">
+              <span className="text-[10px] text-amber-200 uppercase font-bold tracking-wider block">Queue</span>
+              <span className="text-2xl font-black text-amber-300">{submissions.length}</span>
             </div>
-
-            <div className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl flex items-center space-x-4 shrink-0">
-              <div className="text-center">
-                <span className="text-[10px] text-amber-200 uppercase font-bold tracking-wider block">Queue</span>
-                <span className="text-2xl font-black text-amber-300">{submissions.length}</span>
-              </div>
-              <div className="h-8 w-px bg-white/20" />
-              <div className="text-center">
-                <span className="text-[10px] text-amber-200 uppercase font-bold tracking-wider block">Accuracy Rate</span>
-                <span className="text-2xl font-black text-white">99.4%</span>
-              </div>
+            <div className="h-8 w-px bg-white/20" />
+            <div className="text-center">
+              <span className="text-[10px] text-amber-200 uppercase font-bold tracking-wider block">Graded</span>
+              <span className="text-2xl font-black text-white">
+                {submissions.filter((s) => s.status === 'GRADED').length}
+              </span>
             </div>
           </div>
-        </div>
+        }
+      />
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard label="Queue" value={submissions.length} accent="amber" icon={<FileCode2 className="w-5 h-5" />} />
+        <StatCard
+          label="Pending"
+          value={submissions.filter((s) => s.status === 'PENDING' || s.status === 'AI_EVALUATED').length}
+          accent="indigo"
+          icon={<Clock className="w-5 h-5" />}
+        />
+        <StatCard
+          label="Graded"
+          value={submissions.filter((s) => s.status === 'GRADED').length}
+          accent="emerald"
+          icon={<CheckCircle2 className="w-5 h-5" />}
+        />
+        <StatCard label="AI assisted" value={submissions.filter((s) => s.aiEvaluation).length} accent="violet" icon={<Sparkles className="w-5 h-5" />} />
       </div>
 
       {/* Main Split Layout: Left Queue & Right Audit Console */}
@@ -161,8 +174,16 @@ export default function EvaluatorDashboard({
                   <Terminal className="w-4 h-4 text-slate-500" />
                   <span>Submitted Entry Code (`src/index.ts` / `server.ts`)</span>
                 </span>
-                <div className="bg-slate-950 text-slate-200 p-4 rounded-xl text-xs font-mono overflow-x-auto max-h-64 leading-relaxed border border-slate-800">
-                  <pre>{selectedSubmission.codeContent || '// Candidate code snippet loaded\nexport async function handleAssessment() {\n  // Verified server action\n  return { success: true, evaluated: true };\n}'}</pre>
+                <div className="bg-slate-950 text-slate-200 p-0 rounded-xl text-xs font-mono overflow-hidden max-h-72 border border-slate-800">
+                  <AiMessage
+                    content={
+                      '```ts\n' +
+                      (selectedSubmission.codeContent ||
+                        '// Candidate code snippet loaded\nexport async function handleAssessment() {\n  return { success: true, evaluated: true };\n}') +
+                      '\n```'
+                    }
+                    className="border-0 rounded-none shadow-none bg-transparent"
+                  />
                 </div>
               </div>
 

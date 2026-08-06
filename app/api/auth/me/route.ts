@@ -31,6 +31,22 @@ export async function PUT(req: NextRequest) {
         return NextResponse.json({ error: 'User not found' }, { status: 404 });
       }
 
+      if (body.preferences && typeof body.preferences === 'object') {
+        const nextPrefs = {
+          theme:
+            body.preferences.theme === 'light' ||
+            body.preferences.theme === 'dark' ||
+            body.preferences.theme === 'system'
+              ? body.preferences.theme
+              : existing.preferences?.theme || 'system',
+          sidebarCollapsed:
+            typeof body.preferences.sidebarCollapsed === 'boolean'
+              ? body.preferences.sidebarCollapsed
+              : Boolean(existing.preferences?.sidebarCollapsed),
+        };
+        updates.preferences = nextPrefs;
+      }
+
       if (
         typeof updates.avatar === 'string' &&
         updates.avatar !== existing.avatar &&

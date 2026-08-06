@@ -4,7 +4,11 @@ import { Course } from '../types';
 import { useAuth } from '../lib/authContext';
 import { api } from '../lib/api';
 import Select from './ui/Select';
-import { Sparkles, ArrowRight, CheckCircle2, Layers, BookOpen, Code, AlertCircle, RefreshCw } from 'lucide-react';
+import { Sparkles, CheckCircle2, Layers, Code, AlertCircle, RefreshCw } from 'lucide-react';
+import { PageHero } from './ui/PageHero';
+import { AiLoadingBubble, AiMessage } from './ui/AiMessage';
+import { Button } from './ui/Button';
+import { Badge } from './ui/Badge';
 
 interface AICurriculumGeneratorProps {
   onCourseGeneratedAndSaved: (newCourse: Course) => void;
@@ -24,8 +28,8 @@ export default function AICurriculumGenerator({
   const [generatedCourse, setGeneratedCourse] = useState<Partial<Course> | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
 
-  const handleGenerate = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleGenerate = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (!topicPrompt.trim()) return;
 
     setErrorMsg('');
@@ -42,9 +46,9 @@ export default function AICurriculumGenerator({
         }),
       });
       setGeneratedCourse(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setErrorMsg(err.message || 'Failed to generate course outline via AI.');
+      setErrorMsg(err instanceof Error ? err.message : 'Failed to generate course outline via AI.');
     } finally {
       setIsGenerating(false);
     }
@@ -77,43 +81,36 @@ export default function AICurriculumGenerator({
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      
-      {/* Header */}
-      <div className="bg-gradient-to-r from-violet-950 via-indigo-900 to-slate-900 rounded-2xl p-6 text-white shadow-xl border border-indigo-800/40">
-        <div className="flex items-center space-x-3 mb-2">
-          <div className="p-2 bg-indigo-500/20 rounded-xl border border-indigo-400/30 text-indigo-300">
-            <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
-          </div>
-          <div>
-            <h2 className="text-xl font-extrabold tracking-tight">AI Curriculum Architect</h2>
-            <p className="text-xs text-indigo-200">Powered by Gemini 3.6 Flash &bull; House of EdTech Add-On Feature</p>
-          </div>
-        </div>
-        <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
-          Specify a technical topic or skill domain. Gemini AI will automatically design a complete production course outline with modules, lessons, exercise challenges, and evaluation rubrics.
-        </p>
-      </div>
+      <PageHero
+        tone="violet"
+        eyebrow={
+          <>
+            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            Gemini 3.6 Flash
+          </>
+        }
+        title="AI Curriculum Architect"
+        description="Describe a skill domain. Gemini designs a full course outline with modules, lessons, challenges, and rubrics."
+        icon={<Sparkles className="w-72 h-72 text-indigo-300" />}
+      />
 
-      {/* Input Form */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-4">
+      <div className="bg-sf-surface rounded-2xl p-5 sm:p-6 border border-sf shadow-sf-sm space-y-4">
         <form onSubmit={handleGenerate} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">
-              Course Topic or Prompt Idea
-            </label>
+            <label className="block text-xs font-bold text-sf mb-1">Course Topic or Prompt Idea</label>
             <input
               type="text"
               required
               value={topicPrompt}
-              onChange={e => setTopicPrompt(e.target.value)}
-              className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500"
-              placeholder="e.g. Next.js 16 App Router, RSC, and Server Actions Masterclass"
+              onChange={(e) => setTopicPrompt(e.target.value)}
+              className="w-full text-sm p-3 border border-sf rounded-xl bg-sf-surface text-sf focus:ring-2 focus:ring-indigo-500/30 outline-none min-h-11"
+              placeholder="e.g. Next.js App Router, RSC, and Server Actions Masterclass"
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Category Domain</label>
+              <label className="block text-xs font-bold text-sf mb-1">Category Domain</label>
               <Select
                 value={targetCategory}
                 onChange={setTargetCategory}
@@ -128,7 +125,7 @@ export default function AICurriculumGenerator({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Target Skill Level</label>
+              <label className="block text-xs font-bold text-sf mb-1">Target Skill Level</label>
               <Select
                 value={targetLevel}
                 onChange={(v) => setTargetLevel(v as 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED')}
@@ -143,84 +140,76 @@ export default function AICurriculumGenerator({
           </div>
 
           {errorMsg && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600 flex items-center space-x-2">
+            <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-xl text-xs text-red-600 flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{errorMsg}</span>
             </div>
           )}
 
-          <div className="flex justify-end space-x-2 pt-2">
-            <button
-              type="button"
-              onClick={onCancel}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
-            >
+          <div className="flex flex-wrap justify-end gap-2 pt-2">
+            <Button type="button" variant="ghost" onClick={onCancel}>
               Cancel
-            </button>
-
-            <button
-              type="submit"
-              disabled={isGenerating}
-              className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow-md transition-all flex items-center space-x-2 disabled:opacity-50"
-            >
-              {isGenerating ? (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>Gemini AI is Structuring Curriculum...</span>
-                </>
-              ) : (
-                <>
-                  <span>Generate Full Curriculum</span>
-                  <Sparkles className="w-4 h-4" />
-                </>
-              )}
-            </button>
+            </Button>
+            <Button type="submit" disabled={isGenerating} loading={isGenerating}>
+              {isGenerating ? 'Structuring curriculum…' : 'Generate Full Curriculum'}
+              {!isGenerating ? <Sparkles className="w-4 h-4" /> : null}
+            </Button>
           </div>
         </form>
       </div>
 
-      {/* Generated Course Preview */}
-      {generatedCourse && (
-        <div className="bg-white rounded-2xl p-6 border border-indigo-200 shadow-xl space-y-6">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-            <div>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-100 text-emerald-800">
-                AI Course Preview Ready
-              </span>
-              <h3 className="text-xl font-bold text-slate-900 mt-1">{generatedCourse.title}</h3>
-            </div>
+      {isGenerating ? (
+        <div className="space-y-3">
+          <AiLoadingBubble label="Gemini is structuring your curriculum…" />
+          <div className="rounded-2xl border border-sf bg-sf-surface p-4 space-y-2">
+            <div className="h-3 rounded-full ai-shimmer w-1/3" />
+            <div className="h-3 rounded-full ai-shimmer w-full" />
+            <div className="h-3 rounded-full ai-shimmer w-5/6" />
+            <div className="h-24 rounded-xl ai-shimmer w-full mt-3" />
+          </div>
+        </div>
+      ) : null}
 
-            <button
-              onClick={handleSaveGeneratedCourse}
-              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold shadow-md transition-all flex items-center space-x-2"
-            >
-              <CheckCircle2 className="w-4 h-4" />
-              <span>Publish Course to Catalog (CRUD Save)</span>
-            </button>
+      {generatedCourse && (
+        <div className="bg-sf-surface rounded-2xl p-5 sm:p-6 border border-indigo-200 dark:border-indigo-900 shadow-sf-md space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-sf pb-4">
+            <div>
+              <Badge tone="success">AI Course Preview Ready</Badge>
+              <h3 className="text-xl font-bold text-sf mt-2">{generatedCourse.title}</h3>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="secondary" size="sm" onClick={() => handleGenerate()}>
+                <RefreshCw className="w-3.5 h-3.5" />
+                Regenerate
+              </Button>
+              <Button
+                size="sm"
+                className="bg-emerald-600 hover:bg-emerald-700"
+                onClick={handleSaveGeneratedCourse}
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                Publish to Catalog
+              </Button>
+            </div>
           </div>
 
-          <p className="text-xs text-slate-700 leading-relaxed font-medium">
-            {generatedCourse.description}
-          </p>
+          <AiMessage content={generatedCourse.description || ''} />
 
-          {/* Generated Modules */}
           <div className="space-y-3">
-            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center">
+            <h4 className="text-xs font-bold text-sf-muted uppercase tracking-wider flex items-center">
               <Layers className="w-4 h-4 mr-1.5 text-indigo-600" />
               Generated Modules ({generatedCourse.modules?.length})
             </h4>
-
             <div className="space-y-3">
               {generatedCourse.modules?.map((mod, i) => (
-                <div key={i} className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-2">
-                  <h5 className="font-bold text-slate-900">{mod.title}</h5>
-                  <p className="text-slate-600">{mod.description}</p>
-                  
+                <div key={i} className="p-4 bg-sf-surface-2 rounded-xl border border-sf text-xs space-y-2">
+                  <h5 className="font-bold text-sf">{mod.title}</h5>
+                  <p className="text-sf-muted">{mod.description}</p>
                   <div className="pl-3 border-l-2 border-indigo-300 space-y-1 pt-1">
                     {mod.lessons?.map((les, j) => (
-                      <div key={j} className="flex justify-between text-slate-700">
-                        <span>&bull; {les.title}</span>
-                        <span className="font-mono text-slate-400">{les.durationMinutes}m</span>
+                      <div key={j} className="flex justify-between text-sf">
+                        <span>• {les.title}</span>
+                        <span className="font-mono text-sf-muted">{les.durationMinutes}m</span>
                       </div>
                     ))}
                   </div>
@@ -229,27 +218,29 @@ export default function AICurriculumGenerator({
             </div>
           </div>
 
-          {/* Generated Assignments */}
           <div className="space-y-3">
-            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center">
+            <h4 className="text-xs font-bold text-sf-muted uppercase tracking-wider flex items-center">
               <Code className="w-4 h-4 mr-1.5 text-indigo-600" />
-              Generated Coding Challenges & Rubrics ({generatedCourse.assignments?.length})
+              Coding Challenges ({generatedCourse.assignments?.length})
             </h4>
-
             <div className="space-y-3">
               {generatedCourse.assignments?.map((assign, i) => (
-                <div key={i} className="p-4 bg-indigo-50/50 rounded-xl border border-indigo-200 text-xs space-y-2">
-                  <div className="flex justify-between font-bold text-indigo-950">
+                <div
+                  key={i}
+                  className="p-4 bg-indigo-50/50 dark:bg-indigo-950/30 rounded-xl border border-indigo-200 dark:border-indigo-900 text-xs space-y-2"
+                >
+                  <div className="flex justify-between font-bold text-sf">
                     <span>{assign.title}</span>
-                    <span>Max Points: {assign.maxScore}</span>
+                    <span>Max: {assign.maxScore}</span>
                   </div>
-                  <p className="text-slate-700">{assign.description}</p>
-                  
-                  <div className="bg-white p-3 rounded-lg border border-slate-200 space-y-1">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase">Rubric Criteria</span>
+                  <p className="text-sf-muted">{assign.description}</p>
+                  <div className="bg-sf-surface p-3 rounded-lg border border-sf space-y-1">
+                    <span className="text-[10px] font-bold text-sf-muted uppercase">Rubric</span>
                     {assign.rubrics?.map((rub, k) => (
-                      <div key={k} className="flex justify-between text-slate-600 text-[11px]">
-                        <span>- {rub.title}: {rub.description}</span>
+                      <div key={k} className="flex justify-between text-sf-muted text-[11px]">
+                        <span>
+                          - {rub.title}: {rub.description}
+                        </span>
                         <span className="font-bold text-indigo-600">{rub.maxPoints} pts</span>
                       </div>
                     ))}
@@ -258,10 +249,8 @@ export default function AICurriculumGenerator({
               ))}
             </div>
           </div>
-
         </div>
       )}
-
     </div>
   );
 }

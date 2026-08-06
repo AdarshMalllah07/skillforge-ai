@@ -1,1 +1,142 @@
 @import "tailwindcss";
+@import "highlight.js/styles/github-dark.min.css";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --spacing-sf-1: 0.5rem;
+  --spacing-sf-2: 1rem;
+  --spacing-sf-3: 1.5rem;
+  --spacing-sf-4: 2rem;
+  --spacing-sf-5: 2.5rem;
+  --spacing-sf-6: 3rem;
+
+  --color-sf-bg: #f8fafc;
+  --color-sf-surface: #ffffff;
+  --color-sf-surface-2: #f1f5f9;
+  --color-sf-border: #e2e8f0;
+  --color-sf-text: #0f172a;
+  --color-sf-muted: #64748b;
+  --color-sf-accent: #4f46e5;
+  --color-sf-accent-soft: #eef2ff;
+
+  --shadow-sf-xs: 0 1px 2px rgb(15 23 42 / 0.04);
+  --shadow-sf-sm: 0 1px 3px rgb(15 23 42 / 0.06), 0 1px 2px rgb(15 23 42 / 0.04);
+  --shadow-sf-md: 0 4px 12px rgb(15 23 42 / 0.08), 0 2px 4px rgb(15 23 42 / 0.04);
+  --shadow-sf-lg: 0 12px 32px rgb(15 23 42 / 0.12), 0 4px 8px rgb(15 23 42 / 0.06);
+  --shadow-sf-glow: 0 0 0 1px rgb(79 70 229 / 0.12), 0 8px 24px rgb(79 70 229 / 0.12);
+}
+
+.dark {
+  --color-sf-bg: #0b1220;
+  --color-sf-surface: #111827;
+  --color-sf-surface-2: #1e293b;
+  --color-sf-border: #334155;
+  --color-sf-text: #f1f5f9;
+  --color-sf-muted: #94a3b8;
+  --color-sf-accent: #818cf8;
+  --color-sf-accent-soft: #1e1b4b;
+
+  --shadow-sf-xs: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-sf-sm: 0 1px 3px rgb(0 0 0 / 0.35), 0 1px 2px rgb(0 0 0 / 0.25);
+  --shadow-sf-md: 0 4px 12px rgb(0 0 0 / 0.4), 0 2px 4px rgb(0 0 0 / 0.3);
+  --shadow-sf-lg: 0 12px 32px rgb(0 0 0 / 0.5), 0 4px 8px rgb(0 0 0 / 0.35);
+  --shadow-sf-glow: 0 0 0 1px rgb(129 140 248 / 0.2), 0 8px 24px rgb(79 70 229 / 0.25);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-sf-bg);
+    color: var(--color-sf-text);
+    font-family: var(--font-sans);
+  }
+
+  ::selection {
+    background-color: color-mix(in oklab, var(--color-sf-accent) 30%, transparent);
+  }
+}
+
+@layer utilities {
+  .bg-sf-bg {
+    background-color: var(--color-sf-bg);
+  }
+  .bg-sf-surface {
+    background-color: var(--color-sf-surface);
+  }
+  .bg-sf-surface-2 {
+    background-color: var(--color-sf-surface-2);
+  }
+  .bg-sf-accent-soft {
+    background-color: var(--color-sf-accent-soft);
+  }
+  .border-sf {
+    border-color: var(--color-sf-border);
+  }
+  .text-sf {
+    color: var(--color-sf-text);
+  }
+  .text-sf-muted {
+    color: var(--color-sf-muted);
+  }
+  .text-sf-accent {
+    color: var(--color-sf-accent);
+  }
+  .shadow-sf-xs {
+    box-shadow: var(--shadow-sf-xs);
+  }
+  .shadow-sf-sm {
+    box-shadow: var(--shadow-sf-sm);
+  }
+  .shadow-sf-md {
+    box-shadow: var(--shadow-sf-md);
+  }
+  .shadow-sf-lg {
+    box-shadow: var(--shadow-sf-lg);
+  }
+  .shadow-sf-glow {
+    box-shadow: var(--shadow-sf-glow);
+  }
+
+  .ai-shimmer {
+    background: linear-gradient(
+      90deg,
+      color-mix(in oklab, var(--color-sf-surface-2) 100%, transparent) 0%,
+      color-mix(in oklab, var(--color-sf-accent) 18%, transparent) 50%,
+      color-mix(in oklab, var(--color-sf-surface-2) 100%, transparent) 100%
+    );
+    background-size: 200% 100%;
+    animation: ai-shimmer 1.4s ease-in-out infinite;
+  }
+
+  @keyframes ai-shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+
+  @media (hover: hover) {
+    .row-actions-hover {
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+    .group:hover .row-actions-hover,
+    .group:focus-within .row-actions-hover {
+      opacity: 1;
+    }
+  }
+}
+
+.hljs {
+  background: transparent !important;
+  padding: 0 !important;
+}

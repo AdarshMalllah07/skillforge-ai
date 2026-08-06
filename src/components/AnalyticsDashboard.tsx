@@ -1,9 +1,25 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import { Submission, Course, AIEvaluationResult } from '../types';
-import { useAuth } from '../lib/authContext';
-import { BarChart3, TrendingUp, Award, CheckCircle2, ShieldCheck, FileCheck2, User, Eye, Search, Filter } from 'lucide-react';
+import { Award, BarChart3, FileCheck2, ShieldCheck, TrendingUp, Eye, Search } from 'lucide-react';
 import AIEvaluationReport from './AIEvaluationReport';
+import { PageHero } from './ui/PageHero';
+import { StatCard, Card } from './ui/Card';
+import { Badge, statusBadgeTone } from './ui/Badge';
+import { Table, THead, Th, Td, Tr } from './ui/Table';
+import { EmptyState } from './ui/EmptyState';
+import { Button } from './ui/Button';
 
 interface AnalyticsDashboardProps {
   submissions: Submission[];
@@ -16,201 +32,258 @@ export default function AnalyticsDashboard({
   courses,
   onReviewSubmission,
 }: AnalyticsDashboardProps) {
-  const { currentUser } = useAuth();
   const [selectedSubReport, setSelectedSubReport] = useState<AIEvaluationResult | null>(null);
   const [searchFilter, setSearchFilter] = useState('');
 
   const totalSubmissions = submissions.length;
-  const evaluatedCount = submissions.filter(s => s.status === 'AI_EVALUATED' || s.status === 'GRADED').length;
-  
-  const avgScore = totalSubmissions > 0
-    ? Math.round(submissions.reduce((acc, s) => acc + (s.finalScore || s.aiEvaluation?.overallScore || 0), 0) / totalSubmissions)
-    : 0;
-
-  const passCount = submissions.filter(s => 
-    (s.finalScore && s.finalScore >= 70) || s.aiEvaluation?.suggestedGrade === 'PASS'
+  const evaluatedCount = submissions.filter(
+    (s) => s.status === 'AI_EVALUATED' || s.status === 'GRADED'
   ).length;
 
-  const passRate = totalSubmissions > 0 ? Math.round((passCount / totalSubmissions) * 100) : 100;
+  const avgScore =
+    totalSubmissions > 0
+      ? Math.round(
+          submissions.reduce(
+            (acc, s) => acc + (s.finalScore || s.aiEvaluation?.overallScore || 0),
+            0
+          ) / totalSubmissions
+        )
+      : 0;
 
-  const filteredSubmissions = submissions.filter(s => 
-    s.studentName.toLowerCase().includes(searchFilter.toLowerCase()) ||
-    s.assignmentTitle.toLowerCase().includes(searchFilter.toLowerCase()) ||
-    s.courseTitle.toLowerCase().includes(searchFilter.toLowerCase())
+  const passCount = submissions.filter(
+    (s) => (s.finalScore && s.finalScore >= 70) || s.aiEvaluation?.suggestedGrade === 'PASS'
+  ).length;
+  const passRate = totalSubmissions > 0 ? Math.round((passCount / totalSubmissions) * 100) : 0;
+
+  const filteredSubmissions = submissions.filter(
+    (s) =>
+      s.studentName.toLowerCase().includes(searchFilter.toLowerCase()) ||
+      s.assignmentTitle.toLowerCase().includes(searchFilter.toLowerCase()) ||
+      s.courseTitle.toLowerCase().includes(searchFilter.toLowerCase())
   );
 
+  const scoreBuckets = useMemo(() => {
+    const buckets = [
+      { name: '0-39', count: 0 },
+      { name: '40-59', count: 0 },
+      { name: '60-79', count: 0 },
+      { name: '80-100', count: 0 },
+    ];
+    submissions.forEach((s) => {
+      const score = s.finalScore || s.aiEvaluation?.overallScore;
+      if (score == null) return;
+      if (score < 40) buckets[0].count += 1;
+      else if (score < 60) buckets[1].count += 1;
+      else if (score < 80) buckets[2].count += 1;
+      else buckets[3].count += 1;
+    });
+    return buckets;
+  }, [submissions]);
+
+  const submissionsOverTime = useMemo(() => {
+    const map = new Map<string, number>();
+    submissions.forEach((s) => {
+      const key = new Date(s.submittedAt).toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric',
+      });
+      map.set(key, (map.get(key) || 0) + 1);
+    });
+    return Array.from(map.entries())
+      .slice(-8)
+      .map(([name, count]) => ({ name, count }));
+  }, [submissions]);
+
   return (
-    <div className="space-y-8">
-      
-      {/* Header */}
-      <div className="bg-slate-900 rounded-2xl p-6 sm:p-8 text-white shadow-xl border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center space-x-2 mb-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-              Assessment Intelligence
-            </span>
-            <span className="text-xs text-slate-400">&bull;</span>
-            <span className="text-xs text-slate-400">House of EdTech Evaluator Desk</span>
+    <div className="space-y-6">
+      <PageHero
+        tone="slate"
+        eyebrow={
+          <>
+            <BarChart3 className="w-3.5 h-3.5" />
+            Assessment Intelligence
+          </>
+        }
+        title="Candidate Grade & Skill Analytics"
+        description="Track submission scores, Gemini evaluation breakdowns, and skill rubrics in real time."
+        aside={
+          <div className="bg-white/10 px-4 py-3 rounded-xl border border-white/15 flex items-center gap-3">
+            <Award className="w-8 h-8 text-amber-400 shrink-0" />
+            <div>
+              <p className="text-[10px] uppercase font-bold text-slate-300">Pass rate</p>
+              <p className="text-xl font-extrabold text-emerald-300">{passRate}%</p>
+            </div>
           </div>
-          <h1 className="text-2xl font-extrabold text-white">Candidate Grade & Skill Analytics</h1>
-          <p className="text-xs text-slate-300 mt-1 max-w-xl">
-            Real-time tracking of student submission scores, Gemini AI evaluation breakdowns, and candidate skill rubrics.
-          </p>
-        </div>
+        }
+      />
 
-        <div className="bg-slate-800 px-4 py-3 rounded-xl border border-slate-700 flex items-center space-x-3 self-start md:self-auto">
-          <Award className="w-8 h-8 text-amber-400 shrink-0" />
-          <div>
-            <p className="text-[10px] uppercase font-bold text-slate-400">Average Pass Rate</p>
-            <p className="text-xl font-extrabold text-emerald-400">{passRate}%</p>
-          </div>
-        </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          label="Submissions"
+          value={totalSubmissions}
+          hint="All candidates"
+          accent="indigo"
+          icon={<FileCheck2 className="w-5 h-5" />}
+        />
+        <StatCard
+          label="AI Evaluated"
+          value={`${evaluatedCount}/${totalSubmissions || 0}`}
+          hint="Gemini engine"
+          accent="emerald"
+          icon={<TrendingUp className="w-5 h-5" />}
+        />
+        <StatCard
+          label="Average Score"
+          value={avgScore}
+          hint="Across rubrics"
+          accent="amber"
+          icon={<BarChart3 className="w-5 h-5" />}
+        />
+        <StatCard
+          label="Courses"
+          value={courses.length}
+          hint="Active catalog"
+          accent="slate"
+          icon={<ShieldCheck className="w-5 h-5" />}
+        />
       </div>
 
-      {/* KPI Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-1">
-          <div className="flex justify-between items-center text-slate-500 text-xs">
-            <span>Total Submissions</span>
-            <FileCheck2 className="w-4 h-4 text-indigo-500" />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card className="p-5">
+          <h3 className="text-sm font-extrabold text-sf mb-4">Score distribution</h3>
+          <div className="h-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={scoreBuckets}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-sf-border)" />
+                <XAxis dataKey="name" tick={{ fontSize: 11 }} stroke="var(--color-sf-muted)" />
+                <YAxis allowDecimals={false} tick={{ fontSize: 11 }} stroke="var(--color-sf-muted)" />
+                <Tooltip
+                  contentStyle={{
+                    background: 'var(--color-sf-surface)',
+                    border: '1px solid var(--color-sf-border)',
+                    borderRadius: 12,
+                    fontSize: 12,
+                  }}
+                />
+                <Bar dataKey="count" fill="#4f46e5" radius={[8, 8, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
-          <p className="text-2xl font-black text-slate-900">{totalSubmissions}</p>
-          <span className="text-[11px] text-emerald-600 font-medium">100% stored in server store</span>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-1">
-          <div className="flex justify-between items-center text-slate-500 text-xs">
-            <span>AI Evaluated Rate</span>
-            <TrendingUp className="w-4 h-4 text-emerald-500" />
+        </Card>
+        <Card className="p-5">
+          <h3 className="text-sm font-extrabold text-sf mb-4">Submissions over time</h3>
+          <div className="h-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={submissionsOverTime.length ? submissionsOverTime : [{ name: '—', count: 0 }]}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-sf-border)" />
+                <XAxis dataKey="name" tick={{ fontSize: 11 }} stroke="var(--color-sf-muted)" />
+                <YAxis allowDecimals={false} tick={{ fontSize: 11 }} stroke="var(--color-sf-muted)" />
+                <Tooltip
+                  contentStyle={{
+                    background: 'var(--color-sf-surface)',
+                    border: '1px solid var(--color-sf-border)',
+                    borderRadius: 12,
+                    fontSize: 12,
+                  }}
+                />
+                <Line type="monotone" dataKey="count" stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
-          <p className="text-2xl font-black text-slate-900">{evaluatedCount} / {totalSubmissions}</p>
-          <span className="text-[11px] text-slate-400 font-medium">Gemini 3.6 Flash Engine</span>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-1">
-          <div className="flex justify-between items-center text-slate-500 text-xs">
-            <span>Average Score</span>
-            <BarChart3 className="w-4 h-4 text-amber-500" />
-          </div>
-          <p className="text-2xl font-black text-slate-900">{avgScore} / 100</p>
-          <span className="text-[11px] text-indigo-600 font-semibold">Across all course rubrics</span>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-1">
-          <div className="flex justify-between items-center text-slate-500 text-xs">
-            <span>Active Courses</span>
-            <ShieldCheck className="w-4 h-4 text-indigo-600" />
-          </div>
-          <p className="text-2xl font-black text-slate-900">{courses.length}</p>
-          <span className="text-[11px] text-slate-400 font-medium">Full CRUD support</span>
-        </div>
+        </Card>
       </div>
 
-      {/* Candidate Submissions Queue */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="p-5 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4">
+      <Card className="overflow-hidden">
+        <div className="p-5 border-b border-sf flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4">
           <div>
-            <h3 className="text-base font-bold text-slate-900">Candidate Submission Log</h3>
-            <p className="text-xs text-slate-500">
-              Detailed list of candidate submissions with score breakdowns and AI report access.
-            </p>
+            <h3 className="text-base font-bold text-sf">Submission log</h3>
+            <p className="text-xs text-sf-muted">Scores, status, and AI reports</p>
           </div>
-
           <div className="relative w-full sm:w-64">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-sf-muted" />
             <input
               type="text"
               placeholder="Filter candidates..."
               value={searchFilter}
-              onChange={e => setSearchFilter(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+              onChange={(e) => setSearchFilter(e.target.value)}
+              className="w-full h-10 pl-9 pr-3 text-xs border border-sf rounded-xl bg-sf-surface text-sf focus:ring-2 focus:ring-indigo-500/30 outline-none"
             />
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-700">
-            <thead className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-              <tr>
-                <th className="p-3.5">Candidate Name</th>
-                <th className="p-3.5">Assignment & Course</th>
-                <th className="p-3.5">Submitted Date</th>
-                <th className="p-3.5">Status</th>
-                <th className="p-3.5">Score</th>
-                <th className="p-3.5 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 font-medium">
-              {filteredSubmissions.map(sub => (
-                <tr key={sub.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="p-3.5">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center text-xs">
-                        {sub.studentName.charAt(0)}
-                      </div>
-                      <div>
-                        <p className="font-bold text-slate-900">{sub.studentName}</p>
-                        <p className="text-[10px] text-slate-400">{sub.studentEmail}</p>
-                      </div>
-                    </div>
-                  </td>
-
-                  <td className="p-3.5">
-                    <p className="font-bold text-slate-900">{sub.assignmentTitle}</p>
-                    <p className="text-[10px] text-slate-500">{sub.courseTitle}</p>
-                  </td>
-
-                  <td className="p-3.5 text-slate-500">
-                    {new Date(sub.submittedAt).toLocaleDateString()}
-                  </td>
-
-                  <td className="p-3.5">
-                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                      sub.status === 'AI_EVALUATED' ? 'bg-indigo-100 text-indigo-700 border border-indigo-200' :
-                      sub.status === 'GRADED' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' :
-                      'bg-amber-100 text-amber-700 border border-amber-200'
-                    }`}>
-                      {sub.status}
-                    </span>
-                  </td>
-
-                  <td className="p-3.5 font-bold text-slate-900">
-                    {sub.finalScore || sub.aiEvaluation?.overallScore || 'Pending'} / {sub.maxScore}
-                  </td>
-
-                  <td className="p-3.5 text-right">
-                    {sub.aiEvaluation ? (
-                      <button
-                        onClick={() => setSelectedSubReport(sub.aiEvaluation!)}
-                        className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-bold transition-colors inline-flex items-center space-x-1"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>View AI Report</span>
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => onReviewSubmission(sub)}
-                        className="px-3 py-1.5 bg-slate-900 hover:bg-indigo-600 text-white rounded-lg text-xs font-bold transition-colors"
-                      >
-                        Review
-                      </button>
-                    )}
-                  </td>
+        {filteredSubmissions.length === 0 ? (
+          <div className="p-6">
+            <EmptyState title="No submissions found" description="Try a different filter or wait for candidate work." />
+          </div>
+        ) : (
+          <div className="max-h-[28rem] overflow-auto">
+            <table className="min-w-full text-sm">
+              <THead>
+                <tr>
+                  <Th>Candidate</Th>
+                  <Th>Assignment</Th>
+                  <Th>Submitted</Th>
+                  <Th>Status</Th>
+                  <Th>Score</Th>
+                  <Th className="text-right">Action</Th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+              </THead>
+              <tbody>
+                {filteredSubmissions.map((sub) => (
+                  <Tr key={sub.id}>
+                    <Td>
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 font-bold flex items-center justify-center text-xs">
+                          {sub.studentName.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="font-bold text-sf text-xs">{sub.studentName}</p>
+                          <p className="text-[10px] text-sf-muted">{sub.studentEmail}</p>
+                        </div>
+                      </div>
+                    </Td>
+                    <Td>
+                      <p className="font-bold text-sf text-xs">{sub.assignmentTitle}</p>
+                      <p className="text-[10px] text-sf-muted">{sub.courseTitle}</p>
+                    </Td>
+                    <Td className="text-sf-muted text-xs">
+                      {new Date(sub.submittedAt).toLocaleDateString()}
+                    </Td>
+                    <Td>
+                      <Badge tone={statusBadgeTone(sub.status)}>{sub.status.replace(/_/g, ' ')}</Badge>
+                    </Td>
+                    <Td className="font-bold text-sf text-xs">
+                      {sub.finalScore || sub.aiEvaluation?.overallScore || '—'} / {sub.maxScore}
+                    </Td>
+                    <Td className="text-right">
+                      <div className="row-actions-hover inline-flex justify-end">
+                        {sub.aiEvaluation ? (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => setSelectedSubReport(sub.aiEvaluation!)}
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            AI Report
+                          </Button>
+                        ) : (
+                          <Button size="sm" onClick={() => onReviewSubmission(sub)}>
+                            Review
+                          </Button>
+                        )}
+                      </div>
+                    </Td>
+                  </Tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
 
-      {/* AI Evaluation Modal when clicking View AI Report */}
       {selectedSubReport && (
-        <AIEvaluationReport
-          evaluation={selectedSubReport}
-          onClose={() => setSelectedSubReport(null)}
-        />
+        <AIEvaluationReport evaluation={selectedSubReport} onClose={() => setSelectedSubReport(null)} />
       )}
-
     </div>
   );
 }

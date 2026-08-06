@@ -16,9 +16,7 @@ export default function Footer() {
           {/* Column 1: Organization & App Details */}
           <div className="md:col-span-2 space-y-3">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-sm">
-                S
-              </div>
+              <img src="/logo.svg" alt="SkillForge AI" className="w-8 h-8 rounded-lg shadow-sm" />
               <span className="text-xl font-bold tracking-tight text-white">
                 SkillForge AI
               </span>

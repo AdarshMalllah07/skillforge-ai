@@ -8,6 +8,10 @@ export function toClient(doc: any): any | null {
   delete obj.password;
   // Always expose so admin UI can show setup-link actions reliably
   obj.invitePending = Boolean(obj.invitePending);
+  obj.preferences = {
+    theme: obj.preferences?.theme === 'light' || obj.preferences?.theme === 'dark' ? obj.preferences.theme : 'system',
+    sidebarCollapsed: Boolean(obj.preferences?.sidebarCollapsed),
+  };
   return obj;
 }
 

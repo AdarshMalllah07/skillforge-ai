@@ -1,5 +1,17 @@
 export type UserRole = 'STUDENT' | 'INSTRUCTOR' | 'EVALUATOR' | 'ADMIN';
 
+export type ThemePreference = 'light' | 'dark' | 'system';
+
+export interface UserPreferences {
+  theme: ThemePreference;
+  sidebarCollapsed: boolean;
+}
+
+export const DEFAULT_USER_PREFERENCES: UserPreferences = {
+  theme: 'system',
+  sidebarCollapsed: false,
+};
+
 export interface User {
   id: string;
   name: string;
@@ -12,6 +24,7 @@ export interface User {
   githubUrl?: string;
   linkedInUrl?: string;
   invitePending?: boolean;
+  preferences?: UserPreferences;
   createdAt?: string;
 }
 

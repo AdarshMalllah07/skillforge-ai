@@ -7,6 +7,9 @@ import {
   ArrowLeft, BookOpen, Layers, CheckCircle2, Clock, Code, FileText, 
   Sparkles, Send, ShieldAlert, Award, Plus, Trash2, Edit 
 } from 'lucide-react';
+import { Breadcrumbs } from './ui/Breadcrumbs';
+import { AiLoadingBubble, AiMessage } from './ui/AiMessage';
+import { Button } from './ui/Button';
 
 interface CourseDetailViewProps {
   course: Course;
@@ -32,14 +35,18 @@ export default function CourseDetailView({
   const [isEnrolled, setIsEnrolled] = useState(currentUser?.role !== 'STUDENT');
 
   // AI Tutor Chat State
-  const [chatMessages, setChatMessages] = useState<{ sender: 'user' | 'ai'; text: string }[]>([
+  const [chatMessages, setChatMessages] = useState<
+    { sender: 'user' | 'ai'; text: string; typing?: boolean; id: string }[]
+  >([
     {
+      id: 'welcome',
       sender: 'ai',
-      text: `Hello! I am your AI Teaching Assistant for "${course.title}". Ask me any architectural questions, Next.js 16 concepts, or help with code challenges!`,
+      text: `Hello! I am your AI Teaching Assistant for **${course.title}**. Ask me architectural questions, Next.js concepts, or help with code challenges.`,
     },
   ]);
   const [inputPrompt, setInputPrompt] = useState('');
   const [isAiThinking, setIsAiThinking] = useState(false);
+  const [lastUserPrompt, setLastUserPrompt] = useState('');
 
   const handleEnroll = async () => {
     try {
@@ -50,14 +57,23 @@ export default function CourseDetailView({
     }
   };
 
-  const handleSendTutorMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inputPrompt.trim() || isAiThinking) return;
-
-    const userMsg = inputPrompt;
-    setInputPrompt('');
-    setChatMessages(prev => [...prev, { sender: 'user', text: userMsg }]);
+  const askTutor = async (userMsg: string, opts?: { replaceLastAi?: boolean }) => {
+    if (!userMsg.trim() || isAiThinking) return;
+    setLastUserPrompt(userMsg);
     setIsAiThinking(true);
+
+    if (!opts?.replaceLastAi) {
+      setChatMessages((prev) => [
+        ...prev,
+        { id: `u_${Date.now()}`, sender: 'user', text: userMsg },
+      ]);
+    } else {
+      setChatMessages((prev) => {
+        const next = [...prev];
+        if (next[next.length - 1]?.sender === 'ai') next.pop();
+        return next;
+      });
+    }
 
     try {
       const data = await api<{ reply: string }>('/api/ai/tutor-chat', {
@@ -69,31 +85,51 @@ export default function CourseDetailView({
         }),
       });
 
-      setChatMessages(prev => [
+      setChatMessages((prev) => [
         ...prev,
-        { sender: 'ai', text: data.reply || 'I could not generate a response right now.' },
+        {
+          id: `a_${Date.now()}`,
+          sender: 'ai',
+          text: data.reply || 'I could not generate a response right now.',
+          typing: true,
+        },
       ]);
-    } catch (err: any) {
-      setChatMessages(prev => [
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Tutor chat unavailable. Check Gemini API key.';
+      setChatMessages((prev) => [
         ...prev,
-        { sender: 'ai', text: err.message || 'Tutor chat unavailable. Check Gemini API key.' },
+        { id: `a_err_${Date.now()}`, sender: 'ai', text: message },
       ]);
     } finally {
       setIsAiThinking(false);
     }
   };
 
+  const handleSendTutorMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inputPrompt.trim() || isAiThinking) return;
+    const userMsg = inputPrompt;
+    setInputPrompt('');
+    await askTutor(userMsg);
+  };
+
   return (
     <div className="space-y-6">
-      
-      {/* Top Navigation */}
-      <button
-        onClick={onBack}
-        className="inline-flex items-center text-xs font-bold text-slate-600 hover:text-indigo-600 bg-white px-3 py-1.5 rounded-lg border border-slate-200 transition-colors shadow-2xs"
-      >
-        <ArrowLeft className="w-4 h-4 mr-1.5" />
-        Back to Course Catalog
-      </button>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Breadcrumbs
+          items={[
+            { label: 'Catalog', href: '/courses' },
+            { label: course.title },
+          ]}
+        />
+        <button
+          onClick={onBack}
+          className="inline-flex items-center text-xs font-bold text-sf-muted hover:text-indigo-600 bg-sf-surface px-3 py-2 rounded-xl border border-sf transition-colors shadow-sf-xs min-h-11"
+        >
+          <ArrowLeft className="w-4 h-4 mr-1.5" />
+          Back to Catalog
+        </button>
+      </div>
 
       {/* Course Header Banner */}
       <div className="bg-slate-900 rounded-2xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-slate-800">
@@ -357,59 +393,59 @@ export default function CourseDetailView({
 
       {/* TAB 3: AI TUTOR */}
       {activeTab === 'ai_tutor' && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-4 max-w-4xl mx-auto">
-          <div className="flex items-center space-x-3 border-b border-slate-100 pb-4">
-            <div className="p-2 bg-indigo-100 rounded-xl text-indigo-600">
+        <div className="bg-sf-surface rounded-2xl border border-sf shadow-sf-sm p-4 sm:p-6 space-y-4 max-w-4xl mx-auto">
+          <div className="flex items-center gap-3 border-b border-sf pb-4">
+            <div className="p-2 bg-indigo-100 dark:bg-indigo-950 rounded-xl text-indigo-600 dark:text-indigo-300">
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-900">Interactive AI Tutor Assistant</h3>
-              <p className="text-xs text-slate-500">Powered by Gemini 3.6 Flash &bull; Contextualized for {course.title}</p>
+              <h3 className="text-base font-bold text-sf">AI Tutor Assistant</h3>
+              <p className="text-xs text-sf-muted">
+                Gemini · Contextualized for {course.title}
+              </p>
             </div>
           </div>
 
-          <div className="h-80 overflow-y-auto space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs">
+          <div className="h-96 overflow-y-auto space-y-4 p-3 sm:p-4 bg-sf-surface-2/60 rounded-xl border border-sf">
             {chatMessages.map((msg, idx) => (
               <div
-                key={idx}
+                key={msg.id}
                 className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
               >
-                <div
-                  className={`max-w-lg p-3.5 rounded-2xl leading-relaxed ${
-                    msg.sender === 'user'
-                      ? 'bg-indigo-600 text-white rounded-br-none'
-                      : 'bg-white text-slate-800 border border-slate-200 shadow-2xs rounded-bl-none'
-                  }`}
-                >
-                  <p className="whitespace-pre-wrap">{msg.text}</p>
-                </div>
+                {msg.sender === 'user' ? (
+                  <div className="max-w-lg p-3.5 rounded-2xl rounded-br-md bg-indigo-600 text-white text-sm leading-relaxed">
+                    {msg.text}
+                  </div>
+                ) : (
+                  <div className="max-w-2xl w-full">
+                    <AiMessage
+                      content={msg.text}
+                      typing={Boolean(msg.typing)}
+                      onRegenerate={
+                        idx === chatMessages.length - 1 && lastUserPrompt
+                          ? () => askTutor(lastUserPrompt, { replaceLastAi: true })
+                          : undefined
+                      }
+                    />
+                  </div>
+                )}
               </div>
             ))}
-            {isAiThinking && (
-              <div className="flex justify-start">
-                <div className="bg-white border border-slate-200 p-3 rounded-2xl text-slate-500 text-xs animate-pulse">
-                  Gemini AI Tutor is formulating a response...
-                </div>
-              </div>
-            )}
+            {isAiThinking ? <AiLoadingBubble label="Gemini AI Tutor is formulating a response…" /> : null}
           </div>
 
           <form onSubmit={handleSendTutorMessage} className="flex gap-2">
             <input
               type="text"
-              placeholder="Ask a question about Server Actions, Next.js 16, or code bugs..."
+              placeholder="Ask about architecture, bugs, or course concepts…"
               value={inputPrompt}
-              onChange={e => setInputPrompt(e.target.value)}
-              className="flex-1 text-xs p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500"
+              onChange={(e) => setInputPrompt(e.target.value)}
+              className="flex-1 text-sm p-3 border border-sf rounded-xl bg-sf-surface text-sf focus:ring-2 focus:ring-indigo-500/30 outline-none min-h-11"
             />
-            <button
-              type="submit"
-              disabled={isAiThinking}
-              className="px-5 py-3 bg-indigo-600 text-white font-bold rounded-xl text-xs hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center space-x-1.5"
-            >
-              <span>Ask</span>
+            <Button type="submit" disabled={isAiThinking} className="min-h-11">
+              Ask
               <Send className="w-3.5 h-3.5" />
-            </button>
+            </Button>
           </form>
         </div>
       )}

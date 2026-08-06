@@ -3,6 +3,9 @@ import React, { useState } from 'react';
 import { useAuth } from '../lib/authContext';
 import { useUi } from './ui/UiProvider';
 import Select from './ui/Select';
+import { PageHero } from './ui/PageHero';
+import { StatCard } from './ui/Card';
+import { Button } from './ui/Button';
 import { User, UserRole } from '../types';
 import { 
   UserPlus, Search, Filter, Shield, GraduationCap, CheckCircle2, 
@@ -240,89 +243,44 @@ export default function AdminUserManagement({ onViewUserCurriculums, onViewUserS
 
   return (
     <div className="space-y-6">
-      
-      {/* Header Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-2xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 transform translate-x-8 -translate-y-8 opacity-10 pointer-events-none">
-          <Shield className="w-80 h-80 text-indigo-400" />
-        </div>
-
-        <div className="relative z-10 space-y-3">
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 text-xs font-bold">
+      <PageHero
+        tone="violet"
+        eyebrow={
+          <>
             <Shield className="w-3.5 h-3.5" />
-            <span>Super Admin & System Security Console</span>
-          </div>
+            Super Admin Console
+          </>
+        }
+        title="User Directory & Role Administration"
+        description="Manage members, assign roles, and supervise evaluation permissions."
+        icon={<Shield className="w-80 h-80 text-indigo-400" />}
+        actions={
+          <Button onClick={handleOpenCreateModal}>
+            <UserPlus className="w-4 h-4" />
+            Create New User
+          </Button>
+        }
+      />
 
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-            User Directory & Role Administration
-          </h1>
-          <p className="text-slate-300 text-xs sm:text-sm max-w-2xl leading-relaxed">
-            Manage all platform members, assign elevated roles (Instructors, Evaluators, Admins), inspect user curriculums, and supervise candidate evaluation permissions.
-          </p>
-
-          <div className="pt-2 flex flex-wrap gap-3">
-            <button
-              onClick={handleOpenCreateModal}
-              className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs rounded-xl shadow-md transition-all flex items-center space-x-2"
-            >
-              <UserPlus className="w-4 h-4" />
-              <span>Create New User (Assign Role)</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Role Distribution Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
-          <div className="flex items-center justify-between text-slate-500">
-            <span className="text-xs font-bold uppercase tracking-wider">Admins</span>
-            <Shield className="w-4 h-4 text-purple-600" />
-          </div>
-          <p className="text-2xl font-black text-slate-900 mt-1">{adminCount}</p>
-          <span className="text-[10px] text-purple-600 font-medium">Full system access</span>
-        </div>
-
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
-          <div className="flex items-center justify-between text-slate-500">
-            <span className="text-xs font-bold uppercase tracking-wider">Instructors</span>
-            <GraduationCap className="w-4 h-4 text-indigo-600" />
-          </div>
-          <p className="text-2xl font-black text-slate-900 mt-1">{instructorCount}</p>
-          <span className="text-[10px] text-indigo-600 font-medium">Course & Rubric Creators</span>
-        </div>
-
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
-          <div className="flex items-center justify-between text-slate-500">
-            <span className="text-xs font-bold uppercase tracking-wider">Students</span>
-            <UserIcon className="w-4 h-4 text-emerald-600" />
-          </div>
-          <p className="text-2xl font-black text-slate-900 mt-1">{studentCount}</p>
-          <span className="text-[10px] text-emerald-600 font-medium">Candidates Enrolled</span>
-        </div>
-
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
-          <div className="flex items-center justify-between text-slate-500">
-            <span className="text-xs font-bold uppercase tracking-wider">Evaluators</span>
-            <CheckCircle2 className="w-4 h-4 text-amber-600" />
-          </div>
-          <p className="text-2xl font-black text-slate-900 mt-1">{evaluatorCount}</p>
-          <span className="text-[10px] text-amber-600 font-medium">Technical Assessors</span>
-        </div>
+        <StatCard label="Admins" value={adminCount} hint="Full system access" accent="violet" icon={<Shield className="w-5 h-5" />} />
+        <StatCard label="Instructors" value={instructorCount} hint="Course creators" accent="indigo" icon={<GraduationCap className="w-5 h-5" />} />
+        <StatCard label="Students" value={studentCount} hint="Active candidates" accent="emerald" icon={<UserIcon className="w-5 h-5" />} />
+        <StatCard label="Evaluators" value={evaluatorCount} hint="Assessor desk" accent="amber" icon={<CheckCircle2 className="w-5 h-5" />} />
       </div>
 
       {/* Filter & Toolbar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="bg-sf-surface p-4 rounded-2xl border border-sf shadow-sf-sm flex flex-col md:flex-row items-center justify-between gap-4">
         
         {/* Search */}
         <div className="relative w-full md:w-96">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-sf-muted" />
           <input
             type="text"
             placeholder="Search user by name, email, or title..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full text-xs pl-9 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500"
+            className="w-full text-xs pl-9 pr-4 py-2.5 border border-sf rounded-xl bg-sf-surface text-sf focus:ring-2 focus:ring-indigo-500/30 min-h-11"
           />
         </div>
 

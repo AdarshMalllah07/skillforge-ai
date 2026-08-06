@@ -154,7 +154,7 @@ export function UiProvider({ children }: { children: React.ReactNode }) {
             role="alertdialog"
             aria-modal="true"
             aria-labelledby="ui-confirm-title"
-            className="relative z-10 w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-2xl p-5 space-y-4"
+            className="relative z-10 w-full max-w-md bg-sf-surface rounded-2xl border border-sf shadow-sf-lg p-5 space-y-4"
           >
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -209,7 +209,7 @@ export function UiProvider({ children }: { children: React.ReactNode }) {
             role="alertdialog"
             aria-modal="true"
             aria-labelledby="ui-alert-title"
-            className="relative z-10 w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-2xl p-5 space-y-4"
+            className="relative z-10 w-full max-w-md bg-sf-surface rounded-2xl border border-sf shadow-sf-lg p-5 space-y-4"
           >
             <div className="flex items-start gap-3">
               <AlertIcon variant={alertState.options.variant} />
@@ -254,16 +254,16 @@ export function UiProvider({ children }: { children: React.ReactNode }) {
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`pointer-events-auto flex items-start gap-2 rounded-xl border px-3.5 py-3 shadow-lg bg-white text-xs ${
+            className={`pointer-events-auto flex items-start gap-2 rounded-xl border px-3.5 py-3 shadow-sf-md bg-sf-surface text-xs ${
               t.variant === 'error'
-                ? 'border-red-200'
+                ? 'border-red-200 dark:border-red-900'
                 : t.variant === 'success'
-                  ? 'border-emerald-200'
-                  : 'border-slate-200'
+                  ? 'border-emerald-200 dark:border-emerald-900'
+                  : 'border-sf'
             }`}
           >
             <AlertIcon variant={t.variant} />
-            <p className="flex-1 text-slate-700 font-medium leading-relaxed">{t.message}</p>
+            <p className="flex-1 text-sf font-medium leading-relaxed">{t.message}</p>
             <button
               type="button"
               onClick={() => dismissToast(t.id)}

@@ -3,6 +3,9 @@ import React, { useState } from 'react';
 import { Course, FilterOptions } from '../types';
 import { useAuth } from '../lib/authContext';
 import Select from './ui/Select';
+import { PageHero } from './ui/PageHero';
+import { EmptyState } from './ui/EmptyState';
+import { Button } from './ui/Button';
 import { 
   Plus, Search, Filter, Sparkles, BookOpen, Layers, Users, Star, 
   Trash2, Edit, ExternalLink, AlertCircle, ArrowRight, CheckCircle,
@@ -110,70 +113,46 @@ export default function CourseCatalog({
 
   return (
     <div className="space-y-8">
-      
-      {/* Header Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-2xl p-6 sm:p-8 text-white shadow-xl border border-slate-800 relative overflow-hidden">
-        <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-gradient-to-l from-indigo-500/10 to-transparent pointer-events-none" />
-        
-        <div className="max-w-3xl space-y-3 relative z-10">
-          <div className="flex items-center space-x-2">
-            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-              House of EdTech Evaluation Suite
-            </span>
-            <span className="text-xs text-slate-400">&bull;</span>
-            <span className="text-xs text-slate-400">Next.js 16 Fullstack CRUD</span>
-          </div>
+      <PageHero
+        tone="slate"
+        eyebrow="House of EdTech Evaluation Suite"
+        title="Curriculum & Assessment Catalog"
+        description="Explore production-grade courses, coding challenges, and AI submission rubrics."
+        actions={
+          isInstructor ? (
+            <>
+              <Button onClick={handleOpenCreateModal}>
+                <Plus className="w-4 h-4" />
+                Create Course
+              </Button>
+              <Button
+                onClick={onOpenAIGenerator}
+                className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500"
+              >
+                <Sparkles className="w-4 h-4 text-amber-300" />
+                Generate via AI
+              </Button>
+            </>
+          ) : (
+            <div className="text-xs text-emerald-200 font-medium flex items-center bg-emerald-950/40 px-3 py-2 rounded-lg border border-emerald-500/20">
+              <CheckCircle className="w-3.5 h-3.5 mr-1.5 text-emerald-400" />
+              Candidate view — enroll and submit from any course
+            </div>
+          )
+        }
+      />
 
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-            Curriculum & Assessment Catalog
-          </h1>
-          <p className="text-slate-300 text-sm leading-relaxed">
-            Explore production-grade courses, interactive coding challenges, and AI submission rubrics. Designed for high-impact technical evaluation without basic todo lists or superficial CRUD.
-          </p>
-
-          <div className="flex flex-wrap items-center gap-3 pt-3">
-            {isInstructor && (
-              <>
-                <button
-                  onClick={handleOpenCreateModal}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold shadow-md hover:shadow-indigo-500/20 transition-all flex items-center space-x-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Create Course (CRUD)</span>
-                </button>
-
-                <button
-                  onClick={onOpenAIGenerator}
-                  className="px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold shadow-md transition-all flex items-center space-x-2 border border-violet-400/30"
-                >
-                  <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
-                  <span>Generate Course via AI</span>
-                </button>
-              </>
-            )}
-
-            {!isInstructor && (
-              <div className="text-xs text-emerald-300 font-medium flex items-center bg-emerald-950/40 px-3 py-1.5 rounded-lg border border-emerald-500/20">
-                <CheckCircle className="w-3.5 h-3.5 mr-1.5 text-emerald-400" />
-                Active Mode: Student / Candidate View (Select any course to enroll & submit assignments)
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Filter Toolbar */}
-      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-3 md:space-y-0 md:flex md:items-center md:justify-between md:gap-4">
+      <div className="bg-sf-surface p-4 sm:p-5 rounded-2xl border border-sf shadow-sf-sm space-y-3 md:space-y-0 md:flex md:items-center md:justify-between md:gap-4">
         
         {/* Search Bar */}
         <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-sf-muted" />
           <input
             type="text"
             placeholder="Search courses by title, tags, or concepts..."
             value={filters.search}
             onChange={e => setFilters({ ...filters, search: e.target.value })}
-            className="w-full text-xs pl-10 pr-9 py-2.5 border border-slate-200 rounded-xl bg-slate-50/50 hover:bg-white focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-slate-900 placeholder:text-slate-400"
+            className="w-full text-xs pl-10 pr-9 py-2.5 border border-sf rounded-xl bg-sf-surface-2/50 hover:bg-sf-surface focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-sf placeholder:text-sf-muted min-h-11"
           />
           {filters.search && (
             <button
@@ -348,19 +327,13 @@ export default function CourseCatalog({
       </div>
 
       {filteredCourses.length === 0 && (
-        <div className="bg-white rounded-2xl p-12 border border-slate-200 text-center space-y-3">
-          <BookOpen className="w-10 h-10 text-slate-300 mx-auto" />
-          <h3 className="text-base font-bold text-slate-800">No courses match your filter criteria</h3>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto">
-            Try adjusting your search query, selecting another category, or generate a new course using the AI Architect.
-          </p>
-          <button
-            onClick={() => setFilters({ search: '', category: 'ALL', level: 'ALL', status: 'ALL' })}
-            className="px-3.5 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100"
-          >
-            Reset Filters
-          </button>
-        </div>
+        <EmptyState
+          title="No courses match your filters"
+          description="Try adjusting search or category, or generate a new course with AI Architect."
+          actionLabel="Reset Filters"
+          onAction={() => setFilters({ search: '', category: 'ALL', level: 'ALL', status: 'ALL' })}
+          icon={<BookOpen className="w-7 h-7" />}
+        />
       )}
 
       {/* Delete Confirmation Modal */}
