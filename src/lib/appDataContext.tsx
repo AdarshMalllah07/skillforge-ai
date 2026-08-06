@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { useRouter } from 'next/navigation';
 import { api } from './api';
 import { useAuth } from './authContext';
+import { getUi } from '../components/ui/UiProvider';
 import { Course, Submission, Assignment } from '../types';
 
 interface AppDataContextType {
@@ -69,7 +70,10 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       setCourses((prev) => [newCourse, ...prev]);
     } catch (err) {
       console.error('Create course error', err);
-      alert(err instanceof Error ? err.message : 'Failed to create course');
+      getUi().toast({
+        message: err instanceof Error ? err.message : 'Failed to create course',
+        variant: 'error',
+      });
     }
   };
 

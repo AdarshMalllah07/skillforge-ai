@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Course } from '../types';
 import { useAuth } from '../lib/authContext';
 import { api } from '../lib/api';
+import Select from './ui/Select';
 import { Sparkles, ArrowRight, CheckCircle2, Layers, BookOpen, Code, AlertCircle, RefreshCw } from 'lucide-react';
 
 interface AICurriculumGeneratorProps {
@@ -113,29 +114,31 @@ export default function AICurriculumGenerator({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">Category Domain</label>
-              <select
+              <Select
                 value={targetCategory}
-                onChange={e => setTargetCategory(e.target.value)}
-                className="w-full text-xs p-2.5 border border-slate-300 rounded-xl bg-white"
-              >
-                <option value="Next.js & Frontend">Next.js & Frontend</option>
-                <option value="Backend & Node.js">Backend & Node.js</option>
-                <option value="Databases & System Design">Databases & System Design</option>
-                <option value="General Tech">General Tech</option>
-              </select>
+                onChange={setTargetCategory}
+                aria-label="Category domain"
+                options={[
+                  { value: 'Next.js & Frontend', label: 'Next.js & Frontend' },
+                  { value: 'Backend & Node.js', label: 'Backend & Node.js' },
+                  { value: 'Databases & System Design', label: 'Databases & System Design' },
+                  { value: 'General Tech', label: 'General Tech' },
+                ]}
+              />
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">Target Skill Level</label>
-              <select
+              <Select
                 value={targetLevel}
-                onChange={e => setTargetLevel(e.target.value as any)}
-                className="w-full text-xs p-2.5 border border-slate-300 rounded-xl bg-white"
-              >
-                <option value="BEGINNER">Beginner</option>
-                <option value="INTERMEDIATE">Intermediate</option>
-                <option value="ADVANCED">Advanced</option>
-              </select>
+                onChange={(v) => setTargetLevel(v as 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED')}
+                aria-label="Target skill level"
+                options={[
+                  { value: 'BEGINNER', label: 'Beginner' },
+                  { value: 'INTERMEDIATE', label: 'Intermediate' },
+                  { value: 'ADVANCED', label: 'Advanced' },
+                ]}
+              />
             </div>
           </div>
 

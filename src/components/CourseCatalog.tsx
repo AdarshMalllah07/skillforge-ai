@@ -2,10 +2,11 @@
 import React, { useState } from 'react';
 import { Course, FilterOptions } from '../types';
 import { useAuth } from '../lib/authContext';
+import Select from './ui/Select';
 import { 
   Plus, Search, Filter, Sparkles, BookOpen, Layers, Users, Star, 
   Trash2, Edit, ExternalLink, AlertCircle, ArrowRight, CheckCircle,
-  ChevronDown, SlidersHorizontal, RotateCcw, X
+  SlidersHorizontal, RotateCcw, X
 } from 'lucide-react';
 
 interface CourseCatalogProps {
@@ -192,50 +193,47 @@ export default function CourseCatalog({
           </div>
 
           {/* Category Dropdown */}
-          <div className="relative">
-            <select
-              value={filters.category}
-              onChange={e => setFilters({ ...filters, category: e.target.value })}
-              className="text-xs font-semibold border border-slate-200 rounded-xl pl-3 pr-8 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-700 transition-all cursor-pointer appearance-none"
-            >
-              {categories.map(cat => (
-                <option key={cat} value={cat}>
-                  {cat === 'ALL' ? 'Category: All' : `Category: ${cat}`}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-          </div>
+          <Select
+            value={filters.category}
+            onChange={(category) => setFilters({ ...filters, category })}
+            aria-label="Filter by category"
+            className="min-w-[10rem]"
+            buttonClassName="border-slate-200 bg-slate-50/50 hover:bg-white"
+            options={categories.map((cat) => ({
+              value: cat,
+              label: cat === 'ALL' ? 'Category: All' : `Category: ${cat}`,
+            }))}
+          />
 
           {/* Level Dropdown */}
-          <div className="relative">
-            <select
-              value={filters.level}
-              onChange={e => setFilters({ ...filters, level: e.target.value })}
-              className="text-xs font-semibold border border-slate-200 rounded-xl pl-3 pr-8 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-700 transition-all cursor-pointer appearance-none"
-            >
-              <option value="ALL">Level: All Levels</option>
-              <option value="BEGINNER">Level: Beginner</option>
-              <option value="INTERMEDIATE">Level: Intermediate</option>
-              <option value="ADVANCED">Level: Advanced</option>
-            </select>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-          </div>
+          <Select
+            value={filters.level}
+            onChange={(level) => setFilters({ ...filters, level })}
+            aria-label="Filter by level"
+            className="min-w-[10rem]"
+            buttonClassName="border-slate-200 bg-slate-50/50 hover:bg-white"
+            options={[
+              { value: 'ALL', label: 'Level: All Levels' },
+              { value: 'BEGINNER', label: 'Level: Beginner' },
+              { value: 'INTERMEDIATE', label: 'Level: Intermediate' },
+              { value: 'ADVANCED', label: 'Level: Advanced' },
+            ]}
+          />
 
           {/* Status Dropdown (Instructors/Evaluators) */}
           {isInstructor && (
-            <div className="relative">
-              <select
-                value={filters.status}
-                onChange={e => setFilters({ ...filters, status: e.target.value })}
-                className="text-xs font-semibold border border-slate-200 rounded-xl pl-3 pr-8 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-700 transition-all cursor-pointer appearance-none"
-              >
-                <option value="ALL">Status: All</option>
-                <option value="PUBLISHED">Status: Published</option>
-                <option value="DRAFT">Status: Draft</option>
-              </select>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
+            <Select
+              value={filters.status}
+              onChange={(status) => setFilters({ ...filters, status })}
+              aria-label="Filter by status"
+              className="min-w-[9rem]"
+              buttonClassName="border-slate-200 bg-slate-50/50 hover:bg-white"
+              options={[
+                { value: 'ALL', label: 'Status: All' },
+                { value: 'PUBLISHED', label: 'Status: Published' },
+                { value: 'DRAFT', label: 'Status: Draft' },
+              ]}
+            />
           )}
 
           {/* Reset Filters */}
@@ -433,29 +431,36 @@ export default function CourseCatalog({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Category</label>
-                  <select
+                  <Select
                     value={formData.category}
-                    onChange={e => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full p-2 text-xs border border-slate-300 rounded-lg bg-white"
-                  >
-                    <option value="Next.js & Frontend">Next.js & Frontend</option>
-                    <option value="Backend & Node.js">Backend & Node.js</option>
-                    <option value="Databases & System Design">Databases & System Design</option>
-                    <option value="General Tech">General Tech</option>
-                  </select>
+                    onChange={(category) => setFormData({ ...formData, category })}
+                    aria-label="Course category"
+                    options={[
+                      { value: 'Next.js & Frontend', label: 'Next.js & Frontend' },
+                      { value: 'Backend & Node.js', label: 'Backend & Node.js' },
+                      { value: 'Databases & System Design', label: 'Databases & System Design' },
+                      { value: 'General Tech', label: 'General Tech' },
+                    ]}
+                  />
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Target Skill Level</label>
-                  <select
+                  <Select
                     value={formData.level}
-                    onChange={e => setFormData({ ...formData, level: e.target.value as any })}
-                    className="w-full p-2 text-xs border border-slate-300 rounded-lg bg-white"
-                  >
-                    <option value="BEGINNER">Beginner</option>
-                    <option value="INTERMEDIATE">Intermediate</option>
-                    <option value="ADVANCED">Advanced</option>
-                  </select>
+                    onChange={(level) =>
+                      setFormData({
+                        ...formData,
+                        level: level as 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED',
+                      })
+                    }
+                    aria-label="Course skill level"
+                    options={[
+                      { value: 'BEGINNER', label: 'Beginner' },
+                      { value: 'INTERMEDIATE', label: 'Intermediate' },
+                      { value: 'ADVANCED', label: 'Advanced' },
+                    ]}
+                  />
                 </div>
               </div>
 

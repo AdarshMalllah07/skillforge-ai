@@ -1,6 +1,8 @@
 'use client';
 import React, { useState } from 'react';
 import { useAuth } from '../lib/authContext';
+import { useUi } from './ui/UiProvider';
+import Select from './ui/Select';
 import { User, UserRole } from '../types';
 import { 
   UserPlus, Search, Filter, Shield, GraduationCap, CheckCircle2, 
@@ -22,6 +24,7 @@ export default function AdminUserManagement({ onViewUserCurriculums, onViewUserS
     deleteUserByAdmin,
     resendSetupEmailByAdmin,
   } = useAuth();
+  const { confirm, alert, toast } = useUi();
 
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('ALL');
@@ -188,13 +191,17 @@ export default function AdminUserManagement({ onViewUserCurriculums, onViewUserS
         const when = result.expiresAt
           ? new Date(result.expiresAt).toLocaleString()
           : 'soon';
-        const proceed = window.confirm(
-          `${result.message}\n\nActive link expires: ${when}\n\nSend a new setup link anyway? The old link will stop working.`
-        );
+        const proceed = await confirm({
+          title: 'Active setup link exists',
+          message: `${result.message}\n\nActive link expires: ${when}\n\nSend a new setup link anyway? The old link will stop working.`,
+          confirmLabel: 'Send new link',
+          cancelLabel: 'Keep existing',
+          variant: 'warning',
+        });
         if (proceed) {
           const forced = await resendSetupEmailByAdmin(user.id, { force: true });
           if (forced.status === 'sent') {
-            alert(forced.message);
+            toast({ message: forced.message, variant: 'success' });
             setEditingUser((prev) =>
               prev && prev.id === user.id ? { ...prev, invitePending: true } : prev
             );
@@ -202,12 +209,16 @@ export default function AdminUserManagement({ onViewUserCurriculums, onViewUserS
         }
         return;
       }
-      alert(result.message);
+      toast({ message: result.message, variant: 'success' });
       setEditingUser((prev) =>
         prev && prev.id === user.id ? { ...prev, invitePending: true } : prev
       );
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to send setup email');
+      await alert({
+        title: 'Could not send setup email',
+        message: err instanceof Error ? err.message : 'Failed to send setup email',
+        variant: 'error',
+      });
     } finally {
       setResendingId(null);
     }
@@ -321,17 +332,20 @@ export default function AdminUserManagement({ onViewUserCurriculums, onViewUserS
             <Filter className="w-4 h-4 text-slate-400" />
             <span>Role:</span>
           </div>
-          <select
+          <Select
             value={roleFilter}
-            onChange={e => setRoleFilter(e.target.value)}
-            className="text-xs border border-slate-300 rounded-xl px-3 py-2 bg-slate-50 font-bold text-slate-700"
-          >
-            <option value="ALL">All Roles ({usersList.length})</option>
-            <option value="ADMIN">Admins ({adminCount})</option>
-            <option value="INSTRUCTOR">Instructors ({instructorCount})</option>
-            <option value="STUDENT">Students ({studentCount})</option>
-            <option value="EVALUATOR">Evaluators ({evaluatorCount})</option>
-          </select>
+            onChange={setRoleFilter}
+            aria-label="Filter by role"
+            className="min-w-[11rem]"
+            buttonClassName="bg-slate-50 font-bold"
+            options={[
+              { value: 'ALL', label: `All Roles (${usersList.length})` },
+              { value: 'ADMIN', label: `Admins (${adminCount})` },
+              { value: 'INSTRUCTOR', label: `Instructors (${instructorCount})` },
+              { value: 'STUDENT', label: `Students (${studentCount})` },
+              { value: 'EVALUATOR', label: `Evaluators (${evaluatorCount})` },
+            ]}
+          />
         </div>
 
       </div>
@@ -441,10 +455,15 @@ export default function AdminUserManagement({ onViewUserCurriculums, onViewUserS
 
                 {user.id !== currentUser.id && (
                   <button
-                    onClick={() => {
-                      if (confirm(`Are you sure you want to delete user ${user.name}?`)) {
-                        deleteUserByAdmin(user.id);
-                      }
+                    onClick={async () => {
+                      const ok = await confirm({
+                        title: 'Delete user',
+                        message: `Are you sure you want to delete ${user.name}? This cannot be undone.`,
+                        confirmLabel: 'Delete',
+                        cancelLabel: 'Cancel',
+                        variant: 'danger',
+                      });
+                      if (ok) deleteUserByAdmin(user.id);
                     }}
                     className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                     title="Delete User"
