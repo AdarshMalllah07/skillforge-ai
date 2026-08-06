@@ -44,12 +44,14 @@ export function StatCard({
   };
 
   return (
-    <Card hover className="p-4 sm:p-5">
+    <Card hover className="p-4 sm:p-5 overflow-visible">
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 space-y-1">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-sf-muted">{label}</p>
-          <p className="text-2xl font-black tracking-tight text-sf truncate">{value}</p>
-          {hint ? <p className="text-[11px] text-sf-muted">{hint}</p> : null}
+        <div className="min-w-0 flex-1 space-y-1">
+          <p className="text-[11px] font-bold uppercase tracking-wide text-sf-muted leading-snug break-words">
+            {label}
+          </p>
+          <p className="text-2xl font-black tracking-tight text-sf leading-none">{value}</p>
+          {hint ? <p className="text-[11px] text-sf-muted leading-snug">{hint}</p> : null}
         </div>
         {icon ? (
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${accentMap[accent]}`}>

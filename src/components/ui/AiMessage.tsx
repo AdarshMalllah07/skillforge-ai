@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import { Check, Copy, RefreshCw } from 'lucide-react';
 import { useUi } from './UiProvider';
+import { ErrorBoundary } from './ErrorBoundary';
 
 function prefersReducedMotion() {
   if (typeof window === 'undefined') return true;
@@ -115,47 +116,56 @@ export function AiMessage({
 
   const markdown = useMemo(
     () => (
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeHighlight]}
-        components={{
-          code({ className, children, ...props }) {
-            const isBlock = Boolean(className) || String(children).includes('\n');
-            if (!isBlock) {
+      <ErrorBoundary
+        fallback={<p className="whitespace-pre-wrap leading-relaxed text-sf">{displayed}</p>}
+      >
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeHighlight]}
+          components={{
+            code({ className, children, ...props }) {
+              const isBlock = Boolean(className) || String(children).includes('\n');
+              if (!isBlock) {
+                return (
+                  <code
+                    className="px-1.5 py-0.5 rounded-md bg-sf-surface-2 text-[12px] font-mono text-sf-accent"
+                    {...props}
+                  >
+                    {children}
+                  </code>
+                );
+              }
+              return <CodeBlock className={className}>{children}</CodeBlock>;
+            },
+            pre({ children }) {
+              return <>{children}</>;
+            },
+            a({ href, children }) {
               return (
-                <code
-                  className="px-1.5 py-0.5 rounded-md bg-sf-surface-2 text-[12px] font-mono text-sf-accent"
-                  {...props}
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-indigo-500 underline underline-offset-2"
                 >
                   {children}
-                </code>
+                </a>
               );
-            }
-            return <CodeBlock className={className}>{children}</CodeBlock>;
-          },
-          pre({ children }) {
-            return <>{children}</>;
-          },
-          a({ href, children }) {
-            return (
-              <a href={href} target="_blank" rel="noreferrer" className="text-indigo-500 underline underline-offset-2">
-                {children}
-              </a>
-            );
-          },
-          ul({ children }) {
-            return <ul className="list-disc pl-5 space-y-1 my-2">{children}</ul>;
-          },
-          ol({ children }) {
-            return <ol className="list-decimal pl-5 space-y-1 my-2">{children}</ol>;
-          },
-          p({ children }) {
-            return <p className="my-2 leading-relaxed">{children}</p>;
-          },
-        }}
-      >
-        {displayed}
-      </ReactMarkdown>
+            },
+            ul({ children }) {
+              return <ul className="list-disc pl-5 space-y-1 my-2">{children}</ul>;
+            },
+            ol({ children }) {
+              return <ol className="list-decimal pl-5 space-y-1 my-2">{children}</ol>;
+            },
+            p({ children }) {
+              return <p className="my-2 leading-relaxed">{children}</p>;
+            },
+          }}
+        >
+          {displayed}
+        </ReactMarkdown>
+      </ErrorBoundary>
     ),
     [displayed]
   );

@@ -47,7 +47,11 @@ export function PageHero({
           {description ? (
             <p className="text-sm text-white/75 max-w-2xl leading-relaxed">{description}</p>
           ) : null}
-          {actions ? <div className="flex flex-wrap items-center gap-2 pt-1">{actions}</div> : null}
+          {actions ? (
+            <div className="flex flex-wrap items-center gap-2 pt-1 [&_button]:whitespace-nowrap">
+              {actions}
+            </div>
+          ) : null}
         </div>
         {aside ? <div className="shrink-0">{aside}</div> : null}
       </div>

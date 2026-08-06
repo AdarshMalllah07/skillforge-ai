@@ -39,7 +39,7 @@ export function Button({
 }: ButtonProps) {
   return (
     <button
-      className={`inline-flex items-center justify-center font-bold transition-all disabled:opacity-50 disabled:pointer-events-none min-w-0 ${variantClass[variant]} ${sizeClass[size]} ${className}`}
+      className={`inline-flex items-center justify-center font-bold whitespace-nowrap transition-all disabled:opacity-50 disabled:pointer-events-none shrink-0 ${variantClass[variant]} ${sizeClass[size]} ${className}`}
       disabled={disabled || loading}
       {...props}
     >

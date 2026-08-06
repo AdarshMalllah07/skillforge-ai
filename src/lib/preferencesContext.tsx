@@ -69,7 +69,12 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
         theme: currentUser.preferences.theme || 'system',
         sidebarCollapsed: Boolean(currentUser.preferences.sidebarCollapsed),
       } satisfies UserPreferences;
-      setPreferences(next);
+      setPreferences((prev) => {
+        if (prev.theme === next.theme && prev.sidebarCollapsed === next.sidebarCollapsed) {
+          return prev;
+        }
+        return next;
+      });
       applyDomTheme(next.theme);
       setResolvedTheme(resolveTheme(next.theme));
       hydratedFromUser.current = currentUser.id;
@@ -90,7 +95,12 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       setResolvedTheme(resolveTheme(next.theme));
       hydratedFromUser.current = null;
     }
-  }, [currentUser?.id, currentUser?.preferences, isAuthenticated]);
+  }, [
+    currentUser?.id,
+    currentUser?.preferences?.theme,
+    currentUser?.preferences?.sidebarCollapsed,
+    isAuthenticated,
+  ]);
 
   useEffect(() => {
     if (preferences.theme !== 'system') return;
