@@ -14,6 +14,7 @@ interface AuthContextType {
   signup: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   updateUserProfile: (updatedFields: Partial<User>) => Promise<void>;
+  changePassword: (oldPassword: string, newPassword: string) => Promise<void>;
   uploadAvatar: (file: File) => Promise<void>;
   removeAvatar: () => Promise<void>;
   candidateInfo: CandidateInfo;
@@ -162,6 +163,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUsersList((prev) => prev.map((u) => (u.id === user.id ? user : u)));
   };
 
+  const changePassword = async (oldPassword: string, newPassword: string) => {
+    await api('/api/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ oldPassword, newPassword }),
+    });
+  };
+
   const uploadAvatar = async (file: File) => {
     const formData = new FormData();
     formData.append('avatar', file);
@@ -244,6 +252,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signup,
         logout,
         updateUserProfile,
+        changePassword,
         uploadAvatar,
         removeAvatar,
         candidateInfo,
