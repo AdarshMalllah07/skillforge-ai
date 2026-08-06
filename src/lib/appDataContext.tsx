@@ -1,11 +1,13 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from './api';
 import { useAuth } from './authContext';
 import { getUi } from '../components/ui/UiProvider';
 import { Course, Submission, Assignment } from '../types';
+import { TAB_PATH } from './routes';
+import { getNavItems } from '../components/nav/navItems';
 
 interface AppDataContextType {
   courses: Course[];
@@ -61,7 +63,20 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     refreshData();
   }, [refreshData, currentUser?.id]);
 
-  const handleCreateCourse = async (courseData: Partial<Course>) => {
+  // Warm route chunks so sidebar clicks feel instant
+  useEffect(() => {
+    if (!isAuthenticated || !currentUser) return;
+    const paths = getNavItems(currentUser.role).map((item) => TAB_PATH[item.tab]);
+    paths.forEach((path) => {
+      try {
+        router.prefetch(path);
+      } catch {
+        // ignore
+      }
+    });
+  }, [isAuthenticated, currentUser?.role, router]);
+
+  const handleCreateCourse = useCallback(async (courseData: Partial<Course>) => {
     try {
       const newCourse = await api<Course>('/api/courses', {
         method: 'POST',
@@ -75,9 +90,9 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         variant: 'error',
       });
     }
-  };
+  }, []);
 
-  const handleUpdateCourse = async (id: string, updatedFields: Partial<Course>) => {
+  const handleUpdateCourse = useCallback(async (id: string, updatedFields: Partial<Course>) => {
     setCourses((prev) => prev.map((c) => (c.id === id ? { ...c, ...updatedFields } : c)));
     try {
       await api(`/api/courses/${id}`, {
@@ -87,105 +102,124 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       console.error('Update course error', err);
     }
-  };
+  }, []);
 
-  const handleDeleteCourse = async (id: string) => {
+  const handleDeleteCourse = useCallback(async (id: string) => {
     setCourses((prev) => prev.filter((c) => c.id !== id));
     try {
       await api(`/api/courses/${id}`, { method: 'DELETE' });
     } catch (err) {
       console.error('Delete course error', err);
     }
-  };
+  }, []);
 
-  const handleCreateAssignment = async (courseId: string, assignmentData: Partial<Assignment>) => {
-    try {
-      const newAssign = await api<Assignment>(`/api/courses/${courseId}/assignments`, {
-        method: 'POST',
-        body: JSON.stringify(assignmentData),
-      });
+  const handleCreateAssignment = useCallback(
+    async (courseId: string, assignmentData: Partial<Assignment>) => {
+      try {
+        const newAssign = await api<Assignment>(`/api/courses/${courseId}/assignments`, {
+          method: 'POST',
+          body: JSON.stringify(assignmentData),
+        });
 
-      setCourses((prev) =>
-        prev.map((c) => {
-          if (c.id === courseId) {
-            return { ...c, assignments: [...c.assignments, newAssign] };
+        setCourses((prev) =>
+          prev.map((c) => {
+            if (c.id === courseId) {
+              return { ...c, assignments: [...c.assignments, newAssign] };
+            }
+            return c;
+          })
+        );
+      } catch (err) {
+        console.error('Create assignment error', err);
+      }
+    },
+    []
+  );
+
+  const handleSubmissionSuccess = useCallback((newSubmission: Submission) => {
+    setSubmissions((prev) => [newSubmission, ...prev.filter((s) => s.id !== newSubmission.id)]);
+  }, []);
+
+  const handleUpdateSubmissionGrade = useCallback(
+    async (submissionId: string, grade: number, feedback: string) => {
+      setSubmissions((prev) =>
+        prev.map((s) => {
+          if (s.id === submissionId) {
+            return {
+              ...s,
+              finalScore: grade,
+              instructorFeedback: feedback,
+              status: 'GRADED',
+            };
           }
-          return c;
+          return s;
         })
       );
-    } catch (err) {
-      console.error('Create assignment error', err);
-    }
-  };
 
-  const handleSubmissionSuccess = (newSubmission: Submission) => {
-    setSubmissions((prev) => [newSubmission, ...prev.filter((s) => s.id !== newSubmission.id)]);
-  };
-
-  const handleUpdateSubmissionGrade = async (
-    submissionId: string,
-    grade: number,
-    feedback: string
-  ) => {
-    setSubmissions((prev) =>
-      prev.map((s) => {
-        if (s.id === submissionId) {
-          return {
-            ...s,
+      try {
+        await api(`/api/submissions/${submissionId}`, {
+          method: 'PUT',
+          body: JSON.stringify({
             finalScore: grade,
             instructorFeedback: feedback,
             status: 'GRADED',
-          };
-        }
-        return s;
-      })
-    );
-
-    try {
-      await api(`/api/submissions/${submissionId}`, {
-        method: 'PUT',
-        body: JSON.stringify({
-          finalScore: grade,
-          instructorFeedback: feedback,
-          status: 'GRADED',
-        }),
-      });
-    } catch (err) {
-      console.error('Grade update error', err);
-    }
-  };
-
-  const openCourse = (course: Course) => router.push(`/courses/${course.id}`);
-  const openSubmission = (assignment: Assignment, course: Course) =>
-    router.push(`/courses/${course.id}/submit/${assignment.id}`);
-  const openGenerator = () => router.push('/generator');
-  const openSubmissions = () => router.push('/submissions');
-  const openCourses = () => router.push('/courses');
-
-  return (
-    <AppDataContext.Provider
-      value={{
-        courses,
-        submissions,
-        setCourses,
-        setSubmissions,
-        refreshData,
-        handleCreateCourse,
-        handleUpdateCourse,
-        handleDeleteCourse,
-        handleCreateAssignment,
-        handleSubmissionSuccess,
-        handleUpdateSubmissionGrade,
-        openCourse,
-        openSubmission,
-        openGenerator,
-        openSubmissions,
-        openCourses,
-      }}
-    >
-      {children}
-    </AppDataContext.Provider>
+          }),
+        });
+      } catch (err) {
+        console.error('Grade update error', err);
+      }
+    },
+    []
   );
+
+  const openCourse = useCallback((course: Course) => router.push(`/courses/${course.id}`), [router]);
+  const openSubmission = useCallback(
+    (assignment: Assignment, course: Course) =>
+      router.push(`/courses/${course.id}/submit/${assignment.id}`),
+    [router]
+  );
+  const openGenerator = useCallback(() => router.push('/generator'), [router]);
+  const openSubmissions = useCallback(() => router.push('/submissions'), [router]);
+  const openCourses = useCallback(() => router.push('/courses'), [router]);
+
+  const value = useMemo(
+    () => ({
+      courses,
+      submissions,
+      setCourses,
+      setSubmissions,
+      refreshData,
+      handleCreateCourse,
+      handleUpdateCourse,
+      handleDeleteCourse,
+      handleCreateAssignment,
+      handleSubmissionSuccess,
+      handleUpdateSubmissionGrade,
+      openCourse,
+      openSubmission,
+      openGenerator,
+      openSubmissions,
+      openCourses,
+    }),
+    [
+      courses,
+      submissions,
+      refreshData,
+      handleCreateCourse,
+      handleUpdateCourse,
+      handleDeleteCourse,
+      handleCreateAssignment,
+      handleSubmissionSuccess,
+      handleUpdateSubmissionGrade,
+      openCourse,
+      openSubmission,
+      openGenerator,
+      openSubmissions,
+      openCourses,
+    ]
+  );
+
+  return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;
 }
 
 export function useAppData() {

@@ -1,9 +1,14 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import SubmissionsDashboard from '@/src/components/SubmissionsDashboard';
 import { useAppData } from '@/src/lib/appDataContext';
 import { useAuth } from '@/src/lib/authContext';
+import { PageSkeleton } from '@/src/components/ui/Skeleton';
+
+const SubmissionsDashboard = dynamic(() => import('@/src/components/SubmissionsDashboard'), {
+  loading: () => <PageSkeleton />,
+});
 
 export default function SubmissionsPage() {
   const router = useRouter();

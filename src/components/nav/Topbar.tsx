@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Menu, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useAuth } from '@/src/lib/authContext';
@@ -72,14 +73,14 @@ export function Topbar() {
               </button>
             ) : null}
 
-            <button
-              type="button"
+            <Link
+              href={isAuthenticated ? TAB_PATH.courses : TAB_PATH.login}
+              prefetch
               className="lg:hidden flex items-center gap-2 shrink-0"
-              onClick={() => router.push(isAuthenticated ? TAB_PATH.courses : TAB_PATH.login)}
             >
               <img src="/logo.svg" alt="" className="w-8 h-8 rounded-lg" />
               <span className="text-sm font-extrabold text-sf hidden sm:inline">SkillForge AI</span>
-            </button>
+            </Link>
 
             <div className="hidden sm:block min-w-0">
               <Breadcrumbs

@@ -35,7 +35,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     if (!canAccessPath(pathname, currentUser?.role, true)) {
       router.replace(ROLE_HOME[currentUser!.role]);
     }
-  }, [isLoading, isAuthenticated, currentUser, pathname, router, isAuthPage]);
+  }, [isLoading, isAuthenticated, currentUser?.role, pathname, router, isAuthPage]);
 
   if (isLoading) {
     return (

@@ -1,8 +1,10 @@
 'use client';
 import React, { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { Github, Linkedin, UserCheck, Code2, Award, Sparkles, ExternalLink, ShieldAlert } from 'lucide-react';
 import { useAuth } from '../lib/authContext';
-import CandidateModal from './CandidateModal';
+
+const CandidateModal = dynamic(() => import('./CandidateModal'), { ssr: false });
 
 export default function Footer() {
   const { candidateInfo } = useAuth();

@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { GraduationCap } from 'lucide-react';
 import { useAuth } from '@/src/lib/authContext';
 import { usePreferences } from '@/src/lib/preferencesContext';
@@ -12,7 +13,6 @@ export function Sidebar() {
   const { currentUser, isAuthenticated } = useAuth();
   const { preferences } = usePreferences();
   const pathname = usePathname();
-  const router = useRouter();
   const collapsed = preferences.sidebarCollapsed;
   const activeTab = pathToTab(pathname);
   const items = getNavItems(currentUser?.role);
@@ -25,12 +25,10 @@ export function Sidebar() {
         collapsed ? 'w-[72px]' : 'w-64'
       }`}
     >
-      <div className={`h-16 flex items-center border-b border-sf ${collapsed ? 'justify-center px-2' : 'px-4 gap-2.5'}`}>
-        <button
-          type="button"
-          onClick={() => router.push(TAB_PATH.courses)}
-          className="flex items-center gap-2.5 group min-w-0"
-        >
+      <div
+        className={`h-16 flex items-center border-b border-sf ${collapsed ? 'justify-center px-2' : 'px-4 gap-2.5'}`}
+      >
+        <Link href={TAB_PATH.courses} prefetch className="flex items-center gap-2.5 group min-w-0">
           <img
             src="/logo.svg"
             alt="SkillForge AI"
@@ -42,7 +40,7 @@ export function Sidebar() {
               <p className="text-[10px] text-sf-muted font-medium truncate">AI Assessment</p>
             </div>
           ) : null}
-        </button>
+        </Link>
       </div>
 
       <nav className="flex-1 overflow-y-auto p-2 space-y-1">
@@ -50,11 +48,11 @@ export function Sidebar() {
           const Icon = item.icon;
           const active = activeTab === item.tab;
           return (
-            <button
+            <Link
               key={item.tab}
-              type="button"
+              href={TAB_PATH[item.tab]}
+              prefetch
               title={item.label}
-              onClick={() => router.push(TAB_PATH[item.tab])}
               className={`w-full flex items-center gap-3 rounded-xl text-xs font-bold transition-all min-h-11 ${
                 collapsed ? 'justify-center px-2' : 'px-3'
               } ${activeNavClass(
@@ -68,7 +66,7 @@ export function Sidebar() {
                 className={`w-4 h-4 shrink-0 ${item.tab === 'generator' && !active ? 'text-amber-500' : ''}`}
               />
               {!collapsed ? <span className="truncate">{item.label}</span> : null}
-            </button>
+            </Link>
           );
         })}
       </nav>
