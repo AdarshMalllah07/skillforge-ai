@@ -40,7 +40,7 @@ export default function AIEvaluationReport({
       onClose={onClose}
       size="xl"
       title="AI Submission Evaluation Report"
-      description="Gemini 3.6 Flash · House of EdTech Rubric Engine"
+      description="Gemini 3.6 Flash · SkillForge AI Rubric Engine"
       footer={
         <div className="flex justify-end">
           <Button onClick={onClose}>Done</Button>

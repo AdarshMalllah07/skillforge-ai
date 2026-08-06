@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     default: 'SkillForge AI',
     template: '%s · SkillForge AI',
   },
-  description: 'AI Assessment Platform for House of EdTech',
+  description: 'AI Assessment Platform by SkillForge AI',
   icons: {
     icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
     apple: '/logo.svg',

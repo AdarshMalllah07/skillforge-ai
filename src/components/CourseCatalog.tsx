@@ -115,7 +115,7 @@ export default function CourseCatalog({
     <div className="space-y-8">
       <PageHero
         tone="slate"
-        eyebrow="House of EdTech Evaluation Suite"
+        eyebrow="SkillForge AI Evaluation Suite"
         title="Curriculum & Assessment Catalog"
         description="Explore production-grade courses, coding challenges, and AI submission rubrics."
         actions={

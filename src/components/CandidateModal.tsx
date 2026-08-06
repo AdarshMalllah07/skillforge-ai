@@ -48,7 +48,7 @@ export default function CandidateModal({ onClose }: CandidateModalProps) {
     },
     {
       title: "Mandatory Footer & Profile Links",
-      description: "Footer explicitly displays Candidate Name, GitHub Profile link, and LinkedIn Profile link as required by House of EdTech assignment guidelines.",
+      description: "Footer explicitly displays Candidate Name, GitHub Profile link, and LinkedIn Profile link as required by SkillForge AI assignment guidelines.",
       status: "COMPLETED",
       badge: "Submission Mandate"
     }
@@ -65,7 +65,7 @@ export default function CandidateModal({ onClose }: CandidateModalProps) {
               <User className="w-5 h-5 text-indigo-300" />
             </div>
             <div>
-              <h3 className="text-lg font-bold">House of EdTech - Candidate Submission Details</h3>
+              <h3 className="text-lg font-bold">SkillForge AI - Candidate Submission Details</h3>
               <p className="text-xs text-indigo-200">Fullstack Developer Assignment 1 &bull; Jan 2026</p>
             </div>
           </div>
@@ -191,7 +191,7 @@ export default function CandidateModal({ onClose }: CandidateModalProps) {
           <div>
             <h4 className="text-sm font-bold text-slate-900 mb-3 flex items-center">
               <ShieldCheck className="w-4 h-4 mr-1.5 text-emerald-600" />
-              House of EdTech Evaluation Criteria Checklist
+              SkillForge AI Evaluation Criteria Checklist
             </h4>
             
             <div className="space-y-3">

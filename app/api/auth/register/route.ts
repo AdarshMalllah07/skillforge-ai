@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
         role: 'STUDENT',
         avatar: DEFAULT_AVATAR,
         title: 'Student / Candidate',
-        bio: 'Enrolled student exploring courses and submitting assignments on House of EdTech.',
+        bio: 'Enrolled student exploring courses and submitting assignments on SkillForge AI.',
         skills: [],
       });
 

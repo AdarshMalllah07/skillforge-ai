@@ -101,7 +101,7 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400">
           <p>
-            Submitted for <span className="font-semibold text-slate-200">House of EdTech</span> Fullstack Developer Evaluation (Jan 2026).
+            Submitted for <span className="font-semibold text-slate-200">SkillForge AI</span> Fullstack Developer Evaluation (Jan 2026).
           </p>
           <div className="flex items-center space-x-4 mt-4 sm:mt-0">
             <span>Built with React 19, Express, & Tailwind CSS</span>

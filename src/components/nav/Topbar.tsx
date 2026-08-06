@@ -2,8 +2,9 @@
 
 import React, { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { Menu } from 'lucide-react';
+import { Menu, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useAuth } from '@/src/lib/authContext';
+import { usePreferences } from '@/src/lib/preferencesContext';
 import { TAB_PATH, pathToTab } from '@/src/lib/routes';
 import { AvatarDropdown } from '@/src/components/ui/AvatarDropdown';
 import { Breadcrumbs, Crumb } from '@/src/components/ui/Breadcrumbs';
@@ -33,11 +34,13 @@ function crumbsForPath(pathname: string): Crumb[] {
 
 export function Topbar() {
   const { isAuthenticated } = useAuth();
+  const { preferences, toggleSidebarCollapsed } = usePreferences();
   const pathname = usePathname();
   const router = useRouter();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const crumbs = crumbsForPath(pathname);
   const tab = pathToTab(pathname);
+  const collapsed = preferences.sidebarCollapsed;
 
   return (
     <>
@@ -53,6 +56,22 @@ export function Topbar() {
               <Menu className="w-4 h-4" />
             </button>
 
+            {isAuthenticated ? (
+              <button
+                type="button"
+                onClick={toggleSidebarCollapsed}
+                className="hidden lg:inline-flex items-center justify-center h-9 w-9 rounded-lg border border-sf bg-sf-surface text-sf-muted hover:text-sf hover:bg-sf-surface-2 shadow-sf-xs transition-colors shrink-0"
+                title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              >
+                {collapsed ? (
+                  <PanelLeftOpen className="w-[18px] h-[18px]" strokeWidth={1.75} />
+                ) : (
+                  <PanelLeftClose className="w-[18px] h-[18px]" strokeWidth={1.75} />
+                )}
+              </button>
+            ) : null}
+
             <button
               type="button"
               className="lg:hidden flex items-center gap-2 shrink-0"
@@ -63,7 +82,9 @@ export function Topbar() {
             </button>
 
             <div className="hidden sm:block min-w-0">
-              <Breadcrumbs items={crumbs.length ? crumbs : tab ? [{ label: String(tab).replace(/_/g, ' ') }] : []} />
+              <Breadcrumbs
+                items={crumbs.length ? crumbs : tab ? [{ label: String(tab).replace(/_/g, ' ') }] : []}
+              />
             </div>
           </div>
 

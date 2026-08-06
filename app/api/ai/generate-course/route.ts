@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const systemPrompt = `You are an elite EdTech Curriculum Architect for House of EdTech.
+      const systemPrompt = `You are an elite EdTech Curriculum Architect for SkillForge AI.
 Create a detailed, highly technical, and production-ready course outline based on the user request.
 The target level is ${targetLevel || 'ADVANCED'} and category is ${targetCategory || 'Next.js & Frontend'}.
 

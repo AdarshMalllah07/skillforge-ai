@@ -85,7 +85,7 @@ export default function StudentDashboard({
         eyebrow={
           <>
             <GraduationCap className="w-3.5 h-3.5" />
-            Candidate Portal · House of EdTech
+            Candidate Portal · SkillForge AI
           </>
         }
         title={`Welcome back, ${currentUser.name}`}

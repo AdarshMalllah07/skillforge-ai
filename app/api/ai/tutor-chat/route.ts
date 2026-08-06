@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
         contents: `Course: ${courseContext || 'Next.js 16 Fullstack'}. Current Lesson: ${lessonTitle || 'General'}.\nStudent question: ${prompt}`,
         config: {
           systemInstruction:
-            'You are an expert interactive AI Teaching Assistant for House of EdTech. Provide clear, encouraging, technically accurate answers with short TypeScript code examples where helpful.',
+            'You are an expert interactive AI Teaching Assistant for SkillForge AI. Provide clear, encouraging, technically accurate answers with short TypeScript code examples where helpful.',
         },
       });
 

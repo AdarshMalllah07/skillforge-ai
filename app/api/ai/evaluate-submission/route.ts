@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
         ? `[CODE SUBMISSION]:\n${codeContent}`
         : `[ESSAY SUBMISSION]:\n${essayContent}`;
 
-      const systemPrompt = `You are a Senior Full-Stack Technical Lead & Academic Evaluator at House of EdTech.
+      const systemPrompt = `You are a Senior Full-Stack Technical Lead & Academic Evaluator at SkillForge AI.
 Your job is to thoroughly evaluate the candidate's submission for the assignment: "${assignmentTitle}".
 Assignment Context: ${assignmentDescription || 'Assess production readiness, security, sanitization, and architectural quality.'}
 

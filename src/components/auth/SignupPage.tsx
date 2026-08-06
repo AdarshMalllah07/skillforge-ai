@@ -59,7 +59,7 @@ export default function SignupPage({ onNavigateToLogin, onSignupSuccess }: Signu
             Create Student Account
           </h2>
           <p className="text-xs text-slate-500 max-w-xs mx-auto">
-            Join House of EdTech Platform as a Student / Candidate to access courses and submit technical assignments.
+            Join SkillForge AI Platform as a Student / Candidate to access courses and submit technical assignments.
           </p>
         </div>
 
