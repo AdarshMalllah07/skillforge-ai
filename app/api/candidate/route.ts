@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withDb } from '@/lib/server/api';
+import { withApi } from '@/lib/server/api';
 import { requireAuth } from '@/server/middleware/auth';
 import { Candidate } from '@/server/models/Candidate';
 
-export async function GET() {
-  return withDb(async () => {
+export async function GET(req: NextRequest) {
+  return withApi(req, async () => {
     try {
       const candidate = await Candidate.findOne();
       if (!candidate) {
@@ -22,7 +22,7 @@ export async function GET() {
 }
 
 export async function PUT(req: NextRequest) {
-  return withDb(async () => {
+  return withApi(req, async () => {
     try {
       const auth = await requireAuth(req);
       if ('error' in auth) return auth.error;

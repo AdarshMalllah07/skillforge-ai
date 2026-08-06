@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import { withDb } from '@/lib/server/api';
+import { withApi } from '@/lib/server/api';
 import { requireRoles } from '@/server/middleware/auth';
 import { User } from '@/server/models/User';
 import { toClient, toClientList, newId } from '@/server/utils';
@@ -11,7 +11,7 @@ import { buildPasswordLink, createPasswordToken } from '@/server/email/tokens';
 import { sendSetupPasswordInviteEmail, sendWelcomeEmail } from '@/server/email/templates';
 
 export async function GET(req: NextRequest) {
-  return withDb(async () => {
+  return withApi(req, async () => {
     try {
       const auth = await requireRoles(req, 'ADMIN');
       if ('error' in auth) return auth.error;
@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  return withDb(async () => {
+  return withApi(req, async () => {
     try {
       const auth = await requireRoles(req, 'ADMIN');
       if ('error' in auth) return auth.error;

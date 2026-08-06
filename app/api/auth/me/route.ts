@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withDb } from '@/lib/server/api';
+import { withApi } from '@/lib/server/api';
 import { requireAuth } from '@/server/middleware/auth';
 import { User } from '@/server/models/User';
 import { toClient } from '@/server/utils';
 import { deleteLocalProfileAvatar, isLocalProfileAvatar } from '@/server/uploads';
 
 export async function GET(req: NextRequest) {
-  return withDb(async () => {
+  return withApi(req, async () => {
     const auth = await requireAuth(req);
     if ('error' in auth) return auth.error;
     return NextResponse.json({ user: auth.user });
@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  return withDb(async () => {
+  return withApi(req, async () => {
     try {
       const auth = await requireAuth(req);
       if ('error' in auth) return auth.error;

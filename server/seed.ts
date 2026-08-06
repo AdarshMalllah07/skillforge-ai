@@ -1,108 +1,53 @@
 import bcrypt from 'bcryptjs';
 import { User } from './models/User';
-import { Course } from './models/Course';
-import { Submission } from './models/Submission';
-import { Enrollment } from './models/Enrollment';
-import { Candidate } from './models/Candidate';
 
 export const SUPER_ADMIN_USERNAME = 'admin';
 export const SUPER_ADMIN_PASSWORD = 'Password@12345';
 
-const DEMO_USER_IDS = ['user_instructor_1', 'user_student_1', 'user_evaluator_1'];
-const DEMO_COURSE_IDS = [
-  'course_next16_mastery',
-  'course_backend_nodejs',
-  'course_db_optimization',
-];
-const DEMO_ENROLLMENT_IDS = ['enroll_alex_next16'];
-const DEMO_SUBMISSION_IDS = ['sub_alex_next16'];
-const DEMO_CANDIDATE_EMAILS = ['ganeshshivhare6@gmail.com'];
+function resolveSuperAdminEmail(): string {
+  const fromEnv = (process.env.ADMIN_EMAIL || process.env.SMTP_USER_EMAIL || '')
+    .trim()
+    .replace(/^['"]|['"]$/g, '');
+  if (fromEnv && fromEnv.includes('@')) return fromEnv.toLowerCase();
+  return 'admin@localhost';
+}
 
-/** Creates or resets the super admin account (username: admin / Password@12345). */
+/**
+ * Creates the super admin account only if it does not already exist.
+ * Does not overwrite an existing admin on every startup.
+ */
 export async function ensureSuperAdmin(): Promise<void> {
-  const hashed = await bcrypt.hash(SUPER_ADMIN_PASSWORD, 10);
+  const adminEmail = resolveSuperAdminEmail();
   const existing =
-    (await User.findOne({ email: SUPER_ADMIN_USERNAME })) ||
     (await User.findById('user_admin_1')) ||
-    (await User.findOne({ email: 'admin@houseofedtech.com' }));
+    (await User.findOne({ email: SUPER_ADMIN_USERNAME })) ||
+    (await User.findOne({ email: adminEmail })) ||
+    (await User.findOne({ role: 'ADMIN' }).sort({ createdAt: 1 }));
 
   if (existing) {
-    existing.email = SUPER_ADMIN_USERNAME;
-    existing.password = hashed;
-    existing.role = 'ADMIN';
-    existing.name = 'Super Admin';
-    existing.title = 'Platform Administrator';
-    existing.bio = '';
-    existing.skills = [];
-    existing.githubUrl = '';
-    existing.linkedInUrl = '';
-    await existing.save();
-    console.log(`Super admin ready — login: ${SUPER_ADMIN_USERNAME} / ${SUPER_ADMIN_PASSWORD}`);
+    console.log(
+      `Super admin already present — login: ${SUPER_ADMIN_USERNAME} or ${existing.email}`
+    );
     return;
   }
 
+  const hashed = await bcrypt.hash(SUPER_ADMIN_PASSWORD, 10);
   await User.create({
     _id: 'user_admin_1',
     name: 'Super Admin',
-    email: SUPER_ADMIN_USERNAME,
+    email: adminEmail,
     password: hashed,
     role: 'ADMIN',
     title: 'Platform Administrator',
     bio: '',
     skills: [],
   });
-  console.log(`Super admin created — login: ${SUPER_ADMIN_USERNAME} / ${SUPER_ADMIN_PASSWORD}`);
+  console.log(
+    `Super admin created — login: ${SUPER_ADMIN_USERNAME} or ${adminEmail} / ${SUPER_ADMIN_PASSWORD}`
+  );
 }
 
-/** Removes previously seeded demo users/courses (keeps only admin bootstrap). */
-async function removeDemoSeedData(): Promise<void> {
-  const [users, courses, enrollments, submissions, candidates] = await Promise.all([
-    User.deleteMany({ _id: { $in: DEMO_USER_IDS } }),
-    Course.deleteMany({ _id: { $in: DEMO_COURSE_IDS } }),
-    Enrollment.deleteMany({ _id: { $in: DEMO_ENROLLMENT_IDS } }),
-    Submission.deleteMany({ _id: { $in: DEMO_SUBMISSION_IDS } }),
-    Candidate.deleteMany({ email: { $in: DEMO_CANDIDATE_EMAILS } }),
-  ]);
-
-  const removed =
-    users.deletedCount +
-    courses.deletedCount +
-    enrollments.deletedCount +
-    submissions.deletedCount +
-    candidates.deletedCount;
-
-  if (removed > 0) {
-    console.log(`Removed ${removed} demo seed document(s).`);
-  }
-}
-
-const DEFAULT_CANDIDATE = {
-  name: 'Adarsh Mallah',
-  email: '',
-  githubProfile: 'https://github.com/AdarshMalllah07',
-  linkedInProfile: 'https://www.linkedin.com/in/adarsh-mallah-011279312/',
-  portfolioWebsite: '',
-  assignmentTitle: '',
-  companyName: 'House of EdTech',
-  submissionDate: '',
-};
-
-/** Ensures footer candidate profile links are present. */
-async function ensureCandidateProfile(): Promise<void> {
-  const existing = await Candidate.findOne();
-  if (existing) {
-    existing.githubProfile = DEFAULT_CANDIDATE.githubProfile;
-    existing.linkedInProfile = DEFAULT_CANDIDATE.linkedInProfile;
-    if (!existing.name) existing.name = DEFAULT_CANDIDATE.name;
-    await existing.save();
-    return;
-  }
-  await Candidate.create(DEFAULT_CANDIDATE);
-}
-
-/** On startup: ensure admin only — no default demo users, courses, or submissions. */
+/** Startup seed: admin account only. */
 export async function seedDatabase(): Promise<void> {
   await ensureSuperAdmin();
-  await removeDemoSeedData();
-  await ensureCandidateProfile();
 }

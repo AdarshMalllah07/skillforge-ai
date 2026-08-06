@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withDb } from '@/lib/server/api';
+import { withApi } from '@/lib/server/api';
 import { requireRoles } from '@/server/middleware/auth';
 import { Enrollment } from '@/server/models/Enrollment';
 import { toClientList } from '@/server/utils';
 
 export async function GET(req: NextRequest) {
-  return withDb(async () => {
+  return withApi(req, async () => {
     try {
       const auth = await requireRoles(req, 'STUDENT');
       if ('error' in auth) return auth.error;

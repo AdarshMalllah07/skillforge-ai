@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { withDb } from '@/lib/server/api';
+import { withApi } from '@/lib/server/api';
 import { requireRoles } from '@/server/middleware/auth';
 import { User } from '@/server/models/User';
 import { toClient } from '@/server/utils';
@@ -9,7 +9,7 @@ import { deleteLocalProfileAvatar, isLocalProfileAvatar } from '@/server/uploads
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function PUT(req: NextRequest, context: Ctx) {
-  return withDb(async () => {
+  return withApi(req, async () => {
     try {
       const auth = await requireRoles(req, 'ADMIN');
       if ('error' in auth) return auth.error;
@@ -59,7 +59,7 @@ export async function PUT(req: NextRequest, context: Ctx) {
 }
 
 export async function DELETE(req: NextRequest, context: Ctx) {
-  return withDb(async () => {
+  return withApi(req, async () => {
     try {
       const auth = await requireRoles(req, 'ADMIN');
       if ('error' in auth) return auth.error;

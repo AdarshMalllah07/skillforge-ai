@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { withDb } from '@/lib/server/api';
+import { withApi } from '@/lib/server/api';
 import { User } from '@/server/models/User';
 import { signToken } from '@/server/middleware/auth';
 import { toClient, newId } from '@/server/utils';
@@ -8,7 +8,7 @@ import { DEFAULT_AVATAR } from '@/server/uploads';
 import { sendWelcomeEmail } from '@/server/email/templates';
 
 export async function POST(req: NextRequest) {
-  return withDb(async () => {
+  return withApi(req, async () => {
     try {
       const { name, email, password } = await req.json();
       if (!name || !email || !password) {

@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { withDb } from '@/lib/server/api';
+import { withApi } from '@/lib/server/api';
 import { User } from '@/server/models/User';
 import { consumePasswordToken } from '@/server/email/tokens';
 import { sendPasswordChangedEmail } from '@/server/email/templates';
 
 export async function POST(req: NextRequest) {
-  return withDb(async () => {
+  return withApi(req, async () => {
     try {
       const { token, password } = await req.json();
       if (!token || !password) {

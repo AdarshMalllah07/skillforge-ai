@@ -45,3 +45,8 @@ next-env.d.ts
 # uploads
 /uploads
 /public/uploads
+
+# runtime logs
+/logs
+*.log
+

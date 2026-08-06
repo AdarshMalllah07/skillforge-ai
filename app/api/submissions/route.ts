@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withDb } from '@/lib/server/api';
+import { withApi } from '@/lib/server/api';
 import { requireAuth, requireRoles } from '@/server/middleware/auth';
 import { Submission } from '@/server/models/Submission';
 import { Course } from '@/server/models/Course';
 import { toClient, toClientList, newId } from '@/server/utils';
 
 export async function GET(req: NextRequest) {
-  return withDb(async () => {
+  return withApi(req, async () => {
     try {
       const auth = await requireAuth(req);
       if ('error' in auth) return auth.error;
@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  return withDb(async () => {
+  return withApi(req, async () => {
     try {
       const auth = await requireRoles(req, 'STUDENT');
       if ('error' in auth) return auth.error;

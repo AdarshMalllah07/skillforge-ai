@@ -1,40 +1,98 @@
 import nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
+import { logger } from '@/server/logger';
 
 let transporter: Transporter | null = null;
+let transporterVerified = false;
 
 function isSmtpEnabled(): boolean {
   return String(process.env.SMTP_ENABLE || '').toLowerCase() === 'true';
 }
 
-function getFromAddress(): string {
-  return (
-    process.env.SMTP_FROM ||
-    process.env.SMTP_USER_EMAIL ||
-    'noreply@skillforge.ai'
-  );
+function cleanEnv(value?: string | null): string {
+  if (!value) return '';
+  return value.trim().replace(/^['"]|['"]$/g, '');
 }
 
-function getTransporter(): Transporter | null {
-  if (!isSmtpEnabled()) return null;
-  if (transporter) return transporter;
+function getSmtpConfig() {
+  const host = cleanEnv(process.env.SMTP_HOST);
+  const port = Number(cleanEnv(process.env.SMTP_PORT) || '587');
+  const user = cleanEnv(process.env.SMTP_USER_EMAIL);
+  const pass = cleanEnv(process.env.SMTP_PASS);
+  const from = cleanEnv(process.env.SMTP_FROM) || user || 'noreply@skillforge.ai';
 
-  const host = process.env.SMTP_HOST;
-  const port = Number(process.env.SMTP_PORT || 587);
-  const user = process.env.SMTP_USER_EMAIL;
-  const pass = process.env.SMTP_PASS;
+  return { host, port, user, pass, from, enabled: isSmtpEnabled() };
+}
 
-  if (!host || !user || !pass) {
-    console.warn('[email] SMTP_ENABLE=true but SMTP_HOST/USER/PASS incomplete — emails will be logged only');
-    return null;
+function getFromAddress(): string {
+  return getSmtpConfig().from;
+}
+
+async function getTransporter(): Promise<Transporter> {
+  const config = getSmtpConfig();
+
+  logger.email('Resolving SMTP transporter', {
+    enabled: config.enabled,
+    host: config.host,
+    port: config.port,
+    user: config.user,
+    passConfigured: Boolean(config.pass),
+    passLength: config.pass.length,
+  });
+
+  if (!config.enabled) {
+    throw new Error('Email not sent: SMTP_ENABLE is not true');
+  }
+
+  if (!config.host || !config.user || !config.pass) {
+    throw new Error(
+      'Email not sent: SMTP config incomplete. Set SMTP_HOST, SMTP_USER_EMAIL, and SMTP_PASS'
+    );
+  }
+
+  if (transporter && transporterVerified) {
+    return transporter;
   }
 
   transporter = nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    auth: { user, pass },
+    host: config.host,
+    port: config.port,
+    secure: config.port === 465,
+    requireTLS: config.port === 587,
+    auth: { user: config.user, pass: config.pass },
+    connectionTimeout: 15000,
+    greetingTimeout: 15000,
+    socketTimeout: 20000,
+    tls: {
+      minVersion: 'TLSv1.2',
+    },
   });
+
+  try {
+    logger.email('Verifying SMTP connection', {
+      host: config.host,
+      port: config.port,
+      user: config.user,
+    });
+    await transporter.verify();
+    transporterVerified = true;
+    logger.email('SMTP connection verified successfully', {
+      host: config.host,
+      port: config.port,
+      user: config.user,
+    });
+  } catch (err) {
+    transporterVerified = false;
+    transporter = null;
+    logger.emailError('SMTP verification failed', {
+      host: config.host,
+      port: config.port,
+      user: config.user,
+      error: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
+    });
+    throw err;
+  }
 
   return transporter;
 }
@@ -46,25 +104,48 @@ export interface SendEmailOptions {
   text?: string;
 }
 
-export async function sendEmail(options: SendEmailOptions): Promise<{ sent: boolean; skipped?: boolean }> {
-  const transport = getTransporter();
-
-  if (!transport) {
-    console.log('[email:dev-fallback]', {
-      to: options.to,
-      subject: options.subject,
-      text: options.text || '(html only)',
-    });
-    return { sent: false, skipped: true };
-  }
-
-  await transport.sendMail({
-    from: getFromAddress(),
+export async function sendEmail(
+  options: SendEmailOptions
+): Promise<{ sent: boolean; messageId?: string; response?: string }> {
+  const started = Date.now();
+  logger.email('sendEmail called', {
     to: options.to,
     subject: options.subject,
-    html: options.html,
-    text: options.text,
+    textPreview: (options.text || '').slice(0, 300),
   });
 
-  return { sent: true };
+  try {
+    const transport = await getTransporter();
+
+    const info = await transport.sendMail({
+      from: getFromAddress(),
+      to: options.to,
+      subject: options.subject,
+      html: options.html,
+      text: options.text,
+    });
+
+    logger.email('Email sent successfully', {
+      to: options.to,
+      subject: options.subject,
+      messageId: info.messageId,
+      response: info.response,
+      accepted: info.accepted,
+      rejected: info.rejected,
+      durationMs: Date.now() - started,
+    });
+
+    return { sent: true, messageId: info.messageId, response: info.response };
+  } catch (err) {
+    logger.emailError('Email send failed', {
+      to: options.to,
+      subject: options.subject,
+      durationMs: Date.now() - started,
+      error: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
+    });
+    transporter = null;
+    transporterVerified = false;
+    throw err;
+  }
 }

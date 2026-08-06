@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { withDb } from '@/lib/server/api';
+import { withApi } from '@/lib/server/api';
 import { User } from '@/server/models/User';
 import { signToken } from '@/server/middleware/auth';
 import { toClient } from '@/server/utils';
 
 export async function POST(req: NextRequest) {
-  return withDb(async () => {
+  return withApi(req, async () => {
     try {
       const { email, password } = await req.json();
       if (!email || !password) {
@@ -16,7 +16,16 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const user = await User.findOne({ email: String(email).toLowerCase() });
+      const loginId = String(email).toLowerCase().trim();
+      let user = await User.findOne({ email: loginId });
+
+      // Allow signing in with the classic "admin" username even after email is a real address
+      if (!user && loginId === 'admin') {
+        user =
+          (await User.findById('user_admin_1')) ||
+          (await User.findOne({ role: 'ADMIN' }).sort({ createdAt: 1 }));
+      }
+
       if (!user) {
         return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
       }

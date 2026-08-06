@@ -103,7 +103,7 @@ export async function sendPasswordResetEmail(params: {
   to: string;
   name: string;
   resetUrl: string;
-}): Promise<void> {
+}) {
   const subject = 'Reset your SkillForge AI password';
   const html = layout(
     'Password reset request',
@@ -112,7 +112,7 @@ export async function sendPasswordResetEmail(params: {
      <p>This link expires in <strong>${PASSWORD_LINK_EXPIRY_MINUTES} minutes</strong>. If you did not request this, you can safely ignore this email.</p>
      ${ctaButton(params.resetUrl, 'Reset Password')}`
   );
-  await sendEmail({
+  return sendEmail({
     to: params.to,
     subject,
     html,

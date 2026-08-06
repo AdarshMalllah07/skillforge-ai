@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
-import { withDb } from '@/lib/server/api';
+import { withApi } from '@/lib/server/api';
 import { requireAuth } from '@/server/middleware/auth';
 
 function getGeminiClient(): GoogleGenAI | null {
@@ -15,7 +15,7 @@ function getGeminiClient(): GoogleGenAI | null {
 }
 
 export async function POST(req: NextRequest) {
-  return withDb(async () => {
+  return withApi(req, async () => {
     try {
       const auth = await requireAuth(req);
       if ('error' in auth) return auth.error;

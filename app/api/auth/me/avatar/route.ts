@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withDb } from '@/lib/server/api';
+import { withApi } from '@/lib/server/api';
 import { requireAuth } from '@/server/middleware/auth';
 import { User } from '@/server/models/User';
 import { toClient } from '@/server/utils';
@@ -10,7 +10,7 @@ import {
 } from '@/server/uploads';
 
 export async function POST(req: NextRequest) {
-  return withDb(async () => {
+  return withApi(req, async () => {
     try {
       const auth = await requireAuth(req);
       if ('error' in auth) return auth.error;
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  return withDb(async () => {
+  return withApi(req, async () => {
     try {
       const auth = await requireAuth(req);
       if ('error' in auth) return auth.error;

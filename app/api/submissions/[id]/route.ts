@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withDb } from '@/lib/server/api';
+import { withApi } from '@/lib/server/api';
 import { requireAuth, requireRoles } from '@/server/middleware/auth';
 import { Submission } from '@/server/models/Submission';
 import { Course } from '@/server/models/Course';
@@ -11,7 +11,7 @@ import { sendSubmissionGradedEmail } from '@/server/email/templates';
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function GET(req: NextRequest, context: Ctx) {
-  return withDb(async () => {
+  return withApi(req, async () => {
     try {
       const auth = await requireAuth(req);
       if ('error' in auth) return auth.error;
@@ -42,7 +42,7 @@ export async function GET(req: NextRequest, context: Ctx) {
 }
 
 export async function PUT(req: NextRequest, context: Ctx) {
-  return withDb(async () => {
+  return withApi(req, async () => {
     try {
       const auth = await requireRoles(req, 'INSTRUCTOR', 'EVALUATOR', 'ADMIN');
       if ('error' in auth) return auth.error;

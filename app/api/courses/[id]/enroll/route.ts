@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withDb } from '@/lib/server/api';
+import { withApi } from '@/lib/server/api';
 import { requireRoles } from '@/server/middleware/auth';
 import { Course } from '@/server/models/Course';
 import { Enrollment } from '@/server/models/Enrollment';
@@ -10,7 +10,7 @@ import { sendEnrollmentEmail } from '@/server/email/templates';
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function POST(req: NextRequest, context: Ctx) {
-  return withDb(async () => {
+  return withApi(req, async () => {
     try {
       const auth = await requireRoles(req, 'STUDENT');
       if ('error' in auth) return auth.error;
