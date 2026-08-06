@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { withDb } from '@/lib/server/api';
 import { requireRoles } from '@/server/middleware/auth';
 import { User } from '@/server/models/User';
 import { toClient, toClientList, newId } from '@/server/utils';
 import { UserRole } from '@/server/types';
 import { DEFAULT_AVATAR } from '@/server/uploads';
+import { buildPasswordLink, createPasswordToken } from '@/server/email/tokens';
+import { sendSetupPasswordInviteEmail, sendWelcomeEmail } from '@/server/email/templates';
 
 export async function GET(req: NextRequest) {
   return withDb(async () => {
@@ -29,14 +32,15 @@ export async function POST(req: NextRequest) {
       if ('error' in auth) return auth.error;
 
       const { name, email, role, title, bio, skills, avatar, password } = await req.json();
-      if (!name || !email || !role || !password) {
+      if (!name || !email || !role) {
         return NextResponse.json(
-          { error: 'Name, email, role, and password are required' },
+          { error: 'Name, email, and role are required' },
           { status: 400 }
         );
       }
 
-      if (String(password).length < 6) {
+      const hasPassword = Boolean(password && String(password).trim());
+      if (hasPassword && String(password).length < 6) {
         return NextResponse.json(
           { error: 'Password must be at least 6 characters' },
           { status: 400 }
@@ -53,7 +57,11 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Email already registered' }, { status: 409 });
       }
 
-      const hashed = await bcrypt.hash(password, 10);
+      const passwordToHash = hasPassword
+        ? String(password)
+        : crypto.randomBytes(32).toString('hex');
+      const hashed = await bcrypt.hash(passwordToHash, 10);
+
       const user = await User.create({
         _id: newId(`user_${String(role).toLowerCase()}`),
         name,
@@ -65,6 +73,27 @@ export async function POST(req: NextRequest) {
         skills: skills || [],
         avatar: avatar || DEFAULT_AVATAR,
       });
+
+      try {
+        if (hasPassword) {
+          await sendWelcomeEmail({
+            to: user.email,
+            name: user.name,
+            role: user.role,
+          });
+        } else {
+          const { rawToken } = await createPasswordToken(user._id, 'SETUP');
+          const setupUrl = buildPasswordLink(rawToken, 'SETUP');
+          await sendSetupPasswordInviteEmail({
+            to: user.email,
+            name: user.name,
+            role: user.role,
+            setupUrl,
+          });
+        }
+      } catch (err) {
+        console.error('[email] Failed to send admin-created user email', err);
+      }
 
       return NextResponse.json(toClient(user), { status: 201 });
     } catch (err: unknown) {

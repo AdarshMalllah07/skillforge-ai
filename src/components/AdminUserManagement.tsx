@@ -91,17 +91,15 @@ export default function AdminUserManagement({ onViewUserCurriculums, onViewUserS
     const skillsArray = formData.skills.split(',').map(s => s.trim()).filter(Boolean);
 
     if (!editingUser) {
-      if (!formData.password) {
-        alert('Password is required');
-        return;
-      }
-      if (formData.password.length < 6) {
-        alert('Password must be at least 6 characters');
-        return;
-      }
-      if (formData.password !== formData.confirmPassword) {
-        alert('Passwords do not match');
-        return;
+      if (formData.password) {
+        if (formData.password.length < 6) {
+          alert('Password must be at least 6 characters');
+          return;
+        }
+        if (formData.password !== formData.confirmPassword) {
+          alert('Passwords do not match');
+          return;
+        }
       }
     } else if (formData.password) {
       if (formData.password.length < 6) {
@@ -135,7 +133,7 @@ export default function AdminUserManagement({ onViewUserCurriculums, onViewUserS
           bio: formData.bio,
           skills: skillsArray,
           avatar: formData.avatar,
-          password: formData.password,
+          ...(formData.password ? { password: formData.password } : {}),
         });
       }
       setIsCreateModalOpen(false);
@@ -480,17 +478,21 @@ export default function AdminUserManagement({ onViewUserCurriculums, onViewUserS
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {editingUser ? 'New Password (optional)' : 'Password *'}
+                  {editingUser ? 'New Password (optional)' : 'Password (optional)'}
                 </label>
                 <div className="relative">
                   <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
                     type={showPassword ? 'text' : 'password'}
-                    required={!editingUser}
-                    minLength={editingUser && !formData.password ? undefined : 6}
+                    required={false}
+                    minLength={formData.password ? 6 : undefined}
                     value={formData.password}
                     onChange={e => setFormData({ ...formData, password: e.target.value })}
-                    placeholder={editingUser ? 'Leave blank to keep current password' : '••••••••••••'}
+                    placeholder={
+                      editingUser
+                        ? 'Leave blank to keep current password'
+                        : 'Leave blank to email a setup link'
+                    }
                     className="w-full text-xs pl-9 pr-10 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500"
                   />
                   <button
@@ -503,20 +505,23 @@ export default function AdminUserManagement({ onViewUserCurriculums, onViewUserS
                   </button>
                 </div>
                 {!editingUser && (
-                  <p className="mt-1 text-[10px] text-slate-500">Minimum 6 characters. Share this with the user so they can log in.</p>
+                  <p className="mt-1 text-[10px] text-slate-500">
+                    If left blank, the user receives a welcome email with a 30-minute password setup link.
+                    If set, they receive a normal welcome email and can sign in immediately.
+                  </p>
                 )}
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {editingUser ? 'Confirm New Password' : 'Confirm Password *'}
+                  {editingUser ? 'Confirm New Password' : 'Confirm Password'}
                 </label>
                 <div className="relative">
                   <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
                     type={showConfirmPassword ? 'text' : 'password'}
-                    required={!editingUser || !!formData.password}
-                    minLength={editingUser && !formData.password ? undefined : 6}
+                    required={!!formData.password}
+                    minLength={formData.password ? 6 : undefined}
                     value={formData.confirmPassword}
                     onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
                     placeholder="••••••••••••"

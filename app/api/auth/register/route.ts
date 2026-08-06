@@ -5,6 +5,7 @@ import { User } from '@/server/models/User';
 import { signToken } from '@/server/middleware/auth';
 import { toClient, newId } from '@/server/utils';
 import { DEFAULT_AVATAR } from '@/server/uploads';
+import { sendWelcomeEmail } from '@/server/email/templates';
 
 export async function POST(req: NextRequest) {
   return withDb(async () => {
@@ -40,6 +41,16 @@ export async function POST(req: NextRequest) {
         bio: 'Enrolled student exploring courses and submitting assignments on House of EdTech.',
         skills: [],
       });
+
+      try {
+        await sendWelcomeEmail({
+          to: user.email,
+          name: user.name,
+          role: 'STUDENT',
+        });
+      } catch (err) {
+        console.error('[email] Failed to send signup welcome email', err);
+      }
 
       const client = toClient(user)!;
       const token = signToken({ id: client.id, email: client.email, role: client.role });

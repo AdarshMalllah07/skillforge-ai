@@ -45,7 +45,7 @@ export default function ForgotPasswordPage({ onNavigateToLogin }: ForgotPassword
             Reset Account Password
           </h2>
           <p className="text-xs text-slate-500 max-w-xs mx-auto">
-            Enter your registered House of EdTech email to receive a password reset link.
+            Enter your registered email. We will send a password reset link that expires in 30 minutes.
           </p>
         </div>
 
@@ -80,7 +80,7 @@ export default function ForgotPasswordPage({ onNavigateToLogin }: ForgotPassword
             <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto" />
             <h3 className="text-sm font-extrabold text-emerald-950">Password Reset Link Sent!</h3>
             <p className="text-xs text-emerald-800 leading-relaxed">
-              We have dispatched instructions to <strong>{email}</strong>. Check your inbox to set a new password.
+              We have dispatched a reset link to <strong>{email}</strong>. It expires in 30 minutes — check your inbox (and spam folder) to set a new password.
             </p>
             <button
               onClick={() => setSubmitted(false)}

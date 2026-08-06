@@ -11,9 +11,17 @@ export type AppTab =
   | 'evaluator_dashboard'
   | 'login'
   | 'signup'
-  | 'forgot_password';
+  | 'forgot_password'
+  | 'reset_password'
+  | 'setup_password';
 
-export const AUTH_PATHS = ['/login', '/signup', '/forgot-password'] as const;
+export const AUTH_PATHS = [
+  '/login',
+  '/signup',
+  '/forgot-password',
+  '/reset-password',
+  '/setup-password',
+] as const;
 
 export const ROLE_HOME: Record<UserRole, string> = {
   ADMIN: '/admin/users',
@@ -26,6 +34,8 @@ export const TAB_PATH: Record<AppTab, string> = {
   login: '/login',
   signup: '/signup',
   forgot_password: '/forgot-password',
+  reset_password: '/reset-password',
+  setup_password: '/setup-password',
   student_dashboard: '/student',
   instructor_dashboard: '/instructor',
   evaluator_dashboard: '/evaluator',
@@ -48,6 +58,8 @@ export function pathToTab(pathname: string): AppTab | null {
   if (pathname.startsWith('/login')) return 'login';
   if (pathname.startsWith('/signup')) return 'signup';
   if (pathname.startsWith('/forgot-password')) return 'forgot_password';
+  if (pathname.startsWith('/reset-password')) return 'reset_password';
+  if (pathname.startsWith('/setup-password')) return 'setup_password';
   return null;
 }
 

@@ -3,7 +3,10 @@ import { withDb } from '@/lib/server/api';
 import { requireAuth, requireRoles } from '@/server/middleware/auth';
 import { Submission } from '@/server/models/Submission';
 import { Course } from '@/server/models/Course';
+import { User } from '@/server/models/User';
 import { toClient } from '@/server/utils';
+import { getAppBaseUrl } from '@/server/email/tokens';
+import { sendSubmissionGradedEmail } from '@/server/email/templates';
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -60,6 +63,7 @@ export async function PUT(req: NextRequest, context: Ctx) {
         }
       }
 
+      const previousStatus = submission.status;
       const { finalScore, instructorFeedback, status, aiEvaluation } = await req.json();
 
       if (finalScore !== undefined) submission.finalScore = Number(finalScore);
@@ -72,6 +76,28 @@ export async function PUT(req: NextRequest, context: Ctx) {
       }
 
       await submission.save();
+
+      const becameGraded = previousStatus !== 'GRADED' && submission.status === 'GRADED';
+      if (becameGraded) {
+        try {
+          const [student, course] = await Promise.all([
+            User.findById(submission.studentId),
+            Course.findById(submission.courseId),
+          ]);
+          if (student?.email) {
+            await sendSubmissionGradedEmail({
+              to: student.email,
+              name: student.name,
+              courseTitle: course?.title || 'your course',
+              score: submission.finalScore,
+              submissionsUrl: `${getAppBaseUrl()}/submissions`,
+            });
+          }
+        } catch (err) {
+          console.error('[email] Failed to send graded submission email', err);
+        }
+      }
+
       const client = toClient(submission)!;
       return NextResponse.json({
         ...client,

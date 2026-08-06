@@ -4,6 +4,8 @@ import { requireRoles } from '@/server/middleware/auth';
 import { Course } from '@/server/models/Course';
 import { Enrollment } from '@/server/models/Enrollment';
 import { toClient, newId } from '@/server/utils';
+import { getAppBaseUrl } from '@/server/email/tokens';
+import { sendEnrollmentEmail } from '@/server/email/templates';
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -44,6 +46,17 @@ export async function POST(req: NextRequest, context: Ctx) {
 
       course.enrolledStudentsCount = (course.enrolledStudentsCount || 0) + 1;
       await course.save();
+
+      try {
+        await sendEnrollmentEmail({
+          to: auth.user.email,
+          name: auth.user.name,
+          courseTitle: course.title,
+          courseUrl: `${getAppBaseUrl()}/courses/${course._id}`,
+        });
+      } catch (err) {
+        console.error('[email] Failed to send enrollment email', err);
+      }
 
       return NextResponse.json(
         { message: 'Enrolled successfully', enrollment: toClient(enrollment) },

@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { withDb } from '@/lib/server/api';
 import { requireAuth } from '@/server/middleware/auth';
 import { User } from '@/server/models/User';
+import { sendPasswordChangedEmail } from '@/server/email/templates';
 
 export async function POST(req: NextRequest) {
   return withDb(async () => {
@@ -44,6 +45,12 @@ export async function POST(req: NextRequest) {
 
       user.password = await bcrypt.hash(newPassword, 10);
       await user.save();
+
+      try {
+        await sendPasswordChangedEmail({ to: user.email, name: user.name });
+      } catch (err) {
+        console.error('[email] Failed to send password-changed confirmation', err);
+      }
 
       return NextResponse.json({ message: 'Password updated successfully' });
     } catch (err: unknown) {
