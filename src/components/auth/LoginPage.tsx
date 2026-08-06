@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../lib/authContext';
 import { LogIn, Mail, Lock, GraduationCap, Eye, EyeOff } from 'lucide-react';
@@ -125,7 +126,7 @@ export default function LoginPage({
           </button>
         </form>
 
-        <div className="text-center pt-2 border-t border-slate-100">
+        <div className="text-center pt-2 border-t border-slate-100 space-y-2">
           <p className="text-xs text-slate-600">
             Don't have a student account yet?{' '}
             <button
@@ -134,6 +135,11 @@ export default function LoginPage({
             >
               Create Student Account
             </button>
+          </p>
+          <p className="text-xs text-slate-500">
+            <Link href="/" className="font-medium text-slate-600 hover:text-indigo-600">
+              ← Back to SkillForge AI
+            </Link>
           </p>
         </div>
       </div>

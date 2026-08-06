@@ -34,6 +34,23 @@ export const AUTH_PATHS = [
   '/setup-password',
 ] as const;
 
+/** Marketing / browse-without-login pages (exact match for `/`) */
+export const PUBLIC_PATHS = ['/'] as const;
+
+export function isAuthPath(pathname: string): boolean {
+  return AUTH_PATHS.some((p) => pathname.startsWith(p));
+}
+
+export function isPublicPath(pathname: string): boolean {
+  if (pathname === '/') return true;
+  return PUBLIC_PATHS.some((p) => p !== '/' && (pathname === p || pathname.startsWith(`${p}/`)));
+}
+
+/** Routes guests may open without being sent to login */
+export function isGuestAllowedPath(pathname: string): boolean {
+  return isAuthPath(pathname) || isPublicPath(pathname);
+}
+
 export const ROLE_HOME: Record<UserRole, string> = {
   ADMIN: '/admin',
   INSTRUCTOR: '/instructor',
@@ -113,16 +130,14 @@ export function canAccessPath(
   role: UserRole | undefined,
   authenticated: boolean
 ): boolean {
+  if (isGuestAllowedPath(pathname)) return true;
+
   const tab = pathToTab(pathname);
   if (!tab) return authenticated;
-  if (AUTH_PATHS.some((p) => pathname.startsWith(p))) return true;
   if (!authenticated || !role) return false;
 
   // Admin can open every authenticated app route
-  if (role === 'ADMIN') {
-    if (AUTH_PATHS.some((p) => pathname.startsWith(p))) return true;
-    return true;
-  }
+  if (role === 'ADMIN') return true;
 
   switch (tab) {
     case 'admin_overview':

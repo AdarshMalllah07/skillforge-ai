@@ -3,7 +3,14 @@
 import React, { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/src/lib/authContext';
-import { AUTH_PATHS, ROLE_HOME, canAccessPath, legacyRedirectPath } from '@/src/lib/routes';
+import {
+  ROLE_HOME,
+  canAccessPath,
+  isAuthPath,
+  isGuestAllowedPath,
+  isPublicPath,
+  legacyRedirectPath,
+} from '@/src/lib/routes';
 import { Sidebar } from '@/src/components/nav/Sidebar';
 import { Topbar } from '@/src/components/nav/Topbar';
 import Footer from '@/src/components/Footer';
@@ -16,19 +23,21 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const { currentUser, isAuthenticated, isLoading } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
-  const isAuthPage = AUTH_PATHS.some((p) => pathname.startsWith(p));
+  const authPage = isAuthPath(pathname);
+  const publicPage = isPublicPath(pathname);
+  const guestAllowed = isGuestAllowedPath(pathname);
 
   useEffect(() => {
     if (isLoading) return;
 
     if (!isAuthenticated) {
-      if (!isAuthPage) {
+      if (!guestAllowed) {
         router.replace('/login');
       }
       return;
     }
 
-    if (isAuthPage || pathname === '/') {
+    if (authPage || pathname === '/') {
       router.replace(ROLE_HOME[currentUser!.role]);
       return;
     }
@@ -42,7 +51,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     if (!canAccessPath(pathname, currentUser?.role, true)) {
       router.replace(ROLE_HOME[currentUser!.role]);
     }
-  }, [isLoading, isAuthenticated, currentUser?.role, pathname, router, isAuthPage]);
+  }, [isLoading, isAuthenticated, currentUser?.role, pathname, router, guestAllowed, authPage]);
 
   if (isLoading) {
     return (
@@ -52,7 +61,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (isAuthPage || !isAuthenticated) {
+  if (authPage || publicPage || !isAuthenticated) {
     return (
       <div className="min-h-screen bg-sf-bg flex flex-col text-sf font-sans antialiased">
         <NavigationProgress />
