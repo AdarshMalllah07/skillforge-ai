@@ -1,0 +1,50 @@
+<!-- ============================================================
+     CONTENT PARTIAL — LOGIN / SIGN-IN VERIFICATION
+     Variables: {{name}}, {{code}}, {{login_url}}, {{device}}, {{location}}
+     ============================================================ -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f4f5fb;">
+  <tr>
+    <td align="center" style="padding:0 24px;">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:100%;background-color:#ffffff;border:1px solid #e6e7f2;border-radius:14px;">
+        <tr>
+          <td style="padding:36px 36px 8px 36px;font-family:Arial,Helvetica,sans-serif;">
+            <div style="display:inline-block;padding:5px 11px;border-radius:999px;background-color:#efeaff;color:#5b3ee8;font-size:11px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;">Secure sign-in</div>
+            <h1 style="margin:18px 0 10px 0;color:#12132e;font-size:24px;line-height:32px;">Your sign-in code</h1>
+            <p style="margin:0;color:#5a5f80;font-size:15px;line-height:24px;">
+              Hi {{name}}, use the code below to finish signing in to SkillForge AI.
+              It expires in 10 minutes and can only be used once.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:24px 36px 4px 36px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#0f1030;border-radius:12px;">
+              <tr>
+                <td align="center" style="padding:22px;font-family:'Courier New',Courier,monospace;color:#ffffff;font-size:32px;letter-spacing:10px;font-weight:bold;">{{code}}</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:24px 36px 0 36px;">
+            <a href="{{login_url}}" style="display:inline-block;background-color:#6d4aff;color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;text-decoration:none;padding:14px 26px;border-radius:10px;">Sign in instead &rarr;</a>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:26px 36px 36px 36px;font-family:Arial,Helvetica,sans-serif;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f7f7fd;border:1px solid #e6e7f2;border-radius:10px;">
+              <tr>
+                <td style="padding:14px 16px;color:#5a5f80;font-size:13px;line-height:20px;">
+                  <strong style="color:#12132e;">Request details</strong><br />
+                  Device: {{device}}<br />
+                  Location: {{location}}<br />
+                  Didn't try to sign in? Ignore this email &mdash; your account stays safe.
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
