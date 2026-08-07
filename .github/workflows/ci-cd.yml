@@ -1,0 +1,32 @@
+name: SkillForge AI CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Next.js Linter
+        run: npm run lint
+
+      - name: Type Check & Build Test
+        run: npm run build
+        env:
+          NEXT_PUBLIC_APP_URL: https://skillforge-ai-h35u.vercel.app
