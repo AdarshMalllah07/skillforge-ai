@@ -106,7 +106,7 @@ export default function Footer() {
             Submitted for <span className="font-semibold text-slate-200">SkillForge AI</span> Fullstack Developer Evaluation (Jan 2026).
           </p>
           <div className="flex items-center space-x-4 mt-4 sm:mt-0">
-            <span>Built with React 19, Express, & Tailwind CSS</span>
+            <span>Built with Next.js 16, React 19, MongoDB & Tailwind CSS</span>
             <span>&bull;</span>
             <button 
               onClick={() => setIsCandidateModalOpen(true)}

@@ -1,6 +1,6 @@
 <div align="center">
 
-# ⚔️ SkillForge AI
+# SkillForge AI
 
 ### AI-Powered Learning Management & Assessment Platform
 
@@ -23,19 +23,31 @@ An AI-powered Learning Management System that streamlines course creation, stude
 
 ---
 
-# 📖 Overview
+# Overview
 
-SkillForge AI is a modern Full Stack Learning Management System built to simplify online education using Artificial Intelligence.
-
-The platform enables instructors to create AI-assisted courses, students to learn through an interactive dashboard, evaluators to review submissions efficiently, and administrators to manage the entire learning ecosystem from a single platform.
-
-Unlike traditional LMS platforms, SkillForge AI leverages **Google Gemini AI** to automate curriculum generation, assist in evaluation, and provide intelligent learning support.
+SkillForge AI is a full-stack Learning Management System built for the House of EdTech Fullstack Developer assignment. It goes beyond basic CRUD by combining course management, submissions, role-based access, analytics, and Google Gemini AI for curriculum generation and grading assistance.
 
 ---
 
-# ✨ Core Features
+# Assignment Alignment
 
-## 🤖 AI Powered Learning
+| Requirement | Implementation |
+|-------------|----------------|
+| **Next.js 16** + TypeScript | App Router, API routes, SSR/client data fetching |
+| **React.js** | React 19 with Hooks & Context API |
+| **Tailwind CSS** | Tailwind CSS 4 + custom UI components |
+| **PostgreSQL / MongoDB** | MongoDB Atlas via Mongoose |
+| **CRUD** | Courses, Users, Assignments, Submissions, Enrollments |
+| **Auth & Authorization** | JWT + bcrypt + role-based access (Student / Instructor / Evaluator / Admin) |
+| **AI add-on** | Google Gemini — course generation, evaluation, tutor chat |
+| **Deployment + CI/CD** | Vercel + GitHub Actions (Node 20) |
+| **Footer mandate** | Candidate name, GitHub, and LinkedIn links in app footer |
+
+---
+
+# Core Features
+
+## AI-Powered Learning
 
 - AI Course Generation
 - AI Assignment Evaluation
@@ -43,21 +55,16 @@ Unlike traditional LMS platforms, SkillForge AI leverages **Google Gemini AI** t
 - AI Tutor Assistance
 - Intelligent Curriculum Planning
 
----
-
-## 👨‍🎓 Student Portal
+## Student Portal
 
 - Secure Authentication
-- Browse Available Courses
-- Course Enrollment
+- Browse & Enroll in Courses
 - Assignment Submission
 - Track Learning Progress
 - Personal Dashboard
 - AI Learning Assistant
 
----
-
-## 👨‍🏫 Instructor Portal
+## Instructor Portal
 
 - Create & Manage Courses
 - Create Assignments
@@ -65,316 +72,233 @@ Unlike traditional LMS platforms, SkillForge AI leverages **Google Gemini AI** t
 - Student Performance Tracking
 - Course Analytics
 
----
-
-## 📝 Evaluator Portal
+## Evaluator Portal
 
 - Review Student Submissions
 - AI Assisted Evaluation
 - Performance Reports
 - Assessment Analytics
 
----
-
-## 👑 Admin Panel
+## Admin Panel
 
 - User Management
 - Role Management
 - Course Management
 - Platform Analytics
-- Dashboard Overview
 
 ---
 
-# 🚀 Live Project
+# Live Project
 
-### 🌐 Live Application
+**Live Application:** https://skillforge-ai-h35u.vercel.app
 
-https://skillforge-ai-h35u.vercel.app
-
-### 💻 GitHub Repository
-
-https://github.com/AdarshMalllah07/skillforge-ai
+**GitHub Repository:** https://github.com/AdarshMalllah07/skillforge-ai
 
 ---
 
-# 🛠 Technology Stack
+# Technology Stack
 
 | Layer | Technologies |
 |--------|--------------|
-| Frontend | React 19, Vite 6, TypeScript |
-| Styling | Tailwind CSS 4, Motion |
-| Backend | Express.js, TypeScript |
-| Database | MongoDB, Mongoose |
-| Authentication | JWT |
-| AI | Google Gemini API |
+| Framework | **Next.js 16** (App Router) + TypeScript |
+| UI | React 19, Tailwind CSS 4, Motion, Lucide |
+| API | Next.js Route Handlers (`app/api/*`) |
+| Database | MongoDB + Mongoose |
+| Authentication | JWT + bcryptjs |
+| AI | Google Gemini (`@google/genai`) |
+| Email | Nodemailer (password reset / invites) |
 | Deployment | Vercel |
+| CI/CD | GitHub Actions |
 
 ---
 
-# 🏗 System Architecture
+# System Architecture
 
 ```
-                    Client
+                 Browser (React 19 + Tailwind)
 
-                      │
+                            │
 
-             React + Vite SPA
+                   Next.js 16 App Router
 
-                      │
-
-            Express REST API Server
-
-     ┌──────────────┼──────────────┐
-
- Authentication   Business Logic    AI Engine
-
-      JWT           CRUD APIs       Gemini AI
-
-     └──────────────┼──────────────┘
-
-                 MongoDB Atlas
+              ┌─────────────┼─────────────┐
+         Pages / SSR    API Routes     Middleware
+              │             │              │
+              └─────────────┼──────────────┘
+                            │
+              ┌─────────────┼─────────────┐
+         JWT Auth      Business Logic    Gemini AI
+              └─────────────┼─────────────┘
+                            │
+                      MongoDB Atlas
 ```
 
 ---
 
-# 🔐 Authentication & Authorization
+# Authentication & Authorization
 
-✔ JWT Authentication
-
-✔ Secure Password Hashing
-
-✔ Role-Based Access Control (RBAC)
-
-✔ Protected API Routes
-
-✔ Authorization Middleware
+- JWT Authentication
+- Secure Password Hashing (bcrypt)
+- Role-Based Access Control (RBAC)
+- Protected API Routes
+- Authorization helpers in `server/middleware/auth.ts`
 
 ---
 
-# 👥 User Roles
+# User Roles
 
 | Role | Permissions |
 |------|-------------|
-| 👨‍🎓 Student | Learn, Submit Assignments, AI Tutor |
-| 👨‍🏫 Instructor | Manage Courses, Create Assignments |
-| 📝 Evaluator | Review & Evaluate Submissions |
-| 👑 Admin | Complete Platform Management |
+| Student | Learn, Submit Assignments, AI Tutor |
+| Instructor | Manage Courses, Create Assignments |
+| Evaluator | Review & Evaluate Submissions |
+| Admin | Complete Platform Management |
 
 ---
 
-# 📂 Project Structure
+# Project Structure
 
 ```
-server/
-│
+app/                 # Next.js App Router (pages + API routes)
+├── api/             # REST API route handlers
+├── admin/           # Admin dashboards
+├── student/         # Student dashboards
+├── instructor/      # Instructor dashboards
+├── evaluator/       # Evaluator dashboards
+└── ...
+
+server/              # Shared backend (models, auth, email, db)
 ├── models/
-├── routes/
 ├── middleware/
+├── email/
 ├── db.ts
-├── uploads.ts
 └── seed.ts
 
-src/
-│
+src/                 # Shared UI + client libs
 ├── components/
-├── pages/
-├── hooks/
-├── services/
-├── layouts/
-└── assets/
+├── lib/
+└── types.ts
 
-public/
-
-vercel.json
-server.ts
+.github/workflows/   # CI/CD pipeline
 ```
 
 ---
 
-# 📡 API Overview
+# API Overview
 
 | Endpoint | Description |
 |-----------|-------------|
-| /api/auth | Authentication APIs |
-| /api/users | User Management |
-| /api/courses | Courses & Assignments |
-| /api/submissions | Student Submissions |
-| /api/ai | AI Services |
-| /api/candidate | Candidate Information |
+| `/api/auth/*` | Login, register, password flows, profile |
+| `/api/users` | User management |
+| `/api/courses` | Courses & assignments CRUD |
+| `/api/submissions` | Student submissions CRUD |
+| `/api/ai/*` | Course generation, evaluation, tutor |
+| `/api/candidate` | Candidate footer profile info |
+| `/api/health` | Health check |
 
 ---
 
-# ⚡ Performance Optimizations
-
-- Optimized API Design
-- Modular Architecture
-- Efficient MongoDB Queries
-- Lazy Loading
-- Component Reusability
-- Type Safety with TypeScript
-- Production Ready Build
-
----
-
-# 🔒 Security Features
+# Security
 
 - JWT Authentication
 - Password Hashing
-- Input Validation
-- Protected Routes
-- Environment Variables
-- MongoDB Secure Connection
+- Input Validation & Sanitization
+- Protected Routes / RBAC
+- Environment Variables for secrets
+- Secure MongoDB connection
 
 ---
 
-# 🚀 Getting Started
+# Real-World Considerations
 
-## Clone Repository
+- **Scalability:** Stateless JWT auth + MongoDB indexes; API handlers are modular for horizontal scale on Vercel
+- **Error Handling:** Centralized `withApi` wrapper, client ErrorBoundary, structured logging to `logs/`
+- **Performance:** App Router code splitting, Turbopack (Next 16 default), service worker cache versioning
+- **Security:** Role checks on every mutating route; secrets never committed
+
+---
+
+# Getting Started
+
+## Prerequisites
+
+- Node.js **20.9+** (required by Next.js 16)
+- MongoDB (local or Atlas)
+- Gemini API key (for AI features)
+
+## Clone & Install
 
 ```bash
 git clone https://github.com/AdarshMalllah07/skillforge-ai.git
-```
-
-```bash
 cd skillforge-ai
-```
-
----
-
-## Install Dependencies
-
-```bash
 npm install
 ```
 
----
-
 ## Configure Environment
 
-Create a `.env` file.
+Copy `.env.example` to `.env` and fill in values:
 
 ```env
 MONGODB_URI=
-
 JWT_SECRET=
-
 JWT_EXPIRES_IN=7d
-
 PORT=3000
-
 GEMINI_API_KEY=
+APP_URL=http://localhost:3000
 ```
 
----
-
-## Start Development
+## Development
 
 ```bash
 npm run dev
 ```
 
----
-
-## Production Build
+## Production
 
 ```bash
 npm run build
-```
-
-```bash
 npm start
 ```
 
 ---
 
-# 📜 Available Scripts
+# Scripts
 
 | Command | Description |
 |----------|-------------|
-| npm run dev | Development Server |
-| npm run build | Production Build |
-| npm start | Start Production Server |
-| npm run lint | Type Checking |
-| npm run seed | Seed Database |
-| npm run clean | Clean Build Files |
-| npm run create-super-admin | Create Super Admin |
+| `npm run dev` | Development server (Next.js 16 + Turbopack) |
+| `npm run build` | Production build |
+| `npm start` | Start production server |
+| `npm run lint` | TypeScript type check |
+| `npm run seed` | Seed database |
+| `npm run create-super-admin` | Ensure super admin exists |
+| `npm run clean` | Remove `.next` / `dist` |
 
 ---
 
-# 👑 Default Admin Credentials
+# Default Admin Credentials
 
 | Username | Password |
 |----------|----------|
 | admin | Password@12345 |
 
-> ⚠️ Change the default password immediately after the first login in a production environment.
+> Change the default password immediately after first login in production.
 
 ---
 
-# 📸 Application Preview
-
-> Add screenshots here
-
-- Dashboard
-- Student Panel
-- Instructor Dashboard
-- AI Course Generator
-- AI Evaluation
-- Analytics
-- Admin Dashboard
-
----
-
-# 🌟 Highlights
-
-- Full Stack Architecture
-- AI Powered Learning
-- Role Based Access Control
-- Secure JWT Authentication
-- Responsive UI
-- RESTful APIs
-- MongoDB Integration
-- Production Deployment
-- Modular Codebase
-- Scalable Design
-
----
-
-# 🚀 Future Enhancements
-
-- Live Classes
-- Certificate Generation
-- Discussion Forum
-- Real-time Notifications
-- AI Study Planner
-- Leaderboards
-- Email Notifications
-
----
-
-# 👨‍💻 Author
+# Author
 
 ## Adarsh Mallah
 
 Full Stack Developer passionate about building scalable, secure, and AI-powered web applications.
 
-### Connect
-
-**GitHub**
-
-https://github.com/AdarshMalllah07
-
-**LinkedIn**
-
-https://www.linkedin.com/in/adarsh-mallah-011279312/
+- **GitHub:** https://github.com/AdarshMalllah07
+- **LinkedIn:** https://www.linkedin.com/in/adarsh-mallah-011279312/
 
 ---
 
 <div align="center">
 
-### ⭐ If you found this project useful, consider giving it a star!
-
-Made with ❤️ using React, Express, MongoDB & Google Gemini AI
+Made with Next.js 16, React 19, MongoDB & Google Gemini AI
 
 </div>

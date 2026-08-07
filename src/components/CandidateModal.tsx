@@ -30,7 +30,7 @@ export default function CandidateModal({ onClose }: CandidateModalProps) {
     },
     {
       title: "Next.js 16 Architectural Concepts",
-      description: "Demonstrates App Router paradigms, type-safe Server Actions structure, Edge middleware authentication simulation, and server-side data fetching.",
+      description: "Built on Next.js 16 App Router with TypeScript API routes, SSR/client data fetching, JWT auth middleware, MongoDB via Mongoose, and Tailwind CSS UI.",
       status: "COMPLETED",
       badge: "Framework Mastery"
     },

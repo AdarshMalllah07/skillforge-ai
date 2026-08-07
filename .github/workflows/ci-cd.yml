@@ -12,20 +12,25 @@ jobs:
 
         steps:
             - name: Checkout Code
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
 
             - name: Setup Node.js
-              uses: actions/setup-node@v3
+              uses: actions/setup-node@v4
               with:
-                  node-version: "18.x"
+                  node-version: "20.x"
+                  cache: "npm"
 
             - name: Install Dependencies
-              run: |
-                  rm -rf package-lock.json
-                  npm install
+              run: npm ci
 
-            - name: Run ESLint
+            - name: Type Check
               run: npm run lint
 
             - name: Build Project
               run: npm run build
+              env:
+                  # Build-time placeholders so CI can compile without real secrets
+                  MONGODB_URI: mongodb://127.0.0.1:27017/skillforge_ci
+                  JWT_SECRET: ci_jwt_secret_for_build_only
+                  GEMINI_API_KEY: ci_placeholder_key
+                  APP_URL: http://localhost:3000
