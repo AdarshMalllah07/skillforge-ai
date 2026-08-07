@@ -109,9 +109,8 @@ export async function sendEmail(
 ): Promise<{ sent: boolean; messageId?: string; response?: string }> {
   const started = Date.now();
   logger.email('sendEmail called', {
-    to: options.to,
     subject: options.subject,
-    textPreview: (options.text || '').slice(0, 300),
+    hasText: Boolean(options.text),
   });
 
   try {
@@ -126,23 +125,19 @@ export async function sendEmail(
     });
 
     logger.email('Email sent successfully', {
-      to: options.to,
       subject: options.subject,
       messageId: info.messageId,
-      response: info.response,
-      accepted: info.accepted,
-      rejected: info.rejected,
+      acceptedCount: Array.isArray(info.accepted) ? info.accepted.length : 0,
+      rejectedCount: Array.isArray(info.rejected) ? info.rejected.length : 0,
       durationMs: Date.now() - started,
     });
 
     return { sent: true, messageId: info.messageId, response: info.response };
   } catch (err) {
     logger.emailError('Email send failed', {
-      to: options.to,
       subject: options.subject,
       durationMs: Date.now() - started,
       error: err instanceof Error ? err.message : String(err),
-      stack: err instanceof Error ? err.stack : undefined,
     });
     transporter = null;
     transporterVerified = false;

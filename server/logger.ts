@@ -105,30 +105,60 @@ function maybeCleanupOldLogs() {
   }
 }
 
-const SENSITIVE_KEYS = [
+const SENSITIVE_KEYS = new Set([
   'password',
   'oldpassword',
   'newpassword',
   'confirmpassword',
   'token',
+  'rawtoken',
   'accesstoken',
   'refreshtoken',
   'authorization',
+  'cookie',
   'smtp_pass',
   'smtppass',
   'apikey',
   'api_key',
   'secret',
   'jwt',
-];
+  'email',
+  'to',
+  'from',
+  'cc',
+  'bcc',
+  'studentemail',
+  'setupurl',
+  'reseturl',
+  'textpreview',
+  'html',
+  'text',
+  'codecontent',
+  'essaycontent',
+  'mongodburi',
+  'mongodburipassword',
+]);
+
+const EMAIL_RE = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
+const URL_WITH_TOKEN_RE = /(https?:\/\/[^\s"'<>]*[?&]token=)[^&\s"'<>]+/gi;
+
+function redactString(value: string): string {
+  let out = value.replace(EMAIL_RE, '[REDACTED_EMAIL]');
+  out = out.replace(URL_WITH_TOKEN_RE, '$1[REDACTED]');
+  if (out.length > 500) return `${out.slice(0, 500)}…[truncated ${out.length} chars]`;
+  return out;
+}
+
+function normalizeKey(key: string): string {
+  return key.toLowerCase().replace(/[-_]/g, '');
+}
 
 export function sanitizeForLog(value: unknown, depth = 0): unknown {
   if (value == null) return value;
   if (depth > 6) return '[MaxDepth]';
 
   if (typeof value === 'string') {
-    if (value.length > 4000) return `${value.slice(0, 4000)}…[truncated ${value.length} chars]`;
-    return value;
+    return redactString(value);
   }
 
   if (Array.isArray(value)) {
@@ -138,7 +168,7 @@ export function sanitizeForLog(value: unknown, depth = 0): unknown {
   if (typeof value === 'object') {
     const out: Record<string, unknown> = {};
     for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
-      if (SENSITIVE_KEYS.includes(key.toLowerCase().replace(/[-_]/g, ''))) {
+      if (SENSITIVE_KEYS.has(normalizeKey(key))) {
         out[key] = '[REDACTED]';
       } else {
         out[key] = sanitizeForLog(val, depth + 1);

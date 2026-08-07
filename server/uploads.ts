@@ -12,12 +12,46 @@ const uploadsBase = process.env.VERCEL
 export const UPLOADS_ROOT = uploadsBase;
 export const PROFILE_UPLOADS_DIR = path.join(UPLOADS_ROOT, 'profiles');
 export const PROFILE_UPLOADS_URL_PREFIX = '/uploads/profiles/';
+export const SUBMISSION_UPLOADS_DIR = path.join(UPLOADS_ROOT, 'submissions');
+export const SUBMISSION_UPLOADS_URL_PREFIX = '/uploads/submissions/';
 
 const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+const ALLOWED_SUBMISSION_MIME = new Set([
+  'text/plain',
+  'text/markdown',
+  'application/pdf',
+  'application/zip',
+  'application/x-zip-compressed',
+  'application/json',
+  'text/javascript',
+  'application/javascript',
+  'text/typescript',
+  'application/typescript',
+  'text/x-python',
+  'application/octet-stream',
+]);
+const ALLOWED_SUBMISSION_EXT = new Set([
+  '.txt',
+  '.md',
+  '.pdf',
+  '.zip',
+  '.json',
+  '.js',
+  '.ts',
+  '.tsx',
+  '.jsx',
+  '.py',
+  '.java',
+  '.c',
+  '.cpp',
+  '.go',
+  '.rs',
+]);
 
 export function ensureUploadDirs(): void {
   try {
     fs.mkdirSync(PROFILE_UPLOADS_DIR, { recursive: true });
+    fs.mkdirSync(SUBMISSION_UPLOADS_DIR, { recursive: true });
   } catch (err) {
     console.warn('Could not create upload dirs:', err);
   }
@@ -66,5 +100,41 @@ export async function saveProfileAvatar(
   return {
     filename,
     url: `${PROFILE_UPLOADS_URL_PREFIX}${filename}`,
+  };
+}
+
+export async function saveSubmissionAttachment(
+  file: File,
+  userId: string
+): Promise<{ filename: string; url: string; originalName: string }> {
+  const originalExt = path.extname(file.name).toLowerCase() || '';
+  if (!ALLOWED_SUBMISSION_EXT.has(originalExt)) {
+    throw new Error(
+      'Unsupported file type. Allowed: txt, md, pdf, zip, json, and common source extensions'
+    );
+  }
+  if (
+    file.type &&
+    !ALLOWED_SUBMISSION_MIME.has(file.type) &&
+    !file.type.startsWith('text/')
+  ) {
+    throw new Error('Unsupported file MIME type');
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    throw new Error('Attachment must be 10MB or smaller');
+  }
+
+  ensureUploadDirs();
+
+  const safeUserId = userId.replace(/[^a-zA-Z0-9_-]/g, '') || 'user';
+  const filename = `sub_${safeUserId}_${Date.now()}${originalExt}`;
+  const filePath = path.join(SUBMISSION_UPLOADS_DIR, filename);
+  const buffer = Buffer.from(await file.arrayBuffer());
+  fs.writeFileSync(filePath, buffer);
+
+  return {
+    filename,
+    url: `${SUBMISSION_UPLOADS_URL_PREFIX}${filename}`,
+    originalName: path.basename(file.name).slice(0, 200),
   };
 }

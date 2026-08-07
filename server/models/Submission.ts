@@ -14,6 +14,8 @@ const submissionSchema = new Schema(
     codeContent: String,
     essayContent: String,
     repositoryUrl: String,
+    attachmentUrl: String,
+    attachmentName: String,
     status: {
       type: String,
       enum: ['PENDING', 'AI_EVALUATED', 'GRADED', 'REJECTED'],

@@ -3,7 +3,17 @@ import React, { useState } from 'react';
 import { Assignment, Course, Submission, AIEvaluationResult } from '../types';
 import { useAuth } from '../lib/authContext';
 import { api } from '../lib/api';
-import { ArrowLeft, Code, Send, Sparkles, CheckCircle2, RotateCcw, AlertCircle, FileText, Github, ShieldCheck } from 'lucide-react';
+import {
+  ArrowLeft,
+  Code,
+  Send,
+  Sparkles,
+  RotateCcw,
+  AlertCircle,
+  Github,
+  ShieldCheck,
+  Paperclip,
+} from 'lucide-react';
 import AIEvaluationReport from './AIEvaluationReport';
 
 interface SubmissionPortalProps {
@@ -20,15 +30,15 @@ export default function SubmissionPortal({
   onSubmissionSuccess,
 }: SubmissionPortalProps) {
   const { currentUser } = useAuth();
-  
+
   const [codeContent, setCodeContent] = useState(assignment.starterCode || '');
   const [essayContent, setEssayContent] = useState('');
   const [repoUrl, setRepoUrl] = useState('');
-  
+  const [attachment, setAttachment] = useState<File | null>(null);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [latestEvaluation, setLatestEvaluation] = useState<AIEvaluationResult | null>(null);
-  const [submittedItem, setSubmittedItem] = useState<Submission | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
 
   const handleResetCode = () => {
@@ -37,12 +47,12 @@ export default function SubmissionPortal({
 
   const handleSubmitAndEvaluate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (assignment.type === 'CODE' && !codeContent.trim()) {
-      setErrorMessage('Please write or paste code before submitting.');
+    if (assignment.type === 'CODE' && !codeContent.trim() && !attachment && !repoUrl.trim()) {
+      setErrorMessage('Please write code, attach a file, or add a repository URL before submitting.');
       return;
     }
-    if (assignment.type === 'ESSAY' && !essayContent.trim()) {
-      setErrorMessage('Please write your essay content before submitting.');
+    if (assignment.type === 'ESSAY' && !essayContent.trim() && !attachment) {
+      setErrorMessage('Please write your essay content or attach a file before submitting.');
       return;
     }
 
@@ -51,24 +61,27 @@ export default function SubmissionPortal({
     setIsEvaluating(true);
 
     try {
-      // 1. Post submission to backend
+      const formData = new FormData();
+      formData.append('assignmentId', assignment.id);
+      formData.append('assignmentTitle', assignment.title);
+      formData.append('courseId', course.id);
+      formData.append('courseTitle', course.title);
+      formData.append('maxScore', String(assignment.maxScore));
+      if (assignment.type === 'CODE' && codeContent.trim()) {
+        formData.append('codeContent', codeContent);
+      }
+      if (assignment.type === 'ESSAY' && essayContent.trim()) {
+        formData.append('essayContent', essayContent);
+      }
+      if (repoUrl.trim()) formData.append('repositoryUrl', repoUrl.trim());
+      if (attachment) formData.append('attachment', attachment);
+
       const submissionData = await api<Submission>('/api/submissions', {
         method: 'POST',
-        body: JSON.stringify({
-          assignmentId: assignment.id,
-          assignmentTitle: assignment.title,
-          courseId: course.id,
-          courseTitle: course.title,
-          codeContent: assignment.type === 'CODE' ? codeContent : undefined,
-          essayContent: assignment.type === 'ESSAY' ? essayContent : undefined,
-          repositoryUrl: repoUrl || undefined,
-          maxScore: assignment.maxScore,
-        }),
+        body: formData,
       });
 
-      setSubmittedItem(submissionData);
-
-      // 2. Trigger Server-side AI Evaluation using Gemini
+      // AI feedback is advisory — does not set the official finalScore.
       const evalData = await api<AIEvaluationResult>('/api/ai/evaluate-submission', {
         method: 'POST',
         body: JSON.stringify({
@@ -87,13 +100,16 @@ export default function SubmissionPortal({
         ...submissionData,
         status: 'AI_EVALUATED',
         aiEvaluation: evalData,
-        finalScore: evalData.overallScore,
       };
 
       onSubmissionSuccess(finalSubmission);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Submission error:', err);
-      setErrorMessage(err.message || 'An error occurred during submission and AI evaluation.');
+      setErrorMessage(
+        err instanceof Error
+          ? err.message
+          : 'An error occurred during submission and AI evaluation.'
+      );
     } finally {
       setIsSubmitting(false);
       setIsEvaluating(false);
@@ -102,8 +118,6 @@ export default function SubmissionPortal({
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      
-      {/* Top Header */}
       <div className="flex items-center justify-between">
         <button
           onClick={onBack}
@@ -119,7 +133,6 @@ export default function SubmissionPortal({
         </div>
       </div>
 
-      {/* Assignment Summary Banner */}
       <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-3">
         <div className="flex items-center justify-between">
           <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-indigo-100 text-indigo-700">
@@ -133,13 +146,12 @@ export default function SubmissionPortal({
         <h2 className="text-xl font-bold text-slate-900">{assignment.title}</h2>
         <p className="text-xs text-slate-600 leading-relaxed">{assignment.description}</p>
 
-        {/* Rubrics Checklist */}
         <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
           <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
             Grading Rubric Criteria
           </h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {assignment.rubrics.map(rub => (
+            {assignment.rubrics.map((rub) => (
               <div key={rub.id} className="bg-white p-2.5 rounded-lg border border-slate-200 text-xs">
                 <div className="flex justify-between font-bold text-slate-800">
                   <span>{rub.title}</span>
@@ -152,7 +164,6 @@ export default function SubmissionPortal({
         </div>
       </div>
 
-      {/* Submission Editor Workspace */}
       <div className="bg-slate-900 rounded-2xl border border-slate-800 p-6 space-y-4 text-white shadow-xl">
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div className="flex items-center space-x-2">
@@ -181,25 +192,21 @@ export default function SubmissionPortal({
         )}
 
         {assignment.type === 'CODE' ? (
-          <div>
-            <textarea
-              rows={14}
-              value={codeContent}
-              onChange={e => setCodeContent(e.target.value)}
-              className="w-full font-mono text-xs p-4 bg-slate-950 text-indigo-200 rounded-xl border border-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 leading-relaxed"
-              placeholder="// Write your TypeScript / Next.js implementation here..."
-            />
-          </div>
+          <textarea
+            rows={14}
+            value={codeContent}
+            onChange={(e) => setCodeContent(e.target.value)}
+            className="w-full font-mono text-xs p-4 bg-slate-950 text-indigo-200 rounded-xl border border-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 leading-relaxed"
+            placeholder="// Write your TypeScript / Next.js implementation here..."
+          />
         ) : (
-          <div>
-            <textarea
-              rows={10}
-              value={essayContent}
-              onChange={e => setEssayContent(e.target.value)}
-              className="w-full text-xs p-4 bg-slate-950 text-slate-200 rounded-xl border border-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 leading-relaxed"
-              placeholder="Write your architectural analysis or essay response here..."
-            />
-          </div>
+          <textarea
+            rows={10}
+            value={essayContent}
+            onChange={(e) => setEssayContent(e.target.value)}
+            className="w-full text-xs p-4 bg-slate-950 text-slate-200 rounded-xl border border-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 leading-relaxed"
+            placeholder="Write your architectural analysis or essay response here..."
+          />
         )}
 
         <div>
@@ -212,17 +219,33 @@ export default function SubmissionPortal({
               type="url"
               placeholder="https://github.com/username/project-repo"
               value={repoUrl}
-              onChange={e => setRepoUrl(e.target.value)}
+              onChange={(e) => setRepoUrl(e.target.value)}
               className="w-full pl-9 pr-3 py-2 text-xs bg-slate-950 border border-slate-800 rounded-xl text-slate-200 focus:ring-2 focus:ring-indigo-500"
             />
           </div>
         </div>
 
-        {/* Submit Actions */}
+        <div>
+          <label className="block text-xs font-medium text-slate-400 mb-1">
+            Optional file attachment
+          </label>
+          <label className="flex items-center gap-2 w-full px-3 py-2 text-xs bg-slate-950 border border-slate-800 rounded-xl text-slate-300 cursor-pointer hover:border-indigo-500">
+            <Paperclip className="w-4 h-4 text-slate-500" />
+            <span className="truncate">
+              {attachment ? attachment.name : 'Attach pdf, zip, source, or text (max 10MB)'}
+            </span>
+            <input
+              type="file"
+              className="hidden"
+              onChange={(e) => setAttachment(e.target.files?.[0] || null)}
+            />
+          </label>
+        </div>
+
         <div className="pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-xs text-slate-400 flex items-center">
             <Sparkles className="w-4 h-4 text-indigo-400 mr-1.5 animate-pulse" />
-            Grading powered by server-side Gemini 3.6 Flash AI Evaluator
+            AI feedback is advisory — official grades are set by instructors/evaluators
           </div>
 
           <button
@@ -231,10 +254,10 @@ export default function SubmissionPortal({
             className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-xs font-extrabold rounded-xl shadow-lg transition-all flex items-center justify-center space-x-2 disabled:opacity-50"
           >
             {isSubmitting ? (
-              <span>Evaluating with AI...</span>
+              <span>Submitting & getting AI feedback...</span>
             ) : (
               <>
-                <span>Submit Work & AI Evaluate</span>
+                <span>Submit Work & Get AI Feedback</span>
                 <Send className="w-3.5 h-3.5" />
               </>
             )}
@@ -242,14 +265,12 @@ export default function SubmissionPortal({
         </div>
       </div>
 
-      {/* AI Evaluation Result Modal display if evaluated */}
       {latestEvaluation && (
         <AIEvaluationReport
           evaluation={latestEvaluation}
           onClose={() => setLatestEvaluation(null)}
         />
       )}
-
     </div>
   );
 }

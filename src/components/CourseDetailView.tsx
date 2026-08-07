@@ -17,6 +17,12 @@ interface CourseDetailViewProps {
   onBack: () => void;
   onOpenSubmissionPortal: (assignment: Assignment, course: Course) => void;
   onCreateAssignment: (courseId: string, assignmentData: Partial<Assignment>) => void;
+  onUpdateAssignment: (
+    courseId: string,
+    assignmentId: string,
+    assignmentData: Partial<Assignment>
+  ) => void;
+  onDeleteAssignment: (courseId: string, assignmentId: string) => void;
 }
 
 export default function CourseDetailView({
@@ -24,6 +30,8 @@ export default function CourseDetailView({
   onBack,
   onOpenSubmissionPortal,
   onCreateAssignment,
+  onUpdateAssignment,
+  onDeleteAssignment,
 }: CourseDetailViewProps) {
   const { currentUser } = useAuth();
   const canAuthorCourse = canEditCourse(
@@ -324,32 +332,53 @@ export default function CourseDetailView({
             {canAuthorCourse && (
               <button
                 onClick={() => {
+                  const title = window.prompt('Assignment title');
+                  if (!title?.trim()) return;
+                  const description =
+                    window.prompt('Assignment description (optional)') || '';
                   onCreateAssignment(course.id, {
-                    title: '',
-                    description: '',
+                    title: title.trim(),
+                    description: description.trim(),
                     type: 'CODE',
                     maxScore: 100,
                     rubrics: [
-                      { id: `rub_${Date.now()}_1`, title: 'Criterion 1', description: '', maxPoints: 50 },
-                      { id: `rub_${Date.now()}_2`, title: 'Criterion 2', description: '', maxPoints: 50 }
-                    ]
+                      {
+                        id: `rub_${Date.now()}_1`,
+                        title: 'Criterion 1',
+                        description: '',
+                        maxPoints: 50,
+                      },
+                      {
+                        id: `rub_${Date.now()}_2`,
+                        title: 'Criterion 2',
+                        description: '',
+                        maxPoints: 50,
+                      },
+                    ],
                   });
                 }}
                 className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold flex items-center space-x-1.5 shadow-xs"
               >
                 <Plus className="w-4 h-4" />
-                <span>Add Assignment (CRUD)</span>
+                <span>Add Assignment</span>
               </button>
             )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {course.assignments.map(assign => (
-              <div key={assign.id} className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4 shadow-xs hover:border-indigo-300 transition-all">
+            {course.assignments.map((assign) => (
+              <div
+                key={assign.id}
+                className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4 shadow-xs hover:border-indigo-300 transition-all"
+              >
                 <div className="flex items-center justify-between">
-                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                    assign.type === 'CODE' ? 'bg-indigo-100 text-indigo-700' : 'bg-emerald-100 text-emerald-700'
-                  }`}>
+                  <span
+                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      assign.type === 'CODE'
+                        ? 'bg-indigo-100 text-indigo-700'
+                        : 'bg-emerald-100 text-emerald-700'
+                    }`}
+                  >
                     {assign.type} CHALLENGE
                   </span>
                   <span className="text-xs font-bold text-slate-700">
@@ -364,32 +393,75 @@ export default function CourseDetailView({
                   </p>
                 </div>
 
-                {/* Rubrics preview */}
                 <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1.5">
                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                     Evaluation Rubric Parameters ({assign.rubrics.length})
                   </span>
                   <div className="space-y-1">
-                    {assign.rubrics.map(rub => (
+                    {assign.rubrics.map((rub) => (
                       <div key={rub.id} className="flex justify-between text-[11px] text-slate-700">
                         <span>&bull; {rub.title}</span>
-                        <span className="font-mono text-indigo-600 font-semibold">{rub.maxPoints} pts</span>
+                        <span className="font-mono text-indigo-600 font-semibold">
+                          {rub.maxPoints} pts
+                        </span>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="pt-2 flex items-center justify-between">
+                <div className="pt-2 flex items-center justify-between gap-2">
                   <span className="text-[11px] text-slate-400">
                     Due: {new Date(assign.dueDate).toLocaleDateString()}
                   </span>
-                  <button
-                    onClick={() => onOpenSubmissionPortal(assign, course)}
-                    className="px-4 py-2 bg-slate-900 hover:bg-indigo-600 text-white rounded-lg text-xs font-bold transition-all shadow-xs flex items-center space-x-1.5"
-                  >
-                    <span>Open Submission Workspace</span>
-                    <Code className="w-3.5 h-3.5" />
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    {canAuthorCourse && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const title = window.prompt('Update title', assign.title);
+                            if (!title?.trim()) return;
+                            const description = window.prompt(
+                              'Update description',
+                              assign.description || ''
+                            );
+                            onUpdateAssignment(course.id, assign.id, {
+                              title: title.trim(),
+                              description: (description ?? assign.description).trim(),
+                            });
+                          }}
+                          className="px-2.5 py-2 bg-white border border-slate-200 hover:border-indigo-300 text-slate-700 rounded-lg text-xs font-bold"
+                          title="Edit assignment"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (
+                              !window.confirm(
+                                `Delete assignment "${assign.title}"? This cannot be undone.`
+                              )
+                            ) {
+                              return;
+                            }
+                            onDeleteAssignment(course.id, assign.id);
+                          }}
+                          className="px-2.5 py-2 bg-white border border-slate-200 hover:border-red-300 text-red-600 rounded-lg text-xs font-bold"
+                          title="Delete assignment"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </>
+                    )}
+                    <button
+                      onClick={() => onOpenSubmissionPortal(assign, course)}
+                      className="px-4 py-2 bg-slate-900 hover:bg-indigo-600 text-white rounded-lg text-xs font-bold transition-all shadow-xs flex items-center space-x-1.5"
+                    >
+                      <span>Open Submission Workspace</span>
+                      <Code className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

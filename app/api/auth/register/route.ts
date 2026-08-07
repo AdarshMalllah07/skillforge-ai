@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { withApi } from '@/lib/server/api';
 import { User } from '@/server/models/User';
-import { signToken } from '@/server/middleware/auth';
+import { setAuthCookie, signToken } from '@/server/middleware/auth';
 import { toClient, newId } from '@/server/utils';
 import { DEFAULT_AVATAR } from '@/server/uploads';
 import { sendWelcomeEmail } from '@/server/email/templates';
@@ -54,7 +54,9 @@ export async function POST(req: NextRequest) {
 
       const client = toClient(user)!;
       const token = signToken({ id: client.id, email: client.email, role: client.role });
-      return NextResponse.json({ token, user: client }, { status: 201 });
+      const res = NextResponse.json({ user: client }, { status: 201 });
+      setAuthCookie(res, token);
+      return res;
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       return NextResponse.json({ error: 'Registration failed', message }, { status: 500 });

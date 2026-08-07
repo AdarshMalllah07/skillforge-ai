@@ -8,17 +8,24 @@ interface CandidateModalProps {
 }
 
 export default function CandidateModal({ onClose }: CandidateModalProps) {
-  const { candidateInfo, updateCandidateInfo } = useAuth();
+  const { candidateInfo, updateCandidateInfo, currentUser } = useAuth();
+  const canEdit = currentUser?.role === 'ADMIN';
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({ ...candidateInfo });
   const [saveStatus, setSaveStatus] = useState('');
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    await updateCandidateInfo(formData);
-    setSaveStatus('Saved profile successfully!');
-    setIsEditing(false);
-    setTimeout(() => setSaveStatus(''), 3000);
+    if (!canEdit) return;
+    try {
+      await updateCandidateInfo(formData);
+      setSaveStatus('Saved profile successfully!');
+      setIsEditing(false);
+      setTimeout(() => setSaveStatus(''), 3000);
+    } catch {
+      setSaveStatus('Failed to save — admin access required.');
+      setTimeout(() => setSaveStatus(''), 3000);
+    }
   };
 
   const requirementsList = [
@@ -96,7 +103,7 @@ export default function CandidateModal({ onClose }: CandidateModalProps) {
                 <p className="text-sm text-slate-600">{candidateInfo.email}</p>
               </div>
 
-              {!isEditing && (
+              {!isEditing && canEdit && (
                 <button
                   onClick={() => setIsEditing(true)}
                   className="px-3.5 py-1.5 text-xs font-medium bg-white text-slate-700 hover:text-indigo-600 border border-slate-300 rounded-lg shadow-sm hover:border-indigo-300 transition-all self-start sm:self-auto"

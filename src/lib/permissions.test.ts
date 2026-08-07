@@ -4,6 +4,7 @@ import {
   canGradeSubmissions,
   canManageCourses,
   canUseGenerator,
+  canViewDraftCourses,
 } from './permissions';
 
 describe('permission helpers (RBAC)', () => {
@@ -26,5 +27,12 @@ describe('permission helpers (RBAC)', () => {
     expect(canGradeSubmissions('EVALUATOR')).toBe(true);
     expect(canGradeSubmissions('INSTRUCTOR')).toBe(true);
     expect(canGradeSubmissions('STUDENT')).toBe(false);
+  });
+
+  it('does not expose draft courses to evaluators', () => {
+    expect(canViewDraftCourses('ADMIN')).toBe(true);
+    expect(canViewDraftCourses('INSTRUCTOR')).toBe(true);
+    expect(canViewDraftCourses('EVALUATOR')).toBe(false);
+    expect(canViewDraftCourses('STUDENT')).toBe(false);
   });
 });

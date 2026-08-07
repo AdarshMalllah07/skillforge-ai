@@ -6,10 +6,10 @@ import { requireRoles } from '@/server/middleware/auth';
 import { User } from '@/server/models/User';
 import { PasswordToken } from '@/server/models/PasswordToken';
 import { toClient, toClientList, newId } from '@/server/utils';
-import { UserRole } from '@/server/types';
 import { DEFAULT_AVATAR } from '@/server/uploads';
 import { buildPasswordLink, createPasswordToken } from '@/server/email/tokens';
 import { sendSetupPasswordInviteEmail, sendWelcomeEmail } from '@/server/email/templates';
+import { parseBody, userCreateSchema } from '@/server/validation';
 
 function isDuplicateKeyError(err: unknown): boolean {
   return Boolean(
@@ -54,28 +54,14 @@ export async function POST(req: NextRequest) {
       const auth = await requireRoles(req, 'ADMIN');
       if ('error' in auth) return auth.error;
 
-      const { name, email, role, title, bio, skills, avatar, password } = await req.json();
-
-      if (!name || !email || !role) {
-        return NextResponse.json(
-          { error: 'Name, email, and role are required' },
-          { status: 400 }
-        );
+      const parsed = parseBody(userCreateSchema, await req.json());
+      if ('error' in parsed) {
+        return NextResponse.json({ error: parsed.error }, { status: 400 });
       }
+
+      const { name, email, role, title, bio, skills, avatar, password } = parsed.data;
 
       const hasPassword = Boolean(password && String(password).trim());
-      if (hasPassword && String(password).trim().length < 6) {
-        return NextResponse.json(
-          { error: 'Password must be at least 6 characters' },
-          { status: 400 }
-        );
-      }
-
-      const validRoles: UserRole[] = ['STUDENT', 'INSTRUCTOR', 'EVALUATOR', 'ADMIN'];
-      if (!validRoles.includes(role)) {
-        return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
-      }
-
       const normalizedEmail = String(email).toLowerCase().trim();
       const existing = await User.findOne({ email: normalizedEmail });
       if (existing) {

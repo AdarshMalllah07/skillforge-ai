@@ -4,8 +4,20 @@ import { getAuthUser, requireRoles } from '@/server/middleware/auth';
 import { Course } from '@/server/models/Course';
 import { Enrollment } from '@/server/models/Enrollment';
 import { toClient, slugify } from '@/server/utils';
+import { courseUpdateSchema, parseBody } from '@/server/validation';
 
 type Ctx = { params: Promise<{ id: string }> };
+
+function canViewUnpublishedCourse(
+  user: { id: string; role: string } | null,
+  course: { instructorId: string; status: string }
+): boolean {
+  if (course.status === 'PUBLISHED') return true;
+  if (!user) return false;
+  if (user.role === 'ADMIN') return true;
+  if (user.role === 'INSTRUCTOR' && course.instructorId === user.id) return true;
+  return false;
+}
 
 export async function GET(req: NextRequest, context: Ctx) {
   return withApi(req, async () => {
@@ -16,7 +28,7 @@ export async function GET(req: NextRequest, context: Ctx) {
       if (!course) {
         return NextResponse.json({ error: 'Course not found' }, { status: 404 });
       }
-      if (course.status !== 'PUBLISHED' && (!user || user.role === 'STUDENT')) {
+      if (!canViewUnpublishedCourse(user, course)) {
         return NextResponse.json({ error: 'Course not available' }, { status: 403 });
       }
       const client = toClient(course)!;
@@ -51,7 +63,12 @@ export async function PUT(req: NextRequest, context: Ctx) {
         );
       }
 
-      const body = await req.json();
+      const parsed = parseBody(courseUpdateSchema, await req.json());
+      if ('error' in parsed) {
+        return NextResponse.json({ error: parsed.error }, { status: 400 });
+      }
+
+      const body = parsed.data;
       const allowed = [
         'title',
         'description',

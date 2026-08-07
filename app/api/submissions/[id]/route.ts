@@ -7,8 +7,22 @@ import { User } from '@/server/models/User';
 import { toClient } from '@/server/utils';
 import { getAppBaseUrl } from '@/server/email/tokens';
 import { sendSubmissionGradedEmail } from '@/server/email/templates';
+import { parseBody, submissionGradeSchema } from '@/server/validation';
 
 type Ctx = { params: Promise<{ id: string }> };
+
+async function canReadSubmission(
+  user: { id: string; role: string },
+  submission: { studentId: string; courseId: string }
+): Promise<boolean> {
+  if (user.role === 'ADMIN' || user.role === 'EVALUATOR') return true;
+  if (user.role === 'STUDENT') return submission.studentId === user.id;
+  if (user.role === 'INSTRUCTOR') {
+    const course = await Course.findById(submission.courseId);
+    return Boolean(course && course.instructorId === user.id);
+  }
+  return false;
+}
 
 export async function GET(req: NextRequest, context: Ctx) {
   return withApi(req, async () => {
@@ -22,7 +36,7 @@ export async function GET(req: NextRequest, context: Ctx) {
         return NextResponse.json({ error: 'Submission not found' }, { status: 404 });
       }
 
-      if (auth.user.role === 'STUDENT' && submission.studentId !== auth.user.id) {
+      if (!(await canReadSubmission(auth.user, submission))) {
         return NextResponse.json({ error: 'Access denied' }, { status: 403 });
       }
 
@@ -63,8 +77,13 @@ export async function PUT(req: NextRequest, context: Ctx) {
         }
       }
 
+      const parsed = parseBody(submissionGradeSchema, await req.json());
+      if ('error' in parsed) {
+        return NextResponse.json({ error: parsed.error }, { status: 400 });
+      }
+
       const previousStatus = submission.status;
-      const { finalScore, instructorFeedback, status, aiEvaluation } = await req.json();
+      const { finalScore, instructorFeedback, status, aiEvaluation } = parsed.data;
 
       if (finalScore !== undefined) submission.finalScore = Number(finalScore);
       if (instructorFeedback !== undefined) submission.instructorFeedback = instructorFeedback;

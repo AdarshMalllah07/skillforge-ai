@@ -2,17 +2,16 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { User, CandidateInfo } from '../types';
-import { api, getToken, setToken, clearToken } from './api';
+import { api, clearLegacyToken } from './api';
 
 interface AuthContextType {
   currentUser: User | null;
   usersList: User[];
   isAuthenticated: boolean;
   isLoading: boolean;
-  token: string;
   login: (email: string, password: string) => Promise<void>;
   signup: (name: string, email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   updateUserProfile: (updatedFields: Partial<User>) => Promise<void>;
   changePassword: (oldPassword: string, newPassword: string) => Promise<void>;
   uploadAvatar: (file: File) => Promise<void>;
@@ -52,7 +51,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [token, setTokenState] = useState(getToken());
   const [candidateInfo, setCandidateInfo] = useState<CandidateInfo>({
     name: '',
     email: '',
@@ -68,16 +66,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [authModalMode, setAuthModalMode] = useState<'LOGIN' | 'SIGNUP'>('LOGIN');
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
-  const applySession = (newToken: string, user: User) => {
-    setToken(newToken);
-    setTokenState(newToken);
+  const applySession = (user: User) => {
     setCurrentUser(user);
     setIsAuthenticated(true);
   };
 
   const refreshUsers = useCallback(async () => {
     try {
-      if (!getToken()) return;
       const me = await api<{ user: User }>('/api/auth/me');
       if (me.user.role === 'ADMIN') {
         const users = await api<User[]>('/api/users');
@@ -88,26 +83,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  // Restore session on boot
+  // Restore session on boot (httpOnly cookie)
   useEffect(() => {
+    clearLegacyToken();
     const boot = async () => {
-      const existing = getToken();
-      if (!existing) {
-        setIsLoading(false);
-        return;
-      }
       try {
         const { user } = await api<{ user: User }>('/api/auth/me');
         setCurrentUser(user);
         setIsAuthenticated(true);
-        setTokenState(existing);
         if (user.role === 'ADMIN') {
           const users = await api<User[]>('/api/users');
           setUsersList(users);
         }
       } catch {
-        clearToken();
-        setTokenState('');
         setCurrentUser(null);
         setIsAuthenticated(false);
       } finally {
@@ -133,11 +121,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (email: string, password: string) => {
-    const data = await api<{ token: string; user: User }>('/api/auth/login', {
+    const data = await api<{ user: User }>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
-    applySession(data.token, data.user);
+    applySession(data.user);
     setIsAuthModalOpen(false);
     if (data.user.role === 'ADMIN') {
       await refreshUsers();
@@ -145,17 +133,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signup = async (name: string, email: string, password: string) => {
-    const data = await api<{ token: string; user: User }>('/api/auth/register', {
+    const data = await api<{ user: User }>('/api/auth/register', {
       method: 'POST',
       body: JSON.stringify({ name, email, password }),
     });
-    applySession(data.token, data.user);
+    applySession(data.user);
     setIsAuthModalOpen(false);
   };
 
-  const logout = () => {
-    clearToken();
-    setTokenState('');
+  const logout = async () => {
+    try {
+      await api('/api/auth/logout', { method: 'POST' });
+    } catch {
+      // clear local session even if network fails
+    }
+    clearLegacyToken();
     setCurrentUser(null);
     setIsAuthenticated(false);
     setUsersList([]);
@@ -207,7 +199,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       avatar: user.avatar,
       githubUrl: user.githubUrl,
       linkedInUrl: user.linkedInUrl,
-      password: user.password, // may be undefined → API sends setup invite
+      password: user.password,
     };
     const created = await api<User & { emailType?: string }>('/api/users', {
       method: 'POST',
@@ -240,13 +232,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     | { status: 'sent'; message: string }
     | { status: 'needs_confirm'; message: string; expiresAt?: string }
   > => {
-    const headers = new Headers({ 'Content-Type': 'application/json' });
-    const token = getToken();
-    if (token) headers.set('Authorization', `Bearer ${token}`);
-
     const res = await fetch(`/api/users/${id}/resend-setup`, {
       method: 'POST',
-      headers,
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ force: Boolean(options?.force) }),
     });
     const data = (await res.json().catch(() => ({}))) as {
@@ -290,6 +279,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
     } catch (e) {
       console.error('Failed to sync candidate profile with server', e);
+      throw e;
     }
   };
 
@@ -314,7 +304,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         usersList,
         isAuthenticated,
         isLoading,
-        token,
         login,
         signup,
         logout,

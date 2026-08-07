@@ -26,13 +26,9 @@ export function canGradeSubmissions(role?: UserRole): boolean {
   return role === 'INSTRUCTOR' || role === 'EVALUATOR' || role === 'ADMIN';
 }
 
-/** Staff who see drafts / non-published courses */
+/** Staff who see drafts / non-published courses (own drafts for instructors) */
 export function canViewDraftCourses(role?: UserRole): boolean {
-  return (
-    role === 'INSTRUCTOR' ||
-    role === 'EVALUATOR' ||
-    role === 'ADMIN'
-  );
+  return role === 'INSTRUCTOR' || role === 'ADMIN';
 }
 
 /** Role-scoped home for submissions list */

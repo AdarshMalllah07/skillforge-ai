@@ -64,7 +64,7 @@ SkillForge AI is a full-stack Learning Management System built for the House of 
 ## Student Portal (`/student`)
 
 - Browse & enroll in published courses
-- Assignment submission (text + file upload)
+- Assignment submission (code, essay, repo URL, and optional file upload)
 - Role-scoped submissions & analytics
 - In-course AI learning assistant
 
@@ -147,11 +147,12 @@ SkillForge AI is a full-stack Learning Management System built for the House of 
 
 # Authentication & Authorization
 
-- JWT bearer tokens (`Authorization: Bearer …`)
+- httpOnly session cookie (`sf_session`) with signed JWT
+- Optional `Authorization: Bearer …` accepted for tooling/tests
 - Secure password hashing (bcrypt)
 - Role-based access on API routes (`requireAuth` / `requireRoles` in `server/middleware/auth.ts`)
 - Client route guards via `src/lib/routes.ts` + `canAccessPath`
-- Auth flows: register, login, forgot/reset password, admin invite → setup password
+- Auth flows: register, login, logout, forgot/reset password, admin invite → setup password
 - Super admin can sign in with username `admin` or configured email
 
 ---
@@ -207,7 +208,7 @@ logs/                   # daily runtime logs (gitignored)
 
 | Endpoint | Description |
 |----------|-------------|
-| `/api/auth/login` · `/register` | Sign in / sign up |
+| `/api/auth/login` · `/register` · `/logout` | Sign in / sign up / sign out |
 | `/api/auth/me` · `/me/avatar` | Current user profile & avatar |
 | `/api/auth/forgot-password` · `/reset-password` · `/change-password` | Password flows |
 | `/api/users` · `/api/users/[id]` | User CRUD (admin) |
@@ -227,12 +228,14 @@ logs/                   # daily runtime logs (gitignored)
 
 # Security
 
-- JWT authentication with configurable expiry
+- JWT in httpOnly cookies (configurable expiry); `JWT_SECRET` required
 - Password hashing (bcrypt)
-- Role checks on mutating / sensitive routes
+- Role checks on mutating / sensitive routes; draft course & submission reads scoped
+- Zod validation on create/update payloads
 - Secrets via environment variables (never committed)
-- Request logging redacts `Authorization` and cookies
+- API logs omit bodies; emails, tokens, and reset/setup links are redacted
 - Secure MongoDB connection string
+- AI evaluation is advisory and does not set the official grade
 
 Full mitigation strategies and contingency plans: [SECURITY.md](./SECURITY.md)
 
@@ -243,7 +246,7 @@ Full mitigation strategies and contingency plans: [SECURITY.md](./SECURITY.md)
 | Layer | Tooling |
 |-------|---------|
 | Unit / integration | Vitest (`npm test`) |
-| Coverage | RBAC route guards, permissions, JWT sign/verify, payload sanitization, log redaction |
+| Coverage | RBAC permissions, JWT sign/verify + required secret, Zod validation, log redaction |
 | CI | GitHub Actions: typecheck → tests → production build on push/PR to `main` |
 
 ```bash

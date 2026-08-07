@@ -1,73 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ensureDb } from '@/lib/server/ensure-db';
-import { logger, newRequestId, requestContext, sanitizeForLog } from '@/server/logger';
+import { logger, newRequestId, requestContext } from '@/server/logger';
 
-async function readRequestDetails(req: NextRequest) {
-  const headers: Record<string, string> = {};
-  req.headers.forEach((value, key) => {
-    if (key.toLowerCase() === 'authorization') {
-      headers[key] = value.startsWith('Bearer ') ? 'Bearer [REDACTED]' : '[REDACTED]';
-    } else if (key.toLowerCase() === 'cookie') {
-      headers[key] = '[REDACTED]';
-    } else {
-      headers[key] = value.length > 500 ? `${value.slice(0, 500)}…` : value;
-    }
-  });
-
-  let body: unknown = undefined;
-  const contentType = req.headers.get('content-type') || '';
-  try {
-    if (contentType.includes('application/json')) {
-      body = await req.clone().json();
-    } else if (contentType.includes('multipart/form-data')) {
-      body = { type: 'multipart/form-data', note: 'binary/form fields omitted' };
-    } else if (contentType.includes('application/x-www-form-urlencoded')) {
-      body = await req.clone().text();
-    } else if (req.method !== 'GET' && req.method !== 'HEAD') {
-      const text = await req.clone().text();
-      body = text ? text.slice(0, 2000) : undefined;
-    }
-  } catch (err) {
-    body = {
-      parseError: err instanceof Error ? err.message : 'Failed to parse body',
-    };
-  }
-
+function requestSummary(req: NextRequest) {
   return {
     method: req.method,
-    url: req.url,
     path: req.nextUrl.pathname,
-    query: Object.fromEntries(req.nextUrl.searchParams.entries()),
-    headers,
-    body: sanitizeForLog(body),
+    queryKeys: [...req.nextUrl.searchParams.keys()],
+    contentType: req.headers.get('content-type') || undefined,
   };
 }
 
-async function readResponseDetails(response: Response) {
-  const status = response.status;
-  const contentType = response.headers.get('content-type') || '';
-  let body: unknown = undefined;
-
-  try {
-    const clone = response.clone();
-    if (contentType.includes('application/json')) {
-      body = await clone.json();
-    } else {
-      const text = await clone.text();
-      body = text ? text.slice(0, 4000) : undefined;
-    }
-  } catch (err) {
-    body = {
-      parseError: err instanceof Error ? err.message : 'Failed to parse response body',
-    };
-  }
-
-  return { status, contentType, body: sanitizeForLog(body) };
-}
-
 /**
- * Ensures DB connection, runs the route handler, and writes a detailed API log entry.
+ * Ensures DB connection, runs the route handler, and writes a compact API log entry.
  * Prefer this for all `/api/*` route handlers.
+ * Intentionally omits request/response bodies and PII to avoid log leakage.
  */
 export async function withApi(
   req: NextRequest,
@@ -75,25 +22,24 @@ export async function withApi(
 ): Promise<Response | NextResponse> {
   const requestId = newRequestId();
   const started = Date.now();
-  const requestDetails = await readRequestDetails(req);
+  const summary = requestSummary(req);
 
   return requestContext.run(
-    { requestId, method: req.method, path: requestDetails.path },
+    { requestId, method: req.method, path: summary.path },
     async () => {
-      logger.api('API request started', { requestId, ...requestDetails });
+      logger.api('API request started', { requestId, ...summary });
 
       try {
         await ensureDb();
         const response = await handler();
-        const responseDetails = await readResponseDetails(response);
         const durationMs = Date.now() - started;
 
         logger.api('API request completed', {
           requestId,
           method: req.method,
-          path: requestDetails.path,
+          path: summary.path,
+          status: response.status,
           durationMs,
-          ...responseDetails,
         });
 
         try {
@@ -110,7 +56,7 @@ export async function withApi(
         logger.apiError('API request failed', {
           requestId,
           method: req.method,
-          path: requestDetails.path,
+          path: summary.path,
           durationMs,
           error: message,
           stack,

@@ -3,6 +3,7 @@ import { withApi } from '@/lib/server/api';
 import { getAuthUser, requireRoles } from '@/server/middleware/auth';
 import { Course } from '@/server/models/Course';
 import { toClient, toClientList, newId, slugify } from '@/server/utils';
+import { courseCreateSchema, parseBody } from '@/server/validation';
 
 export async function GET(req: NextRequest) {
   return withApi(req, async () => {
@@ -16,8 +17,17 @@ export async function GET(req: NextRequest) {
 
       const filter: Record<string, unknown> = {};
 
-      if (!user || user.role === 'STUDENT') {
+      if (!user || user.role === 'STUDENT' || user.role === 'EVALUATOR') {
         filter.status = 'PUBLISHED';
+      } else if (user.role === 'INSTRUCTOR') {
+        if (status && status !== 'ALL' && status !== 'PUBLISHED') {
+          filter.status = status;
+          filter.instructorId = user.id;
+        } else if (status === 'PUBLISHED') {
+          filter.status = 'PUBLISHED';
+        } else {
+          filter.$or = [{ instructorId: user.id }, { status: 'PUBLISHED' }];
+        }
       } else if (status && status !== 'ALL') {
         filter.status = status;
       }
@@ -36,15 +46,17 @@ export async function GET(req: NextRequest) {
 
       if (search && search.trim() && courses.length === 0) {
         const q = search.trim();
+        const { $text: _text, $or: visibilityOr, ...rest } = filter;
+        const textOr = [
+          { title: { $regex: q, $options: 'i' } },
+          { description: { $regex: q, $options: 'i' } },
+          { category: { $regex: q, $options: 'i' } },
+        ];
         const regexFilter: Record<string, unknown> = {
-          ...(filter.status ? { status: filter.status } : {}),
-          ...(filter.category ? { category: filter.category } : {}),
-          ...(filter.level ? { level: filter.level } : {}),
-          $or: [
-            { title: { $regex: q, $options: 'i' } },
-            { description: { $regex: q, $options: 'i' } },
-            { category: { $regex: q, $options: 'i' } },
-          ],
+          ...rest,
+          ...(visibilityOr
+            ? { $and: [{ $or: visibilityOr as unknown[] }, { $or: textOr }] }
+            : { $or: textOr }),
         };
         courses = await Course.find(regexFilter).sort({ createdAt: -1 });
       }
@@ -69,14 +81,13 @@ export async function POST(req: NextRequest) {
       const auth = await requireRoles(req, 'INSTRUCTOR', 'ADMIN');
       if ('error' in auth) return auth.error;
 
-      const { title, description, category, level, thumbnail, modules, assignments, status } =
-        await req.json();
-      if (!title || !description) {
-        return NextResponse.json(
-          { error: 'Title and description are required' },
-          { status: 400 }
-        );
+      const parsed = parseBody(courseCreateSchema, await req.json());
+      if ('error' in parsed) {
+        return NextResponse.json({ error: parsed.error }, { status: 400 });
       }
+
+      const { title, description, category, level, thumbnail, modules, assignments, status } =
+        parsed.data;
 
       const courseId = newId('course');
       const assignList = (assignments || []).map((a: Record<string, unknown>) => ({

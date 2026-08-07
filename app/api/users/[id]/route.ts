@@ -5,6 +5,7 @@ import { requireRoles } from '@/server/middleware/auth';
 import { User } from '@/server/models/User';
 import { toClient } from '@/server/utils';
 import { deleteLocalProfileAvatar, isLocalProfileAvatar } from '@/server/uploads';
+import { parseBody, userUpdateSchema } from '@/server/validation';
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -15,8 +16,14 @@ export async function PUT(req: NextRequest, context: Ctx) {
       if ('error' in auth) return auth.error;
 
       const { id } = await context.params;
-      const body = await req.json();
-      const allowed = [
+      const parsed = parseBody(userUpdateSchema, await req.json());
+      if ('error' in parsed) {
+        return NextResponse.json({ error: parsed.error }, { status: 400 });
+      }
+
+      const body = parsed.data;
+      const updates: Record<string, unknown> = {};
+      for (const key of [
         'name',
         'email',
         'role',
@@ -26,9 +33,7 @@ export async function PUT(req: NextRequest, context: Ctx) {
         'avatar',
         'githubUrl',
         'linkedInUrl',
-      ] as const;
-      const updates: Record<string, unknown> = {};
-      for (const key of allowed) {
+      ] as const) {
         if (body[key] !== undefined) updates[key] = body[key];
       }
 
@@ -50,7 +55,10 @@ export async function PUT(req: NextRequest, context: Ctx) {
         deleteLocalProfileAvatar(existing.avatar);
       }
 
-      const user = await User.findByIdAndUpdate(id, updates, { new: true });
+      const user = await User.findByIdAndUpdate(id, updates, {
+        new: true,
+        runValidators: true,
+      });
       return NextResponse.json(toClient(user));
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown error';

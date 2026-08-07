@@ -10,7 +10,7 @@ import { Course } from '@/src/types';
 export default function CourseDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { courses, handleCreateAssignment, openSubmission, setCourses } = useAppData();
+  const { courses, handleCreateAssignment, handleUpdateAssignment, handleDeleteAssignment, openSubmission, setCourses } = useAppData();
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -63,6 +63,16 @@ export default function CourseDetailPage() {
       onOpenSubmissionPortal={openSubmission}
       onCreateAssignment={async (courseId, assignmentData) => {
         await handleCreateAssignment(courseId, assignmentData);
+        const refreshed = await api<Course>(`/api/courses/${courseId}`);
+        setCourse(refreshed);
+      }}
+      onUpdateAssignment={async (courseId, assignmentId, assignmentData) => {
+        await handleUpdateAssignment(courseId, assignmentId, assignmentData);
+        const refreshed = await api<Course>(`/api/courses/${courseId}`);
+        setCourse(refreshed);
+      }}
+      onDeleteAssignment={async (courseId, assignmentId) => {
+        await handleDeleteAssignment(courseId, assignmentId);
         const refreshed = await api<Course>(`/api/courses/${courseId}`);
         setCourse(refreshed);
       }}

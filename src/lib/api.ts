@@ -1,19 +1,9 @@
-const TOKEN_KEY = 'edtech_matrix_token';
+const LEGACY_TOKEN_KEY = 'edtech_matrix_token';
 
-export function getToken(): string {
-  if (typeof window === 'undefined') return '';
-  return localStorage.getItem(TOKEN_KEY) || '';
-}
-
-export function setToken(token: string) {
+/** Remove legacy localStorage JWT if present (migrated to httpOnly cookie). */
+export function clearLegacyToken() {
   if (typeof window === 'undefined') return;
-  if (token) localStorage.setItem(TOKEN_KEY, token);
-  else localStorage.removeItem(TOKEN_KEY);
-}
-
-export function clearToken() {
-  if (typeof window === 'undefined') return;
-  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(LEGACY_TOKEN_KEY);
 }
 
 export async function api<T = unknown>(
@@ -25,12 +15,12 @@ export async function api<T = unknown>(
   if (!headers.has('Content-Type') && options.body && !isFormData) {
     headers.set('Content-Type', 'application/json');
   }
-  const token = getToken();
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`);
-  }
 
-  const res = await fetch(path, { ...options, headers });
+  const res = await fetch(path, {
+    ...options,
+    headers,
+    credentials: 'include',
+  });
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {

@@ -117,6 +117,8 @@ export interface Submission {
   codeContent?: string;
   essayContent?: string;
   repositoryUrl?: string;
+  attachmentUrl?: string;
+  attachmentName?: string;
   status: 'PENDING' | 'AI_EVALUATED' | 'GRADED' | 'REJECTED';
   aiEvaluation?: AIEvaluationResult;
   instructorFeedback?: string;

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withApi } from '@/lib/server/api';
-import { requireAuth } from '@/server/middleware/auth';
+import { requireRoles } from '@/server/middleware/auth';
 import { Candidate } from '@/server/models/Candidate';
+import { candidateUpdateSchema, parseBody } from '@/server/validation';
 
 export async function GET(req: NextRequest) {
   return withApi(req, async () => {
@@ -24,15 +25,19 @@ export async function GET(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   return withApi(req, async () => {
     try {
-      const auth = await requireAuth(req);
+      const auth = await requireRoles(req, 'ADMIN');
       if ('error' in auth) return auth.error;
 
-      const body = await req.json();
+      const parsed = parseBody(candidateUpdateSchema, await req.json());
+      if ('error' in parsed) {
+        return NextResponse.json({ error: parsed.error }, { status: 400 });
+      }
+
       let candidate = await Candidate.findOne();
       if (!candidate) {
-        candidate = new Candidate(body);
+        candidate = new Candidate(parsed.data);
       } else {
-        Object.assign(candidate, body);
+        Object.assign(candidate, parsed.data);
       }
       await candidate.save();
       const obj = candidate.toObject();

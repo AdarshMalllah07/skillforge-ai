@@ -92,9 +92,11 @@ Return strict JSON matching this structure:
               { status: 403 }
             );
           }
+          // AI feedback is advisory only — official score stays unset until staff grades.
           submission.aiEvaluation = evaluation;
-          submission.status = 'AI_EVALUATED';
-          submission.finalScore = evaluation.overallScore;
+          if (submission.status === 'PENDING' || submission.status === 'AI_EVALUATED') {
+            submission.status = 'AI_EVALUATED';
+          }
           await submission.save();
         }
       }

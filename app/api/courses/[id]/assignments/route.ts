@@ -3,6 +3,7 @@ import { withApi } from '@/lib/server/api';
 import { requireRoles } from '@/server/middleware/auth';
 import { Course } from '@/server/models/Course';
 import { newId } from '@/server/utils';
+import { assignmentCreateSchema, parseBody } from '@/server/validation';
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -25,11 +26,16 @@ export async function POST(req: NextRequest, context: Ctx) {
         );
       }
 
-      const body = await req.json();
+      const parsed = parseBody(assignmentCreateSchema, await req.json());
+      if ('error' in parsed) {
+        return NextResponse.json({ error: parsed.error }, { status: 400 });
+      }
+
+      const body = parsed.data;
       const assignment = {
         id: newId('assign'),
         courseId: course._id,
-        title: body.title || 'New Challenge',
+        title: body.title,
         description: body.description || '',
         type: body.type || 'CODE',
         programmingLanguage: body.programmingLanguage || 'typescript',

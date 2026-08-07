@@ -19,6 +19,12 @@ interface AppDataContextType {
   handleUpdateCourse: (id: string, updatedFields: Partial<Course>) => Promise<void>;
   handleDeleteCourse: (id: string) => Promise<void>;
   handleCreateAssignment: (courseId: string, assignmentData: Partial<Assignment>) => Promise<void>;
+  handleUpdateAssignment: (
+    courseId: string,
+    assignmentId: string,
+    assignmentData: Partial<Assignment>
+  ) => Promise<void>;
+  handleDeleteAssignment: (courseId: string, assignmentId: string) => Promise<void>;
   handleSubmissionSuccess: (newSubmission: Submission) => void;
   handleUpdateSubmissionGrade: (
     submissionId: string,
@@ -35,13 +41,13 @@ interface AppDataContextType {
 const AppDataContext = createContext<AppDataContextType | undefined>(undefined);
 
 export function AppDataProvider({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, token, currentUser } = useAuth();
+  const { isAuthenticated, currentUser } = useAuth();
   const router = useRouter();
   const [courses, setCourses] = useState<Course[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
 
   const refreshData = useCallback(async () => {
-    if (!isAuthenticated || !token) {
+    if (!isAuthenticated) {
       setCourses([]);
       setSubmissions([]);
       return;
@@ -57,7 +63,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     } catch (e) {
       console.log('Failed to load app data', e);
     }
-  }, [isAuthenticated, token]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     refreshData();
@@ -144,10 +150,62 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         );
       } catch (err) {
         console.error('Create assignment error', err);
+        getUi().toast({
+          message: err instanceof Error ? err.message : 'Failed to create assignment',
+          variant: 'error',
+        });
       }
     },
     []
   );
+
+  const handleUpdateAssignment = useCallback(
+    async (courseId: string, assignmentId: string, assignmentData: Partial<Assignment>) => {
+      try {
+        const updated = await api<Assignment>(
+          `/api/courses/${courseId}/assignments/${assignmentId}`,
+          {
+            method: 'PUT',
+            body: JSON.stringify(assignmentData),
+          }
+        );
+        setCourses((prev) =>
+          prev.map((c) => {
+            if (c.id !== courseId) return c;
+            return {
+              ...c,
+              assignments: c.assignments.map((a) => (a.id === assignmentId ? { ...a, ...updated } : a)),
+            };
+          })
+        );
+      } catch (err) {
+        console.error('Update assignment error', err);
+        getUi().toast({
+          message: err instanceof Error ? err.message : 'Failed to update assignment',
+          variant: 'error',
+        });
+      }
+    },
+    []
+  );
+
+  const handleDeleteAssignment = useCallback(async (courseId: string, assignmentId: string) => {
+    setCourses((prev) =>
+      prev.map((c) => {
+        if (c.id !== courseId) return c;
+        return { ...c, assignments: c.assignments.filter((a) => a.id !== assignmentId) };
+      })
+    );
+    try {
+      await api(`/api/courses/${courseId}/assignments/${assignmentId}`, { method: 'DELETE' });
+    } catch (err) {
+      console.error('Delete assignment error', err);
+      getUi().toast({
+        message: err instanceof Error ? err.message : 'Failed to delete assignment',
+        variant: 'error',
+      });
+    }
+  }, []);
 
   const handleSubmissionSuccess = useCallback((newSubmission: Submission) => {
     setSubmissions((prev) => [newSubmission, ...prev.filter((s) => s.id !== newSubmission.id)]);
@@ -216,6 +274,8 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       handleUpdateCourse,
       handleDeleteCourse,
       handleCreateAssignment,
+      handleUpdateAssignment,
+      handleDeleteAssignment,
       handleSubmissionSuccess,
       handleUpdateSubmissionGrade,
       openCourse,
@@ -232,6 +292,8 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       handleUpdateCourse,
       handleDeleteCourse,
       handleCreateAssignment,
+      handleUpdateAssignment,
+      handleDeleteAssignment,
       handleSubmissionSuccess,
       handleUpdateSubmissionGrade,
       openCourse,
