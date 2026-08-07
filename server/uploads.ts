@@ -1,13 +1,11 @@
 import fs from 'fs';
 import path from 'path';
+import { put } from '@vercel/blob';
 
 export const DEFAULT_AVATAR =
   'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&q=80';
 
-// Vercel’s filesystem is read-only except /tmp; use that for uploads there.
-const uploadsBase = process.env.VERCEL
-  ? path.join('/tmp', 'skillforge-uploads')
-  : path.join(process.cwd(), 'public', 'uploads');
+const uploadsBase = path.join(process.cwd(), 'public', 'uploads');
 
 export const UPLOADS_ROOT = uploadsBase;
 export const PROFILE_UPLOADS_DIR = path.join(UPLOADS_ROOT, 'profiles');
@@ -48,7 +46,12 @@ const ALLOWED_SUBMISSION_EXT = new Set([
   '.rs',
 ]);
 
+export function useBlobStorage(): boolean {
+  return Boolean(process.env.BLOB_READ_WRITE_TOKEN?.trim());
+}
+
 export function ensureUploadDirs(): void {
+  if (useBlobStorage()) return;
   try {
     fs.mkdirSync(PROFILE_UPLOADS_DIR, { recursive: true });
     fs.mkdirSync(SUBMISSION_UPLOADS_DIR, { recursive: true });
@@ -73,6 +76,55 @@ export function deleteLocalProfileAvatar(avatarUrl?: string | null): void {
   }
 }
 
+export type StoreUploadResult = {
+  filename: string;
+  url: string;
+  originalName: string;
+  storage: 'local' | 'blob';
+};
+
+export async function storeUpload(
+  file: File,
+  options: { folder: 'profiles' | 'submissions'; userId: string; prefix: string }
+): Promise<StoreUploadResult> {
+  const originalExt = path.extname(file.name).toLowerCase() || '';
+  const safeUserId = options.userId.replace(/[^a-zA-Z0-9_-]/g, '') || 'user';
+  const filename = `${options.prefix}_${safeUserId}_${Date.now()}${originalExt}`;
+  const originalName = path.basename(file.name).slice(0, 200);
+  const buffer = Buffer.from(await file.arrayBuffer());
+
+  if (useBlobStorage()) {
+    const blob = await put(`${options.folder}/${filename}`, buffer, {
+      access: 'public',
+      contentType: file.type || 'application/octet-stream',
+      token: process.env.BLOB_READ_WRITE_TOKEN,
+    });
+    return {
+      filename,
+      url: blob.url,
+      originalName,
+      storage: 'blob',
+    };
+  }
+
+  ensureUploadDirs();
+  const dir =
+    options.folder === 'profiles' ? PROFILE_UPLOADS_DIR : SUBMISSION_UPLOADS_DIR;
+  const urlPrefix =
+    options.folder === 'profiles'
+      ? PROFILE_UPLOADS_URL_PREFIX
+      : SUBMISSION_UPLOADS_URL_PREFIX;
+  const filePath = path.join(dir, filename);
+  fs.writeFileSync(filePath, buffer);
+
+  return {
+    filename,
+    url: `${urlPrefix}${filename}`,
+    originalName,
+    storage: 'local',
+  };
+}
+
 export async function saveProfileAvatar(
   file: File,
   userId: string
@@ -84,23 +136,20 @@ export async function saveProfileAvatar(
     throw new Error('Image must be 5MB or smaller');
   }
 
-  ensureUploadDirs();
-
   const originalExt = path.extname(file.name).toLowerCase() || '.jpg';
   const safeExt = ['.jpg', '.jpeg', '.png', '.webp', '.gif'].includes(originalExt)
     ? originalExt
     : '.jpg';
-  const safeUserId = userId.replace(/[^a-zA-Z0-9_-]/g, '') || 'user';
-  const filename = `profile_${safeUserId}_${Date.now()}${safeExt}`;
-  const filePath = path.join(PROFILE_UPLOADS_DIR, filename);
 
-  const buffer = Buffer.from(await file.arrayBuffer());
-  fs.writeFileSync(filePath, buffer);
+  // Normalize extension for consistent local filenames
+  const renamed = new File([file], `avatar${safeExt}`, { type: file.type });
+  const stored = await storeUpload(renamed, {
+    folder: 'profiles',
+    userId,
+    prefix: 'profile',
+  });
 
-  return {
-    filename,
-    url: `${PROFILE_UPLOADS_URL_PREFIX}${filename}`,
-  };
+  return { filename: stored.filename, url: stored.url };
 }
 
 export async function saveSubmissionAttachment(
@@ -124,17 +173,15 @@ export async function saveSubmissionAttachment(
     throw new Error('Attachment must be 10MB or smaller');
   }
 
-  ensureUploadDirs();
-
-  const safeUserId = userId.replace(/[^a-zA-Z0-9_-]/g, '') || 'user';
-  const filename = `sub_${safeUserId}_${Date.now()}${originalExt}`;
-  const filePath = path.join(SUBMISSION_UPLOADS_DIR, filename);
-  const buffer = Buffer.from(await file.arrayBuffer());
-  fs.writeFileSync(filePath, buffer);
+  const stored = await storeUpload(file, {
+    folder: 'submissions',
+    userId,
+    prefix: 'sub',
+  });
 
   return {
-    filename,
-    url: `${SUBMISSION_UPLOADS_URL_PREFIX}${filename}`,
-    originalName: path.basename(file.name).slice(0, 200),
+    filename: stored.filename,
+    url: stored.url,
+    originalName: stored.originalName,
   };
 }

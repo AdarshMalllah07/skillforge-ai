@@ -6,10 +6,21 @@ import { setAuthCookie, signToken } from '@/server/middleware/auth';
 import { toClient, newId } from '@/server/utils';
 import { DEFAULT_AVATAR } from '@/server/uploads';
 import { sendWelcomeEmail } from '@/server/email/templates';
+import {
+  AUTH_REGISTER_LIMIT,
+  clientIp,
+  enforceRateLimit,
+} from '@/server/rateLimit';
 
 export async function POST(req: NextRequest) {
   return withApi(req, async () => {
     try {
+      const limited = await enforceRateLimit(req, {
+        key: `auth:register:${clientIp(req)}`,
+        ...AUTH_REGISTER_LIMIT,
+      });
+      if (limited) return limited;
+
       const { name, email, password } = await req.json();
       if (!name || !email || !password) {
         return NextResponse.json(

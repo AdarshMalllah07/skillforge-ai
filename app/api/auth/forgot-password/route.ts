@@ -8,10 +8,21 @@ import {
 } from '@/server/email/tokens';
 import { sendPasswordResetEmail } from '@/server/email/templates';
 import { logger } from '@/server/logger';
+import {
+  AUTH_FORGOT_LIMIT,
+  clientIp,
+  enforceRateLimit,
+} from '@/server/rateLimit';
 
 export async function POST(req: NextRequest) {
   return withApi(req, async () => {
     try {
+      const limited = await enforceRateLimit(req, {
+        key: `auth:forgot:${clientIp(req)}`,
+        ...AUTH_FORGOT_LIMIT,
+      });
+      if (limited) return limited;
+
       const { email } = await req.json();
       if (!email) {
         return NextResponse.json({ error: 'Email is required' }, { status: 400 });

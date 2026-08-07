@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI, Type } from '@google/genai';
 import { withApi } from '@/lib/server/api';
 import { requireRoles } from '@/server/middleware/auth';
+import { AI_USER_LIMIT, enforceRateLimit } from '@/server/rateLimit';
 
 function getGeminiClient(): GoogleGenAI | null {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -19,6 +20,12 @@ export async function POST(req: NextRequest) {
     try {
       const auth = await requireRoles(req, 'INSTRUCTOR', 'ADMIN');
       if ('error' in auth) return auth.error;
+
+      const limited = await enforceRateLimit(req, {
+        key: `ai:generate-course:${auth.user.id}`,
+        ...AI_USER_LIMIT,
+      });
+      if (limited) return limited;
 
       const { topicPrompt, targetLevel, targetCategory } = await req.json();
       if (!topicPrompt) {

@@ -82,12 +82,11 @@ export default function SubmissionPortal({
       });
 
       // AI feedback is advisory — does not set the official finalScore.
+      // Content is loaded server-side from the stored submission.
       const evalData = await api<AIEvaluationResult>('/api/ai/evaluate-submission', {
         method: 'POST',
         body: JSON.stringify({
           submissionId: submissionData.id,
-          codeContent: submissionData.codeContent,
-          essayContent: submissionData.essayContent,
           assignmentTitle: assignment.title,
           assignmentDescription: assignment.description,
           rubrics: assignment.rubrics,

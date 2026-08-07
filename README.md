@@ -150,10 +150,12 @@ SkillForge AI is a full-stack Learning Management System built for the House of 
 - httpOnly session cookie (`sf_session`) with signed JWT
 - Optional `Authorization: Bearer …` accepted for tooling/tests
 - Secure password hashing (bcrypt)
+- Mongo-backed rate limits on login, register, forgot-password, and AI routes
 - Role-based access on API routes (`requireAuth` / `requireRoles` in `server/middleware/auth.ts`)
 - Client route guards via `src/lib/routes.ts` + `canAccessPath`
 - Auth flows: register, login, logout, forgot/reset password, admin invite → setup password
 - Super admin can sign in with username `admin` or configured email
+- AI evaluation requires a stored `submissionId`; content is loaded from the database (not client-supplied payloads)
 
 ---
 
@@ -219,7 +221,7 @@ logs/                   # daily runtime logs (gitignored)
 | `/api/enrollments/me` | Current user’s enrollments |
 | `/api/submissions` · `/api/submissions/[id]` | Submissions + grading |
 | `/api/ai/generate-course` | Gemini curriculum generation |
-| `/api/ai/evaluate-submission` | Gemini rubric evaluation |
+| `/api/ai/evaluate-submission` | Gemini rubric evaluation (requires stored submission) |
 | `/api/ai/tutor-chat` | Gemini course tutor |
 | `/api/candidate` | Footer candidate profile |
 | `/api/health` | Health check |
@@ -232,10 +234,12 @@ logs/                   # daily runtime logs (gitignored)
 - Password hashing (bcrypt)
 - Role checks on mutating / sensitive routes; draft course & submission reads scoped
 - Zod validation on create/update payloads
+- Rate limits on auth and AI endpoints (`server/rateLimit.ts`)
+- AI evaluate bound to stored submissions; advisory scores only (no auto `finalScore`)
+- Durable uploads via Vercel Blob when `BLOB_READ_WRITE_TOKEN` is set
 - Secrets via environment variables (never committed)
 - API logs omit bodies; emails, tokens, and reset/setup links are redacted
 - Secure MongoDB connection string
-- AI evaluation is advisory and does not set the official grade
 
 Full mitigation strategies and contingency plans: [SECURITY.md](./SECURITY.md)
 
@@ -246,7 +250,7 @@ Full mitigation strategies and contingency plans: [SECURITY.md](./SECURITY.md)
 | Layer | Tooling |
 |-------|---------|
 | Unit / integration | Vitest (`npm test`) |
-| Coverage | RBAC permissions, JWT sign/verify + required secret, Zod validation, log redaction |
+| Coverage | RBAC permissions, JWT + required secret, Zod validation, rate limits, AI eval access, upload store selection, log redaction |
 | CI | GitHub Actions: typecheck → tests → production build on push/PR to `main` |
 
 ```bash
@@ -293,6 +297,9 @@ JWT_EXPIRES_IN=7d
 PORT=3000
 APP_URL=http://localhost:3000
 GEMINI_API_KEY=
+
+# Production uploads on Vercel (leave unset locally → public/uploads)
+# BLOB_READ_WRITE_TOKEN=
 
 # Email (optional for local — set SMTP_ENABLE=false to log links to console)
 SMTP_ENABLE=false

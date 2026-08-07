@@ -4,10 +4,21 @@ import { withApi } from '@/lib/server/api';
 import { User } from '@/server/models/User';
 import { setAuthCookie, signToken } from '@/server/middleware/auth';
 import { toClient } from '@/server/utils';
+import {
+  AUTH_LOGIN_LIMIT,
+  clientIp,
+  enforceRateLimit,
+} from '@/server/rateLimit';
 
 export async function POST(req: NextRequest) {
   return withApi(req, async () => {
     try {
+      const limited = await enforceRateLimit(req, {
+        key: `auth:login:${clientIp(req)}`,
+        ...AUTH_LOGIN_LIMIT,
+      });
+      if (limited) return limited;
+
       const { email, password } = await req.json();
       if (!email || !password) {
         return NextResponse.json(

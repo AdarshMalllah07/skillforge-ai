@@ -3,6 +3,9 @@ import { GoogleGenAI } from '@google/genai';
 import { withApi } from '@/lib/server/api';
 import { requireRoles } from '@/server/middleware/auth';
 import { Submission } from '@/server/models/Submission';
+import { Course } from '@/server/models/Course';
+import { AI_USER_LIMIT, enforceRateLimit } from '@/server/rateLimit';
+import { canAccessSubmission } from '@/server/submissionAccess';
 
 function getGeminiClient(): GoogleGenAI | null {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -21,14 +24,44 @@ export async function POST(req: NextRequest) {
       const auth = await requireRoles(req, 'STUDENT', 'INSTRUCTOR', 'EVALUATOR', 'ADMIN');
       if ('error' in auth) return auth.error;
 
-      const {
-        submissionId,
-        codeContent,
-        essayContent,
-        assignmentTitle,
-        assignmentDescription,
-        rubrics,
-      } = await req.json();
+      const limited = await enforceRateLimit(req, {
+        key: `ai:evaluate:${auth.user.id}`,
+        ...AI_USER_LIMIT,
+      });
+      if (limited) return limited;
+
+      const { submissionId, assignmentTitle, assignmentDescription, rubrics } = await req.json();
+
+      if (!submissionId || typeof submissionId !== 'string') {
+        return NextResponse.json(
+          { error: 'submissionId is required' },
+          { status: 400 }
+        );
+      }
+
+      const submission = await Submission.findById(submissionId);
+      if (!submission) {
+        return NextResponse.json({ error: 'Submission not found' }, { status: 404 });
+      }
+
+      let instructorOwnsCourse = false;
+      if (auth.user.role === 'INSTRUCTOR') {
+        const course = await Course.findById(submission.courseId);
+        instructorOwnsCourse = Boolean(course && course.instructorId === auth.user.id);
+      }
+
+      if (!canAccessSubmission(auth.user, submission, instructorOwnsCourse)) {
+        return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+      }
+
+      const codeContent = submission.codeContent || '';
+      const essayContent = submission.essayContent || '';
+      if (!codeContent.trim() && !essayContent.trim()) {
+        return NextResponse.json(
+          { error: 'Submission has no code or essay content to evaluate' },
+          { status: 400 }
+        );
+      }
 
       const ai = getGeminiClient();
       if (!ai) {
@@ -38,12 +71,13 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const payloadText = codeContent
+      const payloadText = codeContent.trim()
         ? `[CODE SUBMISSION]:\n${codeContent}`
         : `[ESSAY SUBMISSION]:\n${essayContent}`;
 
+      const title = assignmentTitle || submission.assignmentTitle;
       const systemPrompt = `You are a Senior Full-Stack Technical Lead & Academic Evaluator at SkillForge AI.
-Your job is to thoroughly evaluate the candidate's submission for the assignment: "${assignmentTitle}".
+Your job is to thoroughly evaluate the candidate's submission for the assignment: "${title}".
 Assignment Context: ${assignmentDescription || 'Assess production readiness, security, sanitization, and architectural quality.'}
 
 Evaluate the code or essay rigorously according to the provided rubrics.
@@ -83,23 +117,12 @@ Return strict JSON matching this structure:
       const evaluation = JSON.parse(response.text || '{}');
       evaluation.reviewedAt = new Date().toISOString();
 
-      if (submissionId) {
-        const submission = await Submission.findById(submissionId);
-        if (submission) {
-          if (auth.user.role === 'STUDENT' && submission.studentId !== auth.user.id) {
-            return NextResponse.json(
-              { error: 'Cannot evaluate another student submission' },
-              { status: 403 }
-            );
-          }
-          // AI feedback is advisory only — official score stays unset until staff grades.
-          submission.aiEvaluation = evaluation;
-          if (submission.status === 'PENDING' || submission.status === 'AI_EVALUATED') {
-            submission.status = 'AI_EVALUATED';
-          }
-          await submission.save();
-        }
+      // AI feedback is advisory only — official score stays unset until staff grades.
+      submission.aiEvaluation = evaluation;
+      if (submission.status === 'PENDING' || submission.status === 'AI_EVALUATED') {
+        submission.status = 'AI_EVALUATED';
       }
+      await submission.save();
 
       return NextResponse.json(evaluation);
     } catch (err: unknown) {
