@@ -51,6 +51,12 @@ export default function CandidateModal({ onClose }: CandidateModalProps) {
       description: "Footer explicitly displays Candidate Name, GitHub Profile link, and LinkedIn Profile link as required by SkillForge AI assignment guidelines.",
       status: "COMPLETED",
       badge: "Submission Mandate"
+    },
+    {
+      title: "Testing & Security Documentation",
+      description: "Vitest suite covers RBAC, JWT auth, and log sanitization. SECURITY.md documents production mitigations and contingency plans. CI runs tests on every push.",
+      status: "COMPLETED",
+      badge: "Good to Have"
     }
   ];
 

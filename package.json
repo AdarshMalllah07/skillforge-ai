@@ -12,6 +12,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "generate-sw": "node scripts/generate-sw.mjs",
     "seed": "tsx -e \"import('dotenv/config'); import('./server/db.ts').then(m => m.connectDB()).then(() => import('./server/seed.ts')).then(s => s.seedDatabase()).then(() => process.exit(0))\"",
     "create-super-admin": "tsx -e \"import('dotenv/config'); import('./server/db.ts').then(m => m.connectDB()).then(() => import('./server/seed.ts')).then(s => s.ensureSuperAdmin()).then(() => process.exit(0))\"",
@@ -47,6 +49,7 @@
     "dotenv": "^17.2.3",
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
-    "typescript": "~5.8.2"
+    "typescript": "~5.8.2",
+    "vitest": "^4.1.10"
   }
 }

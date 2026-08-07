@@ -40,7 +40,9 @@ SkillForge AI is a full-stack Learning Management System built for the House of 
 | **CRUD** | Courses, Users, Assignments, Submissions, Enrollments |
 | **Auth & Authorization** | JWT + bcrypt + RBAC (Student / Instructor / Evaluator / Admin) |
 | **AI add-on** | Gemini 3.6 Flash — course generation, evaluation, tutor chat |
-| **Deployment + CI/CD** | Vercel + GitHub Actions (`npm ci`, typecheck, build on Node 20) |
+| **Deployment + CI/CD** | Vercel + GitHub Actions (typecheck, tests, build on Node 20) |
+| **Testing** | Vitest — RBAC, JWT, sanitization (`npm test`) |
+| **Security write-up** | [SECURITY.md](./SECURITY.md) mitigations & contingency plans |
 | **Footer mandate** | Candidate name, GitHub, and LinkedIn links in app footer |
 
 ---
@@ -232,6 +234,22 @@ logs/                   # daily runtime logs (gitignored)
 - Request logging redacts `Authorization` and cookies
 - Secure MongoDB connection string
 
+Full mitigation strategies and contingency plans: [SECURITY.md](./SECURITY.md)
+
+---
+
+# Testing
+
+| Layer | Tooling |
+|-------|---------|
+| Unit / integration | Vitest (`npm test`) |
+| Coverage | RBAC route guards, permissions, JWT sign/verify, payload sanitization, log redaction |
+| CI | GitHub Actions: typecheck → tests → production build on push/PR to `main` |
+
+```bash
+npm test
+```
+
 ---
 
 # Real-World Considerations
@@ -318,6 +336,7 @@ npm start
 | `npm run build` | Production build (prebuild regenerates SW) |
 | `npm start` | Start production server |
 | `npm run lint` | TypeScript type check (`tsc --noEmit`) |
+| `npm test` | Vitest unit / integration suite |
 | `npm run seed` | Ensure super admin exists |
 | `npm run create-super-admin` | Same as seed (admin only) |
 | `npm run generate-sw` | Regenerate `public/sw.js` cache version |

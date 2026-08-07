@@ -26,6 +26,11 @@ jobs:
             - name: Type Check
               run: npm run lint
 
+            - name: Unit & Integration Tests
+              run: npm test
+              env:
+                  JWT_SECRET: ci_jwt_secret_for_tests_only
+
             - name: Build Project
               run: npm run build
               env:
