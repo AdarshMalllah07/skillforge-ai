@@ -6,6 +6,10 @@ on:
     pull_request:
         branches: [main]
 
+concurrency:
+    group: ci-${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
 jobs:
     build-and-test:
         runs-on: ubuntu-latest
@@ -39,3 +43,49 @@ jobs:
                   JWT_SECRET: ci_jwt_secret_for_build_only
                   GEMINI_API_KEY: ci_placeholder_key
                   APP_URL: http://localhost:3000
+
+    # Deploys production to https://skillforge-ai-h35u.vercel.app on main pushes.
+    # Requires GitHub repo secrets: VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID
+    deploy-production:
+        name: Deploy to Vercel (skillforge-ai-h35u)
+        needs: build-and-test
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        runs-on: ubuntu-latest
+        environment:
+            name: production
+            url: https://skillforge-ai-h35u.vercel.app
+
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20.x"
+                  cache: "npm"
+
+            - name: Install Vercel CLI
+              run: npm install -g vercel@58
+
+            - name: Pull Vercel Environment
+              run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+              env:
+                  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+                  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+            - name: Build Project (Vercel)
+              run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+              env:
+                  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+                  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+            - name: Deploy Prebuilt to Production
+              id: deploy
+              run: |
+                  url=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+                  echo "url=$url" >> "$GITHUB_OUTPUT"
+                  echo "Deployed: $url"
+              env:
+                  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+                  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}

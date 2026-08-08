@@ -40,7 +40,7 @@ SkillForge AI is a full-stack Learning Management System built for the House of 
 | **CRUD** | Courses, Users, Assignments, Submissions, Enrollments |
 | **Auth & Authorization** | JWT + bcrypt + RBAC (Student / Instructor / Evaluator / Admin) |
 | **AI add-on** | Gemini 3.6 Flash — course generation, evaluation, tutor chat |
-| **Deployment + CI/CD** | Vercel + GitHub Actions (typecheck, tests, build on Node 20) |
+| **Deployment + CI/CD** | Vercel (`skillforge-ai-h35u`) + GitHub Actions (test → production deploy) |
 | **Testing** | Vitest — RBAC, JWT, sanitization (`npm test`) |
 | **Security write-up** | [SECURITY.md](./SECURITY.md) mitigations & contingency plans |
 | **Footer mandate** | Candidate name, GitHub, and LinkedIn links in app footer |
@@ -117,7 +117,7 @@ SkillForge AI is a full-stack Learning Management System built for the House of 
 | Email | Nodemailer (password reset, invites, setup links) |
 | PWA | `manifest.webmanifest` + generated `public/sw.js` |
 | Deployment | Vercel |
-| CI/CD | GitHub Actions (Node 20) |
+| CI/CD | GitHub Actions → typecheck, tests, build, then Vercel production deploy (`skillforge-ai-h35u`) |
 
 ---
 
@@ -251,7 +251,20 @@ Full mitigation strategies and contingency plans: [SECURITY.md](./SECURITY.md)
 |-------|---------|
 | Unit / integration | Vitest (`npm test`) |
 | Coverage | RBAC permissions, JWT + required secret, Zod validation, rate limits, AI eval access, upload store selection, log redaction |
-| CI | GitHub Actions: typecheck → tests → production build on push/PR to `main` |
+| CI | GitHub Actions: typecheck → tests → build on PR; on `main` push also deploys to Vercel (`skillforge-ai-h35u`) |
+
+### CI/CD secrets (GitHub → Vercel)
+
+Repo secrets used by `.github/workflows/ci-cd.yml` for production deploy:
+
+| Secret | Purpose |
+|--------|---------|
+| `VERCEL_TOKEN` | Vercel access token |
+| `VERCEL_ORG_ID` | Team / org id |
+| `VERCEL_PROJECT_ID` | Project id for `skillforge-ai-h35u` |
+
+**Live:** https://skillforge-ai-h35u.vercel.app
+
 
 ```bash
 npm test
