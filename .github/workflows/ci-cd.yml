@@ -68,6 +68,43 @@ jobs:
             - name: Install Vercel CLI
               run: npm install -g vercel@latest
 
+            # Explicit link avoids stale/missing .vercel and wrong secret mixups.
+            - name: Link Vercel Project
+              env:
+                  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+                  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+                  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+              run: |
+                  set -euo pipefail
+                  if [ -z "${VERCEL_ORG_ID:-}" ] || [ -z "${VERCEL_PROJECT_ID:-}" ] || [ -z "${VERCEL_TOKEN:-}" ]; then
+                    echo "::error::Missing VERCEL_ORG_ID, VERCEL_PROJECT_ID, or VERCEL_TOKEN secret"
+                    exit 1
+                  fi
+                  mkdir -p .vercel
+                  python3 - <<PY
+                  import json, os
+                  path = ".vercel/project.json"
+                  payload = {
+                      "orgId": os.environ["VERCEL_ORG_ID"],
+                      "projectId": os.environ["VERCEL_PROJECT_ID"],
+                  }
+                  with open(path, "w", encoding="utf-8") as f:
+                      json.dump(payload, f)
+                  print(f"Wrote {path}: orgId={payload['orgId']} projectId={payload['projectId']}")
+                  PY
+                  # Fail fast with a clear message if secrets/token cannot access the project
+                  curl -fsS -H "Authorization: Bearer ${VERCEL_TOKEN}" \
+                    "https://api.vercel.com/v9/projects/${VERCEL_PROJECT_ID}?teamId=${VERCEL_ORG_ID}" \
+                    | tee /tmp/vercel-project.json >/dev/null
+                  python3 - <<'PY'
+                  import json
+                  data = json.load(open("/tmp/vercel-project.json"))
+                  name = data.get("name") or "<unknown>"
+                  print(f"Verified Vercel project access: {name}")
+                  if name != "skillforge-ai-h35u":
+                      raise SystemExit(f"Unexpected project name: {name}")
+                  PY
+
             - name: Pull Vercel Environment
               run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
               env:
@@ -81,7 +118,6 @@ jobs:
                   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
             # Upload can flake with HTML error pages from Vercel API ("Unexpected token '<'").
-            # Retry a few times before failing the job.
             - name: Deploy Prebuilt to Production
               id: deploy
               env:
@@ -94,13 +130,17 @@ jobs:
                   max_attempts=4
                   while [ "$attempt" -le "$max_attempts" ]; do
                     echo "Deploy attempt ${attempt}/${max_attempts}…"
-                    if url=$(vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"); then
+                    # Capture stdout+stderr separately so retries don't treat error spam as a URL
+                    if url=$(vercel deploy --prebuilt --prod --yes --token="$VERCEL_TOKEN" 2> /tmp/vercel-deploy.err); then
                       echo "url=$url" >> "$GITHUB_OUTPUT"
-                      echo "Deployed: $url"
+                      echo "Deployed deployment URL: $url"
+                      echo "Production alias should be: https://skillforge-ai-h35u.vercel.app"
                       exit 0
                     fi
+                    echo "Deploy attempt ${attempt} failed:"
+                    cat /tmp/vercel-deploy.err || true
                     if [ "$attempt" -eq "$max_attempts" ]; then
-                      echo "Deploy failed after ${max_attempts} attempts"
+                      echo "::error::Deploy failed after ${max_attempts} attempts"
                       exit 1
                     fi
                     sleep_seconds=$((attempt * 20))

@@ -259,9 +259,11 @@ Repo secrets used by `.github/workflows/ci-cd.yml` for production deploy:
 
 | Secret | Purpose |
 |--------|---------|
-| `VERCEL_TOKEN` | Vercel access token (Account Settings → Tokens; regenerate if deploy returns HTML/`Unexpected token '<'`) |
-| `VERCEL_ORG_ID` | Team / org id |
-| `VERCEL_PROJECT_ID` | Project id for `skillforge-ai-h35u` |
+| `VERCEL_TOKEN` | Vercel access token (Account Settings → Tokens). Must belong to an account that can access `skillforge-ai-h35u`. |
+| `VERCEL_ORG_ID` | Team / org id (`team_…` from `.vercel/project.json`) |
+| `VERCEL_PROJECT_ID` | Project id (`prj_…` for `skillforge-ai-h35u`) |
+
+**Important:** GitHub can show a green **build-and-test** check while **Deploy to Vercel** still fails — open the Actions run and confirm both jobs are green. Wrong `VERCEL_ORG_ID` / `VERCEL_PROJECT_ID` / token causes `Could not retrieve Project Settings`.
 
 If deploy fails with `Unexpected token '<'` / `Upload aborted`, it is usually a transient Vercel API response (HTML error page). Re-run the failed **Deploy to Vercel** job, or push again after regenerating `VERCEL_TOKEN` if retries keep failing.
 
