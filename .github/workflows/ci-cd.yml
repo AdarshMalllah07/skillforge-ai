@@ -68,8 +68,7 @@ jobs:
             - name: Install Vercel CLI
               run: npm install -g vercel@latest
 
-            # Explicit link avoids stale/missing .vercel and wrong secret mixups.
-            - name: Link Vercel Project
+            - name: Verify Vercel project access
               env:
                   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
                   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
@@ -80,22 +79,9 @@ jobs:
                     echo "::error::Missing VERCEL_ORG_ID, VERCEL_PROJECT_ID, or VERCEL_TOKEN secret"
                     exit 1
                   fi
-                  mkdir -p .vercel
-                  python3 - <<PY
-                  import json, os
-                  path = ".vercel/project.json"
-                  payload = {
-                      "orgId": os.environ["VERCEL_ORG_ID"],
-                      "projectId": os.environ["VERCEL_PROJECT_ID"],
-                  }
-                  with open(path, "w", encoding="utf-8") as f:
-                      json.dump(payload, f)
-                  print(f"Wrote {path}: orgId={payload['orgId']} projectId={payload['projectId']}")
-                  PY
-                  # Fail fast with a clear message if secrets/token cannot access the project
                   curl -fsS -H "Authorization: Bearer ${VERCEL_TOKEN}" \
                     "https://api.vercel.com/v9/projects/${VERCEL_PROJECT_ID}?teamId=${VERCEL_ORG_ID}" \
-                    | tee /tmp/vercel-project.json >/dev/null
+                    > /tmp/vercel-project.json
                   python3 - <<'PY'
                   import json
                   data = json.load(open("/tmp/vercel-project.json"))
@@ -105,20 +91,9 @@ jobs:
                       raise SystemExit(f"Unexpected project name: {name}")
                   PY
 
-            - name: Pull Vercel Environment
-              run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-              env:
-                  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-                  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-
-            - name: Build Project (Vercel)
-              run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-              env:
-                  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-                  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-
-            # Upload can flake with HTML error pages from Vercel API ("Unexpected token '<'").
-            - name: Deploy Prebuilt to Production
+            # Remote production deploy (Vercel builds with dashboard env vars).
+            # Avoids flaky `vercel pull` / `--prebuilt` upload path that was failing CI.
+            - name: Deploy to Vercel Production
               id: deploy
               env:
                   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -126,25 +101,25 @@ jobs:
                   VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
               run: |
                   set -euo pipefail
+                  rm -rf .vercel
                   attempt=1
                   max_attempts=4
                   while [ "$attempt" -le "$max_attempts" ]; do
                     echo "Deploy attempt ${attempt}/${max_attempts}…"
-                    # Capture stdout+stderr separately so retries don't treat error spam as a URL
-                    if url=$(vercel deploy --prebuilt --prod --yes --token="$VERCEL_TOKEN" 2> /tmp/vercel-deploy.err); then
+                    if url=$(vercel deploy --prod --yes --token="$VERCEL_TOKEN" 2> /tmp/vercel-deploy.err); then
                       echo "url=$url" >> "$GITHUB_OUTPUT"
-                      echo "Deployed deployment URL: $url"
-                      echo "Production alias should be: https://skillforge-ai-h35u.vercel.app"
+                      echo "Deployed: $url"
+                      echo "Production site: https://skillforge-ai-h35u.vercel.app"
                       exit 0
                     fi
                     echo "Deploy attempt ${attempt} failed:"
                     cat /tmp/vercel-deploy.err || true
                     if [ "$attempt" -eq "$max_attempts" ]; then
-                      echo "::error::Deploy failed after ${max_attempts} attempts"
+                      echo "::error::Vercel production deploy failed after ${max_attempts} attempts"
                       exit 1
                     fi
                     sleep_seconds=$((attempt * 20))
-                    echo "Upload/API failed; retrying in ${sleep_seconds}s…"
+                    echo "Retrying in ${sleep_seconds}s…"
                     sleep "$sleep_seconds"
                     attempt=$((attempt + 1))
                   done
