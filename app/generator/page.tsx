@@ -14,10 +14,31 @@ export default function GeneratorPage() {
     <AICurriculumGenerator
       onCourseGeneratedAndSaved={async (newCourse) => {
         try {
+          const {
+            title,
+            description,
+            category,
+            level,
+            thumbnail,
+            status,
+            modules,
+            assignments,
+          } = newCourse;
+
           const saved = await api<Course>('/api/courses', {
             method: 'POST',
-            body: JSON.stringify(newCourse),
+            body: JSON.stringify({
+              title,
+              description,
+              category,
+              level,
+              thumbnail,
+              status,
+              modules,
+              assignments,
+            }),
           });
+
           setCourses((prev) => [saved, ...prev]);
           router.push(`/courses/${saved.id}`);
         } catch (err) {
