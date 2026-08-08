@@ -2,15 +2,20 @@
 import React, { useState } from 'react';
 import { Course, Assignment, Lesson } from '../types';
 import { useAuth } from '../lib/authContext';
-import { canEditCourse } from '../lib/permissions';
-import { api } from '../lib/api';
-import { 
-  ArrowLeft, BookOpen, Layers, CheckCircle2, Clock, Code, FileText, 
-  Sparkles, Send, ShieldAlert, Award, Plus, Trash2, Edit 
+import { useAppData } from '../lib/appDataContext';
+import {
+  canEditCourse,
+  canBypassEnrollment,
+  canEnrollInCourses,
+} from '../lib/permissions';
+import {
+  ArrowLeft, BookOpen, Layers, CheckCircle2, Clock, Code,
+  Sparkles, Send, Plus, Trash2, Edit
 } from 'lucide-react';
 import { Breadcrumbs } from './ui/Breadcrumbs';
 import { AiLoadingBubble, AiMessage } from './ui/AiMessage';
 import { Button } from './ui/Button';
+import { api } from '../lib/api';
 
 interface CourseDetailViewProps {
   course: Course;
@@ -34,19 +39,19 @@ export default function CourseDetailView({
   onDeleteAssignment,
 }: CourseDetailViewProps) {
   const { currentUser } = useAuth();
+  const { isEnrolledIn, enrollInCourse } = useAppData();
   const canAuthorCourse = canEditCourse(
     currentUser?.role,
     currentUser?.id,
     course.instructorId
   );
-  const isStaffViewer =
-    currentUser?.role === 'INSTRUCTOR' ||
-    currentUser?.role === 'EVALUATOR' ||
-    currentUser?.role === 'ADMIN';
+  const staffBypass = canBypassEnrollment(currentUser?.role);
+  const canEnroll = canEnrollInCourses(currentUser?.role);
+  const enrolled = staffBypass || isEnrolledIn(course.id);
 
   const [activeTab, setActiveTab] = useState<'modules' | 'assignments' | 'ai_tutor'>('modules');
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(course.modules[0]?.lessons[0] || null);
-  const [isEnrolled, setIsEnrolled] = useState(isStaffViewer);
+  const [enrolling, setEnrolling] = useState(false);
 
   // AI Tutor Chat State
   const [chatMessages, setChatMessages] = useState<
@@ -63,16 +68,28 @@ export default function CourseDetailView({
   const [lastUserPrompt, setLastUserPrompt] = useState('');
 
   const handleEnroll = async () => {
+    if (!canEnroll || enrolling) return;
+    setEnrolling(true);
     try {
-      await api(`/api/courses/${course.id}/enroll`, { method: 'POST' });
-      setIsEnrolled(true);
-    } catch (err) {
-      console.error(err);
+      await enrollInCourse(course.id);
+    } finally {
+      setEnrolling(false);
     }
   };
 
   const askTutor = async (userMsg: string, opts?: { replaceLastAi?: boolean }) => {
     if (!userMsg.trim() || isAiThinking) return;
+    if (!enrolled) {
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          id: `a_enroll_${Date.now()}`,
+          sender: 'ai',
+          text: 'Please enroll in this course to use the AI tutor.',
+        },
+      ]);
+      return;
+    }
     setLastUserPrompt(userMsg);
     setIsAiThinking(true);
 
@@ -127,6 +144,16 @@ export default function CourseDetailView({
     await askTutor(userMsg);
   };
 
+  const openAssignment = async (assign: Assignment) => {
+    if (canAuthorCourse || staffBypass || isEnrolledIn(course.id)) {
+      onOpenSubmissionPortal(assign, course);
+      return;
+    }
+    if (!canEnroll) return;
+    const ok = await enrollInCourse(course.id);
+    if (ok) onOpenSubmissionPortal(assign, course);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -177,11 +204,27 @@ export default function CourseDetailView({
           <div className="bg-slate-800/80 backdrop-blur-md p-5 rounded-2xl border border-slate-700 space-y-3 w-full md:w-64 shrink-0">
             <div className="flex items-center justify-between text-xs">
               <span className="text-slate-400">Status</span>
-              <span className="font-bold text-emerald-400 flex items-center">
-                <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Enrolled
-              </span>
+              {enrolled ? (
+                <span className="font-bold text-emerald-400 flex items-center">
+                  <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+                  {staffBypass && !isEnrolledIn(course.id) ? 'Staff access' : 'Enrolled'}
+                </span>
+              ) : (
+                <span className="font-bold text-amber-300">Not enrolled</span>
+              )}
             </div>
-            
+
+            {canEnroll && !isEnrolledIn(course.id) ? (
+              <button
+                type="button"
+                onClick={handleEnroll}
+                disabled={enrolling}
+                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white rounded-xl text-xs font-bold shadow-md transition-all text-center"
+              >
+                {enrolling ? 'Enrolling…' : 'Enroll in Course'}
+              </button>
+            ) : null}
+
             <button
               onClick={() => setActiveTab('assignments')}
               className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold shadow-md transition-all text-center flex items-center justify-center space-x-2"
@@ -243,7 +286,7 @@ export default function CourseDetailView({
             </h3>
 
             <div className="space-y-3">
-              {course.modules.map((mod, modIdx) => (
+              {course.modules.map((mod) => (
                 <div key={mod.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-2xs">
                   <div className="p-3.5 bg-slate-50 border-b border-slate-200">
                     <h4 className="text-xs font-bold text-slate-900">{mod.title}</h4>
@@ -325,7 +368,9 @@ export default function CourseDetailView({
             <div>
               <h3 className="text-base font-bold text-slate-900">Course Assignments & Rubrics</h3>
               <p className="text-xs text-slate-500">
-                Submit your solution to receive instant AI evaluation and rubric scoring.
+                {canEnroll && !isEnrolledIn(course.id)
+                  ? 'Enroll in this course to open the submission workspace.'
+                  : 'Submit your solution to receive instant AI evaluation and rubric scoring.'}
               </p>
             </div>
 
@@ -454,13 +499,19 @@ export default function CourseDetailView({
                         </button>
                       </>
                     )}
-                    <button
-                      onClick={() => onOpenSubmissionPortal(assign, course)}
-                      className="px-4 py-2 bg-slate-900 hover:bg-indigo-600 text-white rounded-lg text-xs font-bold transition-all shadow-xs flex items-center space-x-1.5"
-                    >
-                      <span>Open Submission Workspace</span>
-                      <Code className="w-3.5 h-3.5" />
-                    </button>
+                    {(canAuthorCourse || enrolled || canEnroll) && (
+                      <button
+                        onClick={() => void openAssignment(assign)}
+                        className="px-4 py-2 bg-slate-900 hover:bg-indigo-600 text-white rounded-lg text-xs font-bold transition-all shadow-xs flex items-center space-x-1.5"
+                      >
+                        <span>
+                          {canEnroll && !isEnrolledIn(course.id) && !canAuthorCourse && !staffBypass
+                            ? 'Enroll to Submit'
+                            : 'Open Submission Workspace'}
+                        </span>
+                        <Code className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -483,6 +534,20 @@ export default function CourseDetailView({
               </p>
             </div>
           </div>
+
+          {!enrolled && canEnroll ? (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+              Enroll in this course to chat with the AI tutor.
+              <button
+                type="button"
+                onClick={handleEnroll}
+                disabled={enrolling}
+                className="ml-3 font-bold text-emerald-700 hover:underline"
+              >
+                {enrolling ? 'Enrolling…' : 'Enroll now'}
+              </button>
+            </div>
+          ) : null}
 
           <div className="h-96 overflow-y-auto space-y-4 p-3 sm:p-4 bg-sf-surface-2/60 rounded-xl border border-sf">
             {chatMessages.map((msg, idx) => (
@@ -518,9 +583,10 @@ export default function CourseDetailView({
               placeholder="Ask about architecture, bugs, or course concepts…"
               value={inputPrompt}
               onChange={(e) => setInputPrompt(e.target.value)}
-              className="flex-1 text-sm p-3 border border-sf rounded-xl bg-sf-surface text-sf focus:ring-2 focus:ring-indigo-500/30 outline-none min-h-11"
+              disabled={!enrolled}
+              className="flex-1 text-sm p-3 border border-sf rounded-xl bg-sf-surface text-sf focus:ring-2 focus:ring-indigo-500/30 outline-none min-h-11 disabled:opacity-60"
             />
-            <Button type="submit" disabled={isAiThinking} className="min-h-11">
+            <Button type="submit" disabled={isAiThinking || !enrolled} className="min-h-11">
               Ask
               <Send className="w-3.5 h-3.5" />
             </Button>

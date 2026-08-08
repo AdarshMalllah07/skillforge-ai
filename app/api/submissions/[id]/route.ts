@@ -8,21 +8,9 @@ import { toClient } from '@/server/utils';
 import { getAppBaseUrl } from '@/server/email/tokens';
 import { sendSubmissionGradedEmail } from '@/server/email/templates';
 import { parseBody, submissionGradeSchema } from '@/server/validation';
+import { canAccessSubmission } from '@/server/submissionAccess';
 
 type Ctx = { params: Promise<{ id: string }> };
-
-async function canReadSubmission(
-  user: { id: string; role: string },
-  submission: { studentId: string; courseId: string }
-): Promise<boolean> {
-  if (user.role === 'ADMIN' || user.role === 'EVALUATOR') return true;
-  if (user.role === 'STUDENT') return submission.studentId === user.id;
-  if (user.role === 'INSTRUCTOR') {
-    const course = await Course.findById(submission.courseId);
-    return Boolean(course && course.instructorId === user.id);
-  }
-  return false;
-}
 
 export async function GET(req: NextRequest, context: Ctx) {
   return withApi(req, async () => {
@@ -36,7 +24,13 @@ export async function GET(req: NextRequest, context: Ctx) {
         return NextResponse.json({ error: 'Submission not found' }, { status: 404 });
       }
 
-      if (!(await canReadSubmission(auth.user, submission))) {
+      let instructorOwnsCourse = false;
+      if (auth.user.role === 'INSTRUCTOR') {
+        const course = await Course.findById(submission.courseId).select('instructorId');
+        instructorOwnsCourse = Boolean(course && course.instructorId === auth.user.id);
+      }
+
+      if (!canAccessSubmission(auth.user, submission, instructorOwnsCourse)) {
         return NextResponse.json({ error: 'Access denied' }, { status: 403 });
       }
 

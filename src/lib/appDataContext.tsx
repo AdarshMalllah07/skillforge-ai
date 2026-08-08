@@ -5,16 +5,22 @@ import { useRouter } from 'next/navigation';
 import { api } from './api';
 import { useAuth } from './authContext';
 import { getUi } from '../components/ui/UiProvider';
-import { Course, Submission, Assignment } from '../types';
+import { Course, Submission, Assignment, Enrollment } from '../types';
 import { TAB_PATH, ROLE_HOME } from './routes';
 import { getNavItems } from '../components/nav/navItems';
+import { canEnrollInCourses } from './permissions';
 
 interface AppDataContextType {
   courses: Course[];
   submissions: Submission[];
+  enrollments: Enrollment[];
+  enrolledCourseIds: string[];
+  enrolledCourses: Course[];
   setCourses: React.Dispatch<React.SetStateAction<Course[]>>;
   setSubmissions: React.Dispatch<React.SetStateAction<Submission[]>>;
   refreshData: () => Promise<void>;
+  enrollInCourse: (courseId: string) => Promise<boolean>;
+  isEnrolledIn: (courseId: string) => boolean;
   handleCreateCourse: (courseData: Partial<Course>) => Promise<void>;
   handleUpdateCourse: (id: string, updatedFields: Partial<Course>) => Promise<void>;
   handleDeleteCourse: (id: string) => Promise<void>;
@@ -45,25 +51,38 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [courses, setCourses] = useState<Course[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
 
   const refreshData = useCallback(async () => {
     if (!isAuthenticated) {
       setCourses([]);
       setSubmissions([]);
+      setEnrollments([]);
       return;
     }
 
     try {
-      const [courseData, submissionData] = await Promise.all([
+      const requests: Promise<unknown>[] = [
         api<Course[]>('/api/courses'),
         api<Submission[]>('/api/submissions'),
-      ]);
+      ];
+      const loadEnrollments = canEnrollInCourses(currentUser?.role);
+      if (loadEnrollments) {
+        requests.push(api<Enrollment[]>('/api/enrollments/me'));
+      }
+
+      const [courseData, submissionData, enrollmentData] = await Promise.all(requests);
       if (Array.isArray(courseData)) setCourses(courseData);
       if (Array.isArray(submissionData)) setSubmissions(submissionData);
+      if (loadEnrollments && Array.isArray(enrollmentData)) {
+        setEnrollments(enrollmentData);
+      } else {
+        setEnrollments([]);
+      }
     } catch (e) {
       console.log('Failed to load app data', e);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, currentUser?.role]);
 
   useEffect(() => {
     refreshData();
@@ -94,6 +113,76 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     });
     return () => ids.forEach(clearTimeout);
   }, [isAuthenticated, currentUser?.role, router]);
+
+  const enrolledCourseIds = useMemo(
+    () => enrollments.map((e) => e.courseId),
+    [enrollments]
+  );
+
+  const enrolledCourses = useMemo(
+    () => courses.filter((c) => enrolledCourseIds.includes(c.id)),
+    [courses, enrolledCourseIds]
+  );
+
+  const isEnrolledIn = useCallback(
+    (courseId: string) => enrolledCourseIds.includes(courseId),
+    [enrolledCourseIds]
+  );
+
+  const enrollInCourse = useCallback(
+    async (courseId: string) => {
+      try {
+        const result = await api<{
+          message: string;
+          enrollment?: Enrollment;
+        }>(`/api/courses/${courseId}/enroll`, { method: 'POST' });
+
+        const alreadyTracked = enrollments.some((e) => e.courseId === courseId);
+        const isNewEnrollment =
+          result.message === 'Enrolled successfully' && Boolean(result.enrollment);
+
+        if (result.enrollment) {
+          setEnrollments((prev) => {
+            if (prev.some((e) => e.courseId === courseId)) return prev;
+            return [result.enrollment!, ...prev];
+          });
+        } else if (!alreadyTracked) {
+          setEnrollments((prev) => [
+            {
+              id: `local_${courseId}`,
+              courseId,
+              studentId: currentUser?.id || '',
+              enrolledAt: new Date().toISOString(),
+            },
+            ...prev,
+          ]);
+        }
+
+        if (isNewEnrollment && !alreadyTracked) {
+          setCourses((prev) =>
+            prev.map((c) =>
+              c.id === courseId
+                ? { ...c, enrolledStudentsCount: (c.enrolledStudentsCount || 0) + 1 }
+                : c
+            )
+          );
+        }
+
+        getUi().toast({
+          message: result.message || 'Enrolled successfully',
+          variant: 'success',
+        });
+        return true;
+      } catch (err) {
+        getUi().toast({
+          message: err instanceof Error ? err.message : 'Enrollment failed',
+          variant: 'error',
+        });
+        return false;
+      }
+    },
+    [currentUser?.id, enrollments]
+  );
 
   const handleCreateCourse = useCallback(async (courseData: Partial<Course>) => {
     try {
@@ -267,9 +356,14 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     () => ({
       courses,
       submissions,
+      enrollments,
+      enrolledCourseIds,
+      enrolledCourses,
       setCourses,
       setSubmissions,
       refreshData,
+      enrollInCourse,
+      isEnrolledIn,
       handleCreateCourse,
       handleUpdateCourse,
       handleDeleteCourse,
@@ -287,7 +381,12 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     [
       courses,
       submissions,
+      enrollments,
+      enrolledCourseIds,
+      enrolledCourses,
       refreshData,
+      enrollInCourse,
+      isEnrolledIn,
       handleCreateCourse,
       handleUpdateCourse,
       handleDeleteCourse,

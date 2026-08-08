@@ -143,3 +143,10 @@ export interface FilterOptions {
   level: string;
   status: string;
 }
+
+export interface Enrollment {
+  id: string;
+  courseId: string;
+  studentId: string;
+  enrolledAt: string;
+}

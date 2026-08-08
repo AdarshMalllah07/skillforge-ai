@@ -6,14 +6,14 @@ import SubmissionsDashboard from '@/src/components/SubmissionsDashboard';
 
 export default function StudentSubmissionsPage() {
   const router = useRouter();
-  const { submissions, courses } = useAppData();
+  const { submissions, enrolledCourses } = useAppData();
 
   return (
     <SubmissionsDashboard
       submissions={submissions}
-      courses={courses}
+      courses={enrolledCourses}
       onReviewSubmission={(sub) => {
-        const matchedCourse = courses.find((c) => c.id === sub.courseId);
+        const matchedCourse = enrolledCourses.find((c) => c.id === sub.courseId);
         if (matchedCourse) {
           router.push(`/courses/${matchedCourse.id}`);
         }

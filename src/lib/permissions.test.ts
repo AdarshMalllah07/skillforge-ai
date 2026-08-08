@@ -5,6 +5,8 @@ import {
   canManageCourses,
   canUseGenerator,
   canViewDraftCourses,
+  canBypassEnrollment,
+  canEnrollInCourses,
 } from './permissions';
 
 describe('permission helpers (RBAC)', () => {
@@ -34,5 +36,15 @@ describe('permission helpers (RBAC)', () => {
     expect(canViewDraftCourses('INSTRUCTOR')).toBe(true);
     expect(canViewDraftCourses('EVALUATOR')).toBe(false);
     expect(canViewDraftCourses('STUDENT')).toBe(false);
+  });
+
+  it('ties enrollment bypass and enroll capability to roles', () => {
+    expect(canBypassEnrollment('INSTRUCTOR')).toBe(true);
+    expect(canBypassEnrollment('EVALUATOR')).toBe(true);
+    expect(canBypassEnrollment('ADMIN')).toBe(true);
+    expect(canBypassEnrollment('STUDENT')).toBe(false);
+    expect(canEnrollInCourses('STUDENT')).toBe(true);
+    expect(canEnrollInCourses('ADMIN')).toBe(true);
+    expect(canEnrollInCourses('INSTRUCTOR')).toBe(false);
   });
 });

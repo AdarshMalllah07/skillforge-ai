@@ -374,7 +374,7 @@ export default function AdminUserManagement({ onViewUserCurriculums, onViewUserS
                   </button>
                 )}
 
-                {onViewUserSubmissions && (user.role === 'STUDENT' || user.role === 'EVALUATOR') && (
+                {onViewUserSubmissions && user.role === 'STUDENT' && (
                   <button
                     onClick={() => onViewUserSubmissions(user.id)}
                     className="px-2.5 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg font-bold text-[11px] hover:bg-emerald-100 transition-colors flex items-center space-x-1"

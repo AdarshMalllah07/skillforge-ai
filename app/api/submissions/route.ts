@@ -3,6 +3,7 @@ import { withApi } from '@/lib/server/api';
 import { requireAuth, requireRoles } from '@/server/middleware/auth';
 import { Submission } from '@/server/models/Submission';
 import { Course } from '@/server/models/Course';
+import { Enrollment } from '@/server/models/Enrollment';
 import { toClient, toClientList, newId } from '@/server/utils';
 import { saveSubmissionAttachment } from '@/server/uploads';
 import { parseBody, submissionCreateSchema } from '@/server/validation';
@@ -16,19 +17,27 @@ export async function GET(req: NextRequest) {
       const filter: Record<string, unknown> = {};
       const role = auth.user.role;
       const { searchParams } = new URL(req.url);
+      const status = searchParams.get('status');
+      const courseId = searchParams.get('courseId');
 
       if (role === 'STUDENT') {
         filter.studentId = auth.user.id;
       } else if (role === 'INSTRUCTOR') {
         const myCourses = await Course.find({ instructorId: auth.user.id }).select('_id');
-        const ids = myCourses.map((c) => c._id);
-        filter.courseId = { $in: ids };
+        const ownedIds = myCourses.map((c) => String(c._id));
+        if (courseId) {
+          if (!ownedIds.includes(courseId)) {
+            return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+          }
+          filter.courseId = courseId;
+        } else {
+          filter.courseId = { $in: ownedIds };
+        }
+      } else if (courseId) {
+        filter.courseId = courseId;
       }
 
-      const status = searchParams.get('status');
-      const courseId = searchParams.get('courseId');
       if (status) filter.status = status;
-      if (courseId) filter.courseId = courseId;
 
       const submissions = await Submission.find(filter).sort({ submittedAt: -1 });
       return NextResponse.json(
@@ -114,9 +123,27 @@ export async function POST(req: NextRequest) {
       }
 
       const course = data.courseId ? await Course.findById(data.courseId) : null;
-      const assignment = course?.assignments?.find(
+      if (!course) {
+        return NextResponse.json({ error: 'Course not found' }, { status: 404 });
+      }
+
+      const assignment = course.assignments?.find(
         (a: { id: string }) => a.id === data.assignmentId
       );
+      if (!assignment) {
+        return NextResponse.json({ error: 'Assignment not found in course' }, { status: 404 });
+      }
+
+      const enrollment = await Enrollment.findOne({
+        courseId: course._id,
+        studentId: auth.user.id,
+      });
+      if (!enrollment) {
+        return NextResponse.json(
+          { error: 'You must enroll in this course before submitting' },
+          { status: 403 }
+        );
+      }
 
       let attachmentUrl: string | undefined;
       let attachmentName: string | undefined;
@@ -129,9 +156,9 @@ export async function POST(req: NextRequest) {
       const submission = await Submission.create({
         _id: newId('sub'),
         assignmentId: data.assignmentId,
-        assignmentTitle: data.assignmentTitle || assignment?.title || 'Course Assignment',
-        courseId: data.courseId || course?._id || '',
-        courseTitle: data.courseTitle || course?.title || 'Course Title',
+        assignmentTitle: data.assignmentTitle || assignment.title || 'Course Assignment',
+        courseId: String(course._id),
+        courseTitle: data.courseTitle || course.title || 'Course Title',
         studentId: auth.user.id,
         studentName: auth.user.name,
         studentEmail: auth.user.email,
@@ -142,7 +169,7 @@ export async function POST(req: NextRequest) {
         attachmentUrl,
         attachmentName,
         status: 'PENDING',
-        maxScore: data.maxScore || assignment?.maxScore || 100,
+        maxScore: data.maxScore || assignment.maxScore || 100,
       });
 
       const client = toClient(submission)!;

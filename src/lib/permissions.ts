@@ -31,6 +31,16 @@ export function canViewDraftCourses(role?: UserRole): boolean {
   return role === 'INSTRUCTOR' || role === 'ADMIN';
 }
 
+/** Staff can browse course content without enrollment */
+export function canBypassEnrollment(role?: UserRole): boolean {
+  return role === 'INSTRUCTOR' || role === 'EVALUATOR' || role === 'ADMIN';
+}
+
+/** Students (and admins previewing) enroll to submit work */
+export function canEnrollInCourses(role?: UserRole): boolean {
+  return role === 'STUDENT' || role === 'ADMIN';
+}
+
 /** Role-scoped home for submissions list */
 export function submissionsPathForRole(role?: UserRole): string {
   switch (role) {

@@ -1,8 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import { useAuth } from '../lib/authContext';
-import { UserRole } from '../types';
-import { X, Lock, Mail, User as UserIcon, Shield, Sparkles, LogIn, UserPlus, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { X, Lock, Mail, User as UserIcon, Sparkles, LogIn, UserPlus, Eye, EyeOff } from 'lucide-react';
 
 export default function AuthModal() {
   const {
@@ -18,7 +17,6 @@ export default function AuthModal() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState('');
-  const [role, setRole] = useState<UserRole>('STUDENT');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -32,6 +30,7 @@ export default function AuthModal() {
       if (mode === 'LOGIN') {
         await login(email, password);
       } else {
+        // Public signup always creates a STUDENT; staff roles are assigned by admins.
         await signup(name, email, password);
       }
     } catch (err) {
@@ -60,12 +59,12 @@ export default function AuthModal() {
           </div>
 
           <h3 className="text-xl font-extrabold text-white">
-            {mode === 'LOGIN' ? 'Welcome Back' : 'Create Your Account'}
+            {mode === 'LOGIN' ? 'Welcome Back' : 'Create Student Account'}
           </h3>
           <p className="text-xs text-slate-300 mt-1">
             {mode === 'LOGIN'
               ? 'Sign in to manage courses, view assignment submissions, and run AI evaluations.'
-              : 'Join SkillForge AI as a Candidate, Instructor, or Evaluator.'}
+              : 'Public signup creates a Candidate (Student) account. Instructors and evaluators are provisioned by an admin.'}
           </p>
 
           {/* Tab Switcher */}
@@ -168,56 +167,19 @@ export default function AuthModal() {
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Select Active Platform Role</label>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => setRole('INSTRUCTOR')}
-                className={`p-2.5 rounded-xl border text-center transition-all ${
-                  role === 'INSTRUCTOR'
-                    ? 'border-indigo-600 bg-indigo-50 text-indigo-700 font-bold'
-                    : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                <Shield className="w-4 h-4 mx-auto mb-1 text-indigo-600" />
-                <span className="text-[11px]">Instructor</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setRole('STUDENT')}
-                className={`p-2.5 rounded-xl border text-center transition-all ${
-                  role === 'STUDENT'
-                    ? 'border-emerald-600 bg-emerald-50 text-emerald-700 font-bold'
-                    : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                <UserIcon className="w-4 h-4 mx-auto mb-1 text-emerald-600" />
-                <span className="text-[11px]">Candidate</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setRole('EVALUATOR')}
-                className={`p-2.5 rounded-xl border text-center transition-all ${
-                  role === 'EVALUATOR'
-                    ? 'border-amber-600 bg-amber-50 text-amber-700 font-bold'
-                    : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                <CheckCircle2 className="w-4 h-4 mx-auto mb-1 text-amber-600" />
-                <span className="text-[11px]">Evaluator</span>
-              </button>
-            </div>
-          </div>
+          {mode === 'SIGNUP' && (
+            <p className="text-[11px] text-slate-500 leading-relaxed">
+              Your account will be created with the <strong>Student</strong> role. An administrator
+              can later assign Instructor, Evaluator, or Admin roles from Users &amp; Roles.
+            </p>
+          )}
 
           <button
             type="submit"
             disabled={loading}
             className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold rounded-xl text-xs shadow-md transition-all disabled:opacity-50"
           >
-            {loading ? 'Authenticating...' : mode === 'LOGIN' ? 'Sign In to Dashboard' : 'Complete Registration'}
+            {loading ? 'Authenticating...' : mode === 'LOGIN' ? 'Sign In to Dashboard' : 'Create Student Account'}
           </button>
         </form>
 
