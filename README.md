@@ -251,7 +251,7 @@ Full mitigation strategies and contingency plans: [SECURITY.md](./SECURITY.md)
 |-------|---------|
 | Unit / integration | Vitest (`npm test`) |
 | Coverage | RBAC permissions, JWT + required secret, Zod validation, rate limits, AI eval access, upload store selection, log redaction |
-| CI | GitHub Actions: typecheck → tests → build on PR; on `main` push also deploys to Vercel (`skillforge-ai-h35u`) |
+| CI | GitHub Actions: typecheck → tests → build on PR; on `main` push also deploys to Vercel (`skillforge-ai-h35u`) with retries on flaky upload |
 
 ### CI/CD secrets (GitHub → Vercel)
 
@@ -259,9 +259,11 @@ Repo secrets used by `.github/workflows/ci-cd.yml` for production deploy:
 
 | Secret | Purpose |
 |--------|---------|
-| `VERCEL_TOKEN` | Vercel access token |
+| `VERCEL_TOKEN` | Vercel access token (Account Settings → Tokens; regenerate if deploy returns HTML/`Unexpected token '<'`) |
 | `VERCEL_ORG_ID` | Team / org id |
 | `VERCEL_PROJECT_ID` | Project id for `skillforge-ai-h35u` |
+
+If deploy fails with `Unexpected token '<'` / `Upload aborted`, it is usually a transient Vercel API response (HTML error page). Re-run the failed **Deploy to Vercel** job, or push again after regenerating `VERCEL_TOKEN` if retries keep failing.
 
 **Live:** https://skillforge-ai-h35u.vercel.app
 
